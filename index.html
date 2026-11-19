@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F8F8">
+<title>Drill</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Drill">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --email:#F5F8F8;      /* fond : émail */
+  --carte:#FFFFFF;
+  --encre:#0F2A33;      /* texte */
+  --encre-2:#4A6470;
+  --trait:#DCE6E8;
+  --lagon:#0E9384;      /* action principale */
+  --lagon-pale:#E1F4F1;
+  --gencive:#E8546B;    /* alertes fortes */
+  --gencive-pale:#FDECEF;
+  --ambre:#C77A0A;
+  --ambre-pale:#FDF3E2;
+  --ia:#5B4FD9;         /* tout ce qui touche à l'IA */
+  --ia-pale:#EEECFC;
+  --r-l:22px; --r-m:14px; --r-s:10px;
+  --display:"Bricolage Grotesque", system-ui, sans-serif;
+  --texte:"Atkinson Hyperlegible", system-ui, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--email);color:var(--encre);font-family:var(--texte);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+em,i{font-style:normal}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--lagon);outline-offset:2px;border-radius:6px}
+.app{max-width:560px;margin:0 auto;min-height:100dvh;padding:0 18px calc(96px + env(safe-area-inset-bottom))}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.01em;line-height:1.1}
+h1{font-size:2.1rem;font-weight:800}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
+.sous{color:var(--encre-2)}
+.demo{margin:14px 0 0;padding:10px 14px;border-radius:var(--r-s);background:var(--ambre-pale);color:#7A4A05;font-size:.85rem}
+
+/* ---------- en-tête ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0 6px}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:1.25rem}
+.logo svg{width:30px;height:30px}
+.retour{display:inline-flex;align-items:center;gap:6px;padding:8px 12px 8px 8px;border-radius:999px;background:var(--carte);border:1px solid var(--trait);font-weight:700;font-size:.9rem}
+
+/* ---------- accueil ---------- */
+.accroche{padding:22px 0 18px}
+.accroche h1{max-width:13ch}
+.outils{display:grid;gap:12px}
+.outil{display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:14px;text-align:left;background:var(--carte);border:1px solid var(--trait);border-radius:var(--r-l);padding:18px}
+.outil:active{transform:scale(.985)}
+.outil .ico{width:56px;height:56px;border-radius:16px;display:grid;place-items:center}
+.outil .ico svg{width:28px;height:28px}
+.outil h3{margin-bottom:2px}
+.outil p{font-size:.9rem;color:var(--encre-2)}
+.outil .fl{color:var(--encre-2)}
+.ico.l{background:var(--lagon-pale);color:var(--lagon)}
+.ico.i{background:var(--ia-pale);color:var(--ia)}
+.ico.g{background:var(--gencive-pale);color:var(--gencive)}
+.ico.a{background:var(--ambre-pale);color:var(--ambre)}
+.bientot{opacity:.55}
+.pastille{font-size:.75rem;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--trait);color:var(--encre-2)}
+.bloc-titre{margin:26px 0 10px;font-family:var(--display);font-weight:700;font-size:1.05rem;color:var(--encre-2)}
+
+/* ---------- Prescri'Dent : l'arcade de progression ---------- */
+.arcade{display:flex;justify-content:center;gap:3px;margin:14px 0 4px}
+.arcade svg{width:22px;height:26px;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.arcade path{fill:var(--trait);transition:fill .3s}
+.arcade .on path{fill:var(--lagon)}
+.arcade .on{transform:translateY(-3px)}
+.etape-n{text-align:center;font-size:.85rem;color:var(--encre-2)}
+.question{padding:18px 0 110px}
+.question h2{margin-bottom:6px}
+.choix{display:grid;gap:10px;margin-top:14px}
+.opt{display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:16px;border-radius:var(--r-m);background:var(--carte);border:1.5px solid var(--trait);transition:border-color .15s, background .15s}
+.opt .coche{flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--trait);display:grid;place-items:center;transition:.15s}
+.opt.multi .coche{border-radius:7px}
+.opt[aria-pressed="true"]{border-color:var(--lagon);background:var(--lagon-pale)}
+.opt[aria-pressed="true"] .coche{background:var(--lagon);border-color:var(--lagon)}
+.opt[aria-pressed="true"] .coche::after{content:"";width:10px;height:6px;border:2.5px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.opt b{display:block}
+.opt small{color:var(--encre-2);font-size:.85rem;display:block;line-height:1.35}
+.champ{display:grid;gap:6px;margin-top:14px}
+.champ label{font-weight:700;font-size:.9rem}
+.champ input{padding:14px;border-radius:var(--r-s);border:1.5px solid var(--trait);background:var(--carte);width:100%}
+.champ input:focus{border-color:var(--lagon);outline:none}
+.barre-action{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));padding:12px 18px;background:linear-gradient(transparent,var(--email) 30%)}
+.barre-action .in{max-width:524px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;padding:16px;border-radius:999px;font-weight:700;text-align:center;background:var(--lagon);color:#fff}
+.btn:disabled{opacity:.35}
+.btn.sec{background:var(--carte);color:var(--encre);border:1.5px solid var(--trait);flex:0 0 auto;padding:16px 20px}
+.btn.ia{background:var(--ia)}
+
+/* ---------- résultat ---------- */
+.alerte{display:flex;gap:12px;padding:14px;border-radius:var(--r-m);margin-top:10px;font-size:.93rem}
+.alerte svg{flex:none;width:22px;height:22px;margin-top:1px}
+.alerte.forte{background:var(--gencive-pale);color:#8E1F31}
+.alerte.moy{background:var(--ambre-pale);color:#7A4A05}
+.alerte.info{background:var(--lagon-pale);color:#065E54}
+.alerte b{display:block}
+.lignes{margin-top:10px;display:grid;gap:10px}
+.ligne{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:14px;border-radius:var(--r-m);background:var(--carte);border:1.5px solid var(--trait)}
+.ligne[aria-pressed="false"]{opacity:.45}
+.ligne .med{font-weight:700;color:#0A7A5C}
+.ligne .pos{font-size:.9rem;color:var(--encre-2)}
+.ligne .coche{width:24px;height:24px;border-radius:7px;border:2px solid var(--trait);display:grid;place-items:center}
+.ligne[aria-pressed="true"] .coche{background:var(--lagon);border-color:var(--lagon)}
+.ligne[aria-pressed="true"] .coche::after{content:"";width:10px;height:6px;border:2.5px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.vidal{font-size:.8rem;font-weight:700;color:var(--lagon);text-decoration:none;margin-top:4px;display:inline-block}
+.patient{margin-top:22px;padding:18px;border-radius:var(--r-l);background:var(--carte);border:1px solid var(--trait)}
+.patient p{font-size:.85rem;color:var(--encre-2);margin-top:4px}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ---------- codage ---------- */
+.recherche{position:relative;margin:16px 0 4px}
+.recherche input{width:100%;padding:15px 16px 15px 46px;border-radius:999px;border:1.5px solid var(--trait);background:var(--carte)}
+.recherche input:focus{border-color:var(--lagon);outline:none}
+.recherche svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--encre-2)}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:12px 0 6px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex:none;padding:9px 16px;border-radius:999px;border:1.5px solid var(--trait);background:var(--carte);font-weight:700;font-size:.9rem}
+.cat[aria-pressed="true"]{background:var(--encre);color:#fff;border-color:var(--encre)}
+.acte{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:14px 16px;border-radius:var(--r-m);background:var(--carte);border:1.5px solid var(--trait);margin-top:10px;text-align:left;width:100%}
+.acte .code{font-family:var(--display);font-weight:700;letter-spacing:.02em;color:var(--lagon)}
+.acte .lib{font-size:.92rem}
+.acte .plus{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--lagon-pale);color:var(--lagon);font-size:1.4rem;font-weight:700}
+.acte.dans .plus{background:var(--lagon);color:#fff}
+.compteur{padding:18px;border-radius:var(--r-l);background:var(--carte);border:1.5px solid var(--trait);margin-top:12px}
+.compteur .rangee{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:44px;height:44px;border-radius:50%;background:var(--email);border:1.5px solid var(--trait);font-size:1.3rem;font-weight:700}
+.stepper output{min-width:52px;text-align:center;font-family:var(--display);font-weight:800;font-size:1.8rem}
+.seg{display:flex;background:var(--email);border-radius:999px;padding:4px;margin-top:10px}
+.seg button{flex:1;padding:10px 6px;border-radius:999px;font-weight:700;font-size:.88rem;color:var(--encre-2)}
+.seg button[aria-pressed="true"]{background:var(--carte);color:var(--encre);box-shadow:0 1px 3px rgba(15,42,51,.12)}
+.resultat-code{margin-top:14px;padding:12px 14px;border-radius:var(--r-s);background:var(--lagon-pale);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.resultat-code .code{font-family:var(--display);font-weight:800;font-size:1.2rem;color:#065E54}
+.resultat-code small{display:block;font-size:.82rem;color:#065E54}
+.mini{padding:10px 14px;border-radius:999px;background:var(--lagon);color:#fff;font-weight:700;font-size:.85rem;flex:none}
+
+/* panier */
+.panier{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));padding:0 12px 10px}
+.panier .in{max-width:536px;margin:0 auto;background:var(--encre);color:#fff;border-radius:var(--r-l);padding:14px 16px;box-shadow:0 10px 30px rgba(15,42,51,.25)}
+.panier-tete{display:flex;justify-content:space-between;align-items:center;width:100%;color:#fff}
+.panier-tete b{font-family:var(--display);font-size:1.05rem}
+.badge{background:var(--lagon);border-radius:999px;padding:2px 10px;font-weight:700;margin-left:6px}
+.panier-corps{margin-top:12px;display:grid;gap:8px;max-height:52dvh;overflow:auto}
+.p-acte{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:var(--r-s);background:rgba(255,255,255,.07);font-size:.9rem}
+.p-acte .code{font-family:var(--display);font-weight:700}
+.p-acte .mods{color:#7FE3D3;font-weight:700}
+.p-acte button{color:#9FB6BD;font-size:1.2rem;line-height:1}
+.mod{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px}
+.mod small{display:block;color:#9FB6BD;font-size:.8rem;line-height:1.3}
+.switch{flex:none;width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.18);position:relative;transition:.2s}
+.switch::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s cubic-bezier(.3,1.4,.5,1)}
+.switch[aria-checked="true"]{background:var(--lagon)}
+.switch[aria-checked="true"]::after{left:25px}
+.mod-titre{font-size:.8rem;color:#9FB6BD;margin-top:8px}
+.copier{width:100%;margin-top:10px;padding:13px;border-radius:999px;background:#fff;color:var(--encre);font-weight:700}
+
+/* ---------- assistant ---------- */
+.fil{display:grid;gap:12px;margin-top:16px}
+.bulle{padding:14px 16px;border-radius:var(--r-m);max-width:92%;font-size:.95rem}
+.bulle.moi{justify-self:end;background:var(--encre);color:#fff;border-bottom-right-radius:4px}
+.bulle.lui{background:var(--carte);border:1px solid var(--trait);border-bottom-left-radius:4px}
+.bulle.lui.ia{border-color:#D6D2F7}
+.bulle .code{font-family:var(--display);font-weight:800;color:var(--lagon)}
+.suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.sugg{padding:9px 14px;border-radius:999px;background:var(--ia-pale);color:var(--ia);font-weight:700;font-size:.85rem;text-align:left}
+.saisie{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));padding:10px 18px 12px;background:linear-gradient(transparent,var(--email) 25%)}
+.saisie form{max-width:524px;margin:0 auto;display:flex;gap:8px}
+.saisie input{flex:1;padding:15px 18px;border-radius:999px;border:1.5px solid #D6D2F7;background:var(--carte)}
+.saisie input:focus{border-color:var(--ia);outline:none}
+.saisie button{width:52px;height:52px;border-radius:50%;background:var(--ia);color:#fff;display:grid;place-items:center}
+
+/* ---------- barre d'onglets ---------- */
+.onglets{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--trait);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:5}
+.onglets .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.onglet{display:grid;justify-items:center;gap:3px;padding:6px 0;font-size:.72rem;font-weight:700;color:var(--encre-2)}
+.onglet svg{width:24px;height:24px}
+.onglet[aria-current="page"]{color:var(--lagon)}
+.onglet.ia[aria-current="page"]{color:var(--ia)}
+
+.toast{position:fixed;left:50%;top:18px;transform:translate(-50%,-140%);background:var(--encre);color:#fff;padding:12px 18px;border-radius:999px;font-weight:700;font-size:.9rem;transition:transform .35s cubic-bezier(.3,1.4,.5,1);z-index:20}
+.toast.vu{transform:translate(-50%,0)}
+.vue{animation:entree .28s ease-out}
+@keyframes entree{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- ordonnance (impression) ---------- */
+#ordo{display:none}
+@media print{
+  @page{size:A4;margin:16mm}
+  body{background:#fff}
+  .app,.onglets,.barre-action,.panier,.saisie,.toast{display:none!important}
+  #ordo{display:block;font-family:var(--texte);color:#000;font-size:11.5pt}
+  #ordo .entete{display:flex;justify-content:space-between;border-bottom:1.5pt solid #000;padding-bottom:8mm}
+  #ordo .bloc-patient{margin:10mm 0 8mm}
+  #ordo .med{font-weight:700;margin-top:6mm}
+  #ordo .signature{margin-top:24mm;margin-left:55%;border-top:.5pt solid #999;padding-top:2mm;font-size:9pt;color:#555}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<nav class="onglets" aria-label="Navigation principale"><div class="in">
+  <button class="onglet" data-vue="accueil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+  <button class="onglet" data-vue="prescri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg>Prescrire</button>
+  <button class="onglet" data-vue="code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>Coder</button>
+  <button class="onglet ia" data-vue="ia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg>Assistant</button>
+</div></nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="ordo"></div>
+
+<script>
+/* =========================================================
+   Drill — prototype
+   Données de DÉMONSTRATION : à remplacer par la base sourcée
+   (CCAM ameli en vigueur, recommandations HAS / ANSM).
+   ========================================================= */
+
+const $ = (s, el=document) => el.querySelector(s);
+const app = $('#app');
+const ICO = {
+  fleche:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  retour:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>',
+  alerte:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4m0 3h.01"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>',
+  loupe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
+  envoi:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>',
+  dent:'<path d="M7 2.5c-2.6 0-4.3 2-4.3 4.8 0 2.4 1 3.8 1.6 6 .6 2.3.8 7.8 2.6 7.8 1.6 0 1.6-5.2 3.1-5.2s1.5 5.2 3.1 5.2c1.8 0 2-5.5 2.6-7.8.6-2.2 1.6-3.6 1.6-6 0-2.8-1.7-4.8-4.3-4.8-1.4 0-2 .8-3 .8s-1.6-.8-3-.8z"/>'
+};
+const logo = `<svg viewBox="0 0 24 26" aria-hidden="true"><g transform="translate(2.5 1.5)" fill="#0E9384">${ICO.dent}</g></svg>`;
+
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('vu');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('vu'),1800)}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ---------------------------------------------------------
+   Navigation
+--------------------------------------------------------- */
+let vue = 'accueil';
+function aller(v){
+  vue = v;
+  document.querySelectorAll('.onglet').forEach(b=>b.setAttribute('aria-current', b.dataset.vue===v ? 'page':'false'));
+  ({accueil:vAccueil, prescri:vPrescri, code:vCode, ia:vIA})[v]();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.onglet').forEach(b=>b.onclick=()=>aller(b.dataset.vue));
+
+/* ---------------------------------------------------------
+   Accueil
+--------------------------------------------------------- */
+function vAccueil(){
+  const h = new Date().getHours();
+  const salut = h<12 ? 'Bonjour' : h<18 ? 'Bon après-midi' : 'Bonsoir';
+  app.innerHTML = `<div class="vue">
+    <header class="top"><div class="logo">${logo}Drill</div></header>
+    <section class="accroche">
+      <h1>${salut}. On prépare quel patient ?</h1>
+      <p class="sous" style="margin-top:8px">Ordonnance en quelques questions, codes CCAM sans chercher.</p>
+    </section>
+    <div class="outils">
+      <button class="outil" data-go="prescri">
+        <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg></span>
+        <span><h3>Prescri'Dent</h3><p>Profil du patient, alertes et ordonnance prête à imprimer</p></span><span class="fl">${ICO.fleche}</span>
+      </button>
+      <button class="outil" data-go="code">
+        <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg></span>
+        <span><h3>Codage express</h3><p>Choisis tes actes, active les modificateurs, copie</p></span><span class="fl">${ICO.fleche}</span>
+      </button>
+      <button class="outil" data-go="ia">
+        <span class="ico i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg></span>
+        <span><h3>Assistant</h3><p>Décris l'acte avec tes mots, il trouve le code</p></span><span class="fl">${ICO.fleche}</span>
+      </button>
+    </div>
+    <p class="bloc-titre">Bientôt</p>
+    <div class="outils">
+      <div class="outil bientot"><span class="ico a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg></span><span><h3>Logbook de clinique</h3><p>Tes actes validés, ton niveau, tes séries</p></span><span class="pastille">V2</span></div>
+      <div class="outil bientot"><span class="ico g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><span><h3>Mode urgence</h3><p>De la douleur au diagnostic et à la conduite à tenir</p></span><span class="pastille">V2</span></div>
+    </div>
+    <p class="demo">Prototype : protocoles et codes de démonstration, pas encore validés. Ne pas utiliser au fauteuil.</p>
+  </div>`;
+  app.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>aller(b.dataset.go));
+}
+
+/* ---------------------------------------------------------
+   Prescri'Dent : questionnaire
+--------------------------------------------------------- */
+const ETAPES = [
+  { id:'acte', titre:'Pour quel acte ou motif ?', aide:'Une seule réponse.', type:'un', options:[
+    {v:'ext', t:'Extraction ou chirurgie buccale', d:'Avulsion, dent de sagesse, lambeau'},
+    {v:'infect', t:'Infection', d:'Abcès, cellulite débutante, péricoronarite'},
+    {v:'endo', t:'Douleur pulpaire', d:'Pulpite, après pulpectomie'},
+    {v:'paro', t:'Détartrage ou surfaçage', d:'Acte parodontal non chirurgical'},
+    {v:'impl', t:'Pose d’implant', d:''},
+  ]},
+  { id:'profil', titre:'Qui est le patient ?', aide:'Une seule réponse.', type:'un', options:[
+    {v:'adulte', t:'Adulte', d:''},
+    {v:'enfant', t:'Enfant', d:'Les doses seront calculées au poids'},
+    {v:'enceinte', t:'Femme enceinte', d:''},
+    {v:'allaite', t:'Femme qui allaite', d:''},
+  ]},
+  { id:'allergies', titre:'Allergies connues ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucune', options:[
+    {v:'peni', t:'Pénicillines', d:''},
+    {v:'ains', t:'AINS ou aspirine', d:''},
+    {v:'aucune', t:'Aucune allergie connue', d:''},
+  ]},
+  { id:'terrain', titre:'Antécédents médicaux ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options:[
+    {v:'ei', t:'Haut risque d’endocardite infectieuse', d:'Prothèse valvulaire, antécédent d’endocardite, cardiopathie congénitale cyanogène'},
+    {v:'immuno', t:'Immunodépression', d:'Chimiothérapie, corticothérapie au long cours, greffe…'},
+    {v:'diab', t:'Diabète déséquilibré', d:''},
+    {v:'resorb', t:'Traitement anti-résorbeur osseux', d:'Bisphosphonates, dénosumab'},
+    {v:'radio', t:'Radiothérapie cervico-faciale', d:''},
+    {v:'ir', t:'Insuffisance rénale', d:''},
+    {v:'ih', t:'Insuffisance hépatique', d:''},
+    {v:'ulcere', t:'Ulcère gastro-duodénal', d:''},
+    {v:'aucun', t:'Aucun antécédent notable', d:''},
+  ]},
+  { id:'ttt', titre:'Traitements qui jouent sur le saignement ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options:[
+    {v:'avk', t:'Antivitamine K', d:'Warfarine, fluindione…'},
+    {v:'aod', t:'Anticoagulant oral direct', d:'Apixaban, rivaroxaban, dabigatran'},
+    {v:'aap', t:'Antiplaquettaire', d:'Aspirine, clopidogrel…'},
+    {v:'aucun', t:'Aucun de ces traitements', d:''},
+  ]},
+];
+let P = {etape:0, rep:{}, poids:'', lignesOff:new Set()};
+
+function vPrescri(){
+  if (P.etape >= ETAPES.length) return vOrdo();
+  const e = ETAPES[P.etape];
+  const rep = P.rep[e.id] || (e.type==='multi' ? [] : null);
+  const total = 14, allumees = Math.round(total * P.etape / ETAPES.length);
+  const arcade = Array.from({length:total},(_,i)=>`<svg viewBox="0 0 18 22" class="${i<allumees?'on':''}" aria-hidden="true">${ICO.dent}</svg>`).join('');
+  const ok = e.type==='multi' ? rep.length>0 : !!rep;
+  const poidsOk = !(e.id==='profil' && rep==='enfant') || Number(P.poids)>0;
+
+  app.innerHTML = `<div class="vue">
+    <header class="top">
+      ${P.etape>0 ? `<button class="retour" id="prec">${ICO.retour}Retour</button>` : `<div class="logo">${logo}Prescri'Dent</div>`}
+      <button class="retour" id="raz" style="padding-left:12px">Recommencer</button>
+    </header>
+    <div class="arcade" role="progressbar" aria-valuemin="0" aria-valuemax="${ETAPES.length}" aria-valuenow="${P.etape}">${arcade}</div>
+    <p class="etape-n">Question ${P.etape+1} sur ${ETAPES.length}</p>
+    <section class="question">
+      <h2>${e.titre}</h2><p class="sous">${e.aide}</p>
+      <div class="choix">${e.options.map(o=>{
+        const on = e.type==='multi' ? rep.includes(o.v) : rep===o.v;
+        return `<button class="opt ${e.type==='multi'?'multi':''}" data-v="${o.v}" aria-pressed="${on}"><span class="coche"></span><span><b>${o.t}</b>${o.d?`<small>${o.d}</small>`:''}</span></button>`;
+      }).join('')}</div>
+      ${e.id==='profil' && rep==='enfant' ? `<div class="champ"><label for="poids">Poids de l'enfant (kg)</label><input id="poids" inputmode="decimal" value="${esc(P.poids)}" placeholder="ex. 24"></div>`:''}
+    </section>
+  </div>
+  <div class="barre-action"><div class="in"><button class="btn" id="suiv" ${ok&&poidsOk?'':'disabled'}>${P.etape===ETAPES.length-1?'Voir l’ordonnance':'Continuer'}</button></div></div>`;
+
+  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.v;
+    if(e.type==='un'){ P.rep[e.id]=v; if(e.id!=='profil' || v!=='enfant'){ vPrescri(); return setTimeout(suivant,180);} }
+    else{
+      let r=[...(P.rep[e.id]||[])];
+      if(v===e.aucun) r = r.includes(v)?[]:[v];
+      else{ r=r.filter(x=>x!==e.aucun); r = r.includes(v)? r.filter(x=>x!==v) : [...r,v]; }
+      P.rep[e.id]=r;
+    }
+    vPrescri();
+  });
+  const pi=$('#poids'); if(pi){ pi.oninput=()=>{P.poids=pi.value.replace(',','.'); $('#suiv').disabled=!(Number(P.poids)>0)}; }
+  $('#suiv').onclick=suivant;
+  if($('#prec')) $('#prec').onclick=()=>{P.etape--;vPrescri()};
+  $('#raz').onclick=()=>{P={etape:0,rep:{},poids:'',lignesOff:new Set()};vPrescri()};
+}
+function suivant(){ P.etape++; P.lignesOff=new Set(); vPrescri(); window.scrollTo(0,0); }
+
+/* ---------------------------------------------------------
+   Moteur de règles (DÉMO — à sourcer HAS/ANSM)
+--------------------------------------------------------- */
+function moteur(){
+  const r=P.rep, a=r.acte, pr=r.profil, al=r.allergies||[], te=r.terrain||[], tt=r.ttt||[];
+  const enfant = pr==='enfant', kg=Number(P.poids)||0, enceinte = pr==='enceinte';
+  const allPeni = al.includes('peni'), allAins = al.includes('ains');
+  const invasif = ['ext','paro','impl','infect'].includes(a);
+  const alertes=[], lignes=[];
+  const mg=(parKg,max)=>Math.min(Math.round(parKg*kg/50)*50, max);
+
+  // Alertes
+  if(te.includes('ei') && a==='impl') alertes.push({n:'forte',t:'Implant contre-indiqué',d:'Patient à haut risque d’endocardite infectieuse.'});
+  if(te.includes('resorb') && ['ext','impl'].includes(a)) alertes.push({n:'forte',t:'Risque d’ostéonécrose des mâchoires',d:'Préciser le contexte (ostéoporose ou cancer) et la durée du traitement avant tout geste osseux.'});
+  if(te.includes('radio') && ['ext','impl'].includes(a)) alertes.push({n:'forte',t:'Risque d’ostéoradionécrose',d:'Avis spécialisé et protocole hospitalier avant tout geste osseux.'});
+  if(tt.includes('avk')) alertes.push({n:'moy',t:'Antivitamine K : ne pas arrêter',d:'Contrôler l’INR dans les 24 h avant l’acte. Hémostase locale systématique.'});
+  if(tt.includes('aod')) alertes.push({n:'moy',t:'AOD : ne pas arrêter',d:'Programmer l’acte à distance de la dernière prise. Hémostase locale systématique.'});
+  if(tt.includes('aap')) alertes.push({n:'moy',t:'Antiplaquettaire : ne pas arrêter',d:'Hémostase locale systématique.'});
+  if(te.includes('diab')) alertes.push({n:'moy',t:'Diabète déséquilibré',d:'Risque infectieux et de cicatrisation retardée.'});
+  if(enceinte) alertes.push({n:'info',t:'Grossesse',d:'AINS exclus de la proposition. Paracétamol en première intention.'});
+
+  // Antibioprophylaxie
+  const prophy = invasif && a!=='infect' && (te.includes('ei') || te.includes('immuno')) && !(a==='impl' && te.includes('ei'));
+  if(prophy){
+    if(!allPeni) lignes.push({id:'abp', med:'Amoxicilline', pos: enfant ? `${mg(50,2000)} mg en une prise, 30 à 60 min avant l’acte (50 mg/kg)` : '2 g en une prise, 30 à 60 min avant l’acte', qsp:'Dose unique', cat:'Antibioprophylaxie'});
+    else lignes.push({id:'abp', med:'Clindamycine', pos: enfant ? `${mg(15,600)} mg en une prise, 30 à 60 min avant l’acte (15 mg/kg)` : '600 mg en une prise, 30 à 60 min avant l’acte', qsp:'Dose unique', cat:'Antibioprophylaxie'});
+  }
+  // Antibiothérapie curative
+  if(a==='infect'){
+    if(!allPeni) lignes.push({id:'abc', med:'Amoxicilline', pos: enfant ? `${mg(25,1000)} mg matin et soir (50 mg/kg/j)` : '1 g matin et soir', qsp:'7 jours', cat:'Antibiothérapie'});
+    else if(!enfant) lignes.push({id:'abc', med:'Clindamycine', pos:'600 mg matin et soir', qsp:'7 jours', cat:'Antibiothérapie'});
+    else alertes.push({n:'moy',t:'Enfant allergique aux pénicillines',d:'Choisir l’alternative avec le praticien référent.'});
+  }
+  // Antalgie
+  const ihSevere = te.includes('ih');
+  lignes.push({id:'para', med:'Paracétamol', pos: enfant ? `${Math.round(15*kg)} mg toutes les 6 h si douleur (15 mg/kg, max 60 mg/kg/j)` : (ihSevere ? '500 mg toutes les 6 h si douleur, max 2 g/j (insuffisance hépatique)' : '1 g toutes les 6 h si douleur, max 4 g/j'), qsp:'5 jours', cat:'Antalgique'});
+  const ainsCI = enceinte || allAins || te.includes('ir') || te.includes('ulcere') || tt.includes('avk') || tt.includes('aod') || tt.includes('aap');
+  if(['ext','endo','impl'].includes(a) && !ainsCI){
+    lignes.push({id:'ibu', med:'Ibuprofène', pos: enfant ? `${Math.round(10*kg)} mg toutes les 8 h pendant le repas (10 mg/kg)` : '400 mg toutes les 8 h pendant le repas', qsp:'3 jours', cat:'Anti-inflammatoire'});
+  } else if(['ext','endo','impl'].includes(a) && ainsCI && !enceinte){
+    alertes.push({n:'info',t:'Ibuprofène exclu',d:'Allergie, anticoagulant/antiplaquettaire, insuffisance rénale ou ulcère.'});
+  }
+  // Bain de bouche
+  if(['ext','impl','paro'].includes(a) && !enfant){
+    lignes.push({id:'bdb', med:'Chlorhexidine 0,12 % bain de bouche', pos:'1 bain de bouche de 30 s, 3 fois par jour, à commencer le lendemain', qsp:'7 jours', cat:'Antiseptique'});
+  }
+  return {alertes, lignes};
+}
+
+function vOrdo(){
+  const {alertes,lignes} = moteur();
+  const total=14;
+  app.innerHTML = `<div class="vue">
+    <header class="top"><button class="retour" id="prec">${ICO.retour}Retour</button><button class="retour" id="raz" style="padding-left:12px">Nouveau patient</button></header>
+    <div class="arcade" aria-hidden="true">${Array.from({length:total},()=>`<svg viewBox="0 0 18 22" class="on">${ICO.dent}</svg>`).join('')}</div>
+    <section class="question">
+      <h2>Ordonnance proposée</h2>
+      <p class="sous">Touche une ligne pour la retirer ou la remettre.</p>
+      ${alertes.map(x=>`<div class="alerte ${x.n}">${x.n==='info'?ICO.info:ICO.alerte}<span><b>${x.t}</b>${x.d}</span></div>`).join('')}
+      <div class="lignes">${lignes.map(l=>`
+        <button class="ligne" data-id="${l.id}" aria-pressed="${!P.lignesOff.has(l.id)}">
+          <span class="coche"></span>
+          <span style="text-align:left"><small class="sous" style="font-size:.78rem">${l.cat}</small>
+            <span class="med" style="display:block">${l.med}</span>
+            <span class="pos" style="display:block">${l.pos} · ${l.qsp}</span>
+            <a class="vidal" href="https://www.vidal.fr/recherche.html?query=${encodeURIComponent(l.med.split(' ')[0])}" target="_blank" rel="noopener">Voir sur Vidal</a></span>
+        </button>`).join('')}</div>
+      <div class="patient">
+        <h3>Patient</h3>
+        <p>Utilisé uniquement pour l'impression, puis effacé. Rien n'est enregistré.</p>
+        <div class="deux"><div class="champ"><label for="nom">Nom</label><input id="nom" autocomplete="off"></div>
+        <div class="champ"><label for="prenom">Prénom</label><input id="prenom" autocomplete="off"></div></div>
+        <div class="champ"><label for="ddn">Date de naissance</label><input id="ddn" type="date" autocomplete="off"></div>
+      </div>
+      <p class="demo">Protocoles de démonstration : seront remplacés par les recommandations HAS/ANSM sourcées et la mise en page de l'ordonnance du CHU.</p>
+    </section>
+  </div>
+  <div class="barre-action"><div class="in"><button class="btn" id="imprimer">Imprimer l'ordonnance</button></div></div>`;
+  app.querySelectorAll('.ligne').forEach(b=>b.onclick=e=>{
+    if(e.target.closest('.vidal')) return;
+    const id=b.dataset.id; P.lignesOff.has(id)?P.lignesOff.delete(id):P.lignesOff.add(id);
+    b.setAttribute('aria-pressed', !P.lignesOff.has(id));
+  });
+  $('#prec').onclick=()=>{P.etape--;vPrescri()};
+  $('#raz').onclick=()=>{P={etape:0,rep:{},poids:'',lignesOff:new Set()};vPrescri()};
+  $('#imprimer').onclick=()=>imprimer(lignes.filter(l=>!P.lignesOff.has(l.id)));
+}
+
+function imprimer(lignes){
+  const nom=$('#nom').value.trim(), prenom=$('#prenom').value.trim(), ddn=$('#ddn').value;
+  const d = ddn ? new Date(ddn+'T12:00').toLocaleDateString('fr-FR') : '';
+  $('#ordo').innerHTML = `
+    <div class="entete"><div><b>En-tête du CHU</b><br>(modèle à venir)</div><div style="text-align:right">Le ${new Date().toLocaleDateString('fr-FR')}</div></div>
+    <div class="bloc-patient"><b>${esc(nom.toUpperCase())} ${esc(prenom)}</b>${d?`<br>Né(e) le ${d}`:''}</div>
+    ${lignes.map(l=>`<div class="med">${esc(l.med)}</div><div>${esc(l.pos)}</div><div>QSP ${esc(l.qsp.toLowerCase())}</div>`).join('')}
+    <div class="signature">Signature et tampon</div>`;
+  window.print();
+}
+// Effacement des données patient après impression
+window.addEventListener('afterprint',()=>{ $('#ordo').innerHTML=''; ['nom','prenom','ddn'].forEach(id=>{const i=$('#'+id); if(i) i.value='';}); toast('Données patient effacées'); });
+
+/* ---------------------------------------------------------
+   Codage express — base de DÉMO (codes issus de la CCAM v34,
+   à remplacer par la version en vigueur sur ameli)
+--------------------------------------------------------- */
+const MODS = {
+  N:{t:'Enfant de moins de 13 ans', d:'Soins conservateurs sur dent permanente'},
+  E:{t:'Enfant de moins de 5 ans', d:'Radiographie'},
+  F:{t:'Urgence dimanche ou jour férié', d:''},
+  U:{t:'Urgence de nuit (20 h – 8 h)', d:''},
+};
+const AVULSIONS = {1:'HBGD036',2:'HBGD043',3:'HBGD319',4:'HBGD489',5:'HBGD497',6:'HBGD106',7:'HBGD076',8:'HBGD422',9:'HBGD420',10:'HBGD064',11:'HBGD356'};
+const RESTAU = { ic:{1:'HBMD058',2:'HBMD050',3:'HBMD054'}, pm:{1:'HBMD053',2:'HBMD049',3:'HBMD038'} };
+const ENDO = { ic:{v:'HBFD033',n:'HBFD001'}, pm1:{v:'HBFD021',n:null}, pm:{v:'HBFD035',n:'HBFD003'}, m:{v:'HBFD008',n:'HBFD024'} };
+const CATS = ['Chirurgie','Soins','Endodontie','Radiologie','Parodontologie'];
+const ACTES = [
+  {c:'HBGD018',l:'Avulsion d’une troisième molaire maxillaire retenue ou à l’état de germe',cat:'Chirurgie',m:'FU'},
+  {c:'HBGD004',l:'Avulsion d’une troisième molaire mandibulaire retenue ou à l’état de germe',cat:'Chirurgie',m:'FU'},
+  {c:'HBGD025',l:'Avulsion de 2 troisièmes molaires retenues ou à l’état de germe',cat:'Chirurgie',m:'FU'},
+  {c:'HBGD038',l:'Avulsion de 4 troisièmes molaires retenues ou à l’état de germe',cat:'Chirurgie',m:'FU'},
+  {c:'HBGD022',l:'Avulsion d’1 dent permanente sur arcade avec alvéolectomie',cat:'Chirurgie',m:'FU'},
+  {c:'HBGD034',l:'Avulsion de 2 dents permanentes sur arcade avec alvéolectomie',cat:'Chirurgie',m:'FU'},
+  {c:'HBJB001',l:'Évacuation d’abcès parodontal',cat:'Chirurgie',m:''},
+  {c:'LCJA003',l:'Évacuation de collection périmaxillaire ou périmandibulaire, par abord intrabuccal',cat:'Chirurgie',m:''},
+  {c:'HBFD010',l:'Parage de plaie de la pulpe d’une dent avec coiffage',cat:'Soins',m:''},
+  {c:'HBFD006',l:'Biopulpotomie d’une dent temporaire',cat:'Endodontie',m:'FU'},
+  {c:'HBQK389',l:'Radiographie rétroalvéolaire d’un secteur de 1 à 3 dents contiguës',cat:'Radiologie',m:'EFU'},
+  {c:'HBQK191',l:'Radiographies rétroalvéolaires de 2 secteurs distincts de 1 à 3 dents contiguës',cat:'Radiologie',m:'EFU'},
+  {c:'HBQK002',l:'Radiographie panoramique dentomaxillaire',cat:'Radiologie',m:'EFU'},
+  {c:'HBQK001',l:'Radiographie pelvibuccale (occlusale)',cat:'Radiologie',m:'EFU'},
+  {c:'HBJD001',l:'Détartrage et polissage des dents',cat:'Parodontologie',m:''},
+];
+const LIB = {};
+ACTES.forEach(a=>LIB[a.c]=a);
+Object.entries(AVULSIONS).forEach(([n,c])=>LIB[c]={c,l:`Avulsion de ${n} dent${n>1?'s':''} permanente${n>1?'s':''} sur arcade sans alvéolectomie`,cat:'Chirurgie',m:'FU'});
+const SECT = {ic:'incisivocanin', pm:'prémolomolaire'};
+Object.entries(RESTAU).forEach(([s,o])=>Object.entries(o).forEach(([f,c])=>LIB[c]={c,l:`Restauration d’une dent du secteur ${SECT[s]} sur ${f==3?'3 faces ou plus':f+' face'+(f>1?'s':'')}, matériau en phase plastique`,cat:'Soins',m:'N'}));
+const DENTS = {ic:'d’une incisive ou canine permanente', pm1:'d’une 1re prémolaire maxillaire', pm:'d’une prémolaire (autre que 1re max.)', m:'d’une molaire permanente'};
+Object.entries(ENDO).forEach(([d,o])=>Object.entries(o).forEach(([v,c])=>{ if(c) LIB[c]={c,l:`${v==='v'?'Exérèse de la pulpe vivante':'Exérèse du contenu canalaire non vivant'} ${DENTS[d]}`,cat:'Endodontie',m:'FNU'}; }));
+
+let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:6, sect:'pm', faces:2, dent:'m', vital:'v'};
+
+function vCode(){
+  const q=C.q.trim().toLowerCase();
+  let liste;
+  if(q){ liste = Object.values(LIB).filter(a=>(a.c+' '+a.l).toLowerCase().includes(q) || rechercheNombre(q,a)); }
+  else liste = ACTES.filter(a=>a.cat===C.cat);
+  app.innerHTML = `<div class="vue">
+    <header class="top"><div class="logo">${logo}Codage express</div></header>
+    <label class="recherche">${ICO.loupe}<input id="q" type="search" placeholder="Rechercher un acte ou un code" value="${esc(C.q)}" aria-label="Rechercher un acte"></label>
+    ${q?'':`<div class="cats" role="tablist">${CATS.map(c=>`<button class="cat" aria-pressed="${c===C.cat}" data-c="${c}">${c}</button>`).join('')}</div>`}
+    ${q?'':outilsCategorie()}
+    <div id="liste">${liste.map(carteActe).join('') || `<p class="sous" style="margin-top:20px">Aucun acte trouvé. Décris-le à l'assistant, il cherchera pour toi.</p><button class="btn ia" style="margin-top:12px;width:100%" id="versIA">Demander à l'assistant</button>`}</div>
+    <div style="height:${C.panier.length?140:20}px"></div>
+  </div>${panierHTML()}`;
+  const qi=$('#q'); qi.oninput=()=>{C.q=qi.value; const p=qi.selectionStart; vCode(); const n=$('#q'); n.focus(); n.setSelectionRange(p,p);};
+  app.querySelectorAll('.cat').forEach(b=>b.onclick=()=>{C.cat=b.dataset.c;vCode()});
+  if($('#versIA')) $('#versIA').onclick=()=>{IA.brouillon=C.q; aller('ia')};
+  brancherOutils(); brancherPanier();
+  app.querySelectorAll('.acte').forEach(b=>b.onclick=()=>basculer(b.dataset.c));
+}
+function rechercheNombre(q,a){ const m=q.match(/(\d+)\s*dent/); return m && a.l.toLowerCase().startsWith(`avulsion de ${m[1]} dent`); }
+function carteActe(a){ const dans=C.panier.some(p=>p.c===a.c); return `<button class="acte ${dans?'dans':''}" data-c="${a.c}"><span><span class="code">${a.c}</span><span class="lib" style="display:block">${a.l}</span></span><span class="plus">${dans?'✓':'+'}</span></button>`; }
+
+function outilsCategorie(){
+  if(C.cat==='Chirurgie'){
+    const c=AVULSIONS[C.nAv];
+    return `<div class="compteur"><h3>Avulsions de dents permanentes</h3><p class="sous" style="font-size:.88rem">Sur arcade, sans alvéolectomie. Choisis le nombre de dents.</p>
+      <div class="rangee"><span class="sous">Nombre de dents</span><div class="stepper"><button id="moins" aria-label="Une dent de moins">−</button><output id="nAv">${C.nAv}</output><button id="plus" aria-label="Une dent de plus">+</button></div></div>
+      <div class="resultat-code"><span><span class="code">${c||'—'}</span><small>${c?LIB[c].l:'Au-delà de 11 dents : code à ajouter à la base'}</small></span>${c?`<button class="mini" data-ajout="${c}">Ajouter</button>`:''}</div></div>`;
+  }
+  if(C.cat==='Soins'){
+    const c=RESTAU[C.sect][C.faces];
+    return `<div class="compteur"><h3>Restauration en phase plastique</h3><p class="sous" style="font-size:.88rem">Composite ou amalgame, sans ancrage radiculaire.</p>
+      <div class="seg" data-k="sect">${[['ic','Incisivo-canin'],['pm','Prémolo-molaire']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.sect===v}">${t}</button>`).join('')}</div>
+      <div class="seg" data-k="faces">${[[1,'1 face'],[2,'2 faces'],[3,'3 faces ou +']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.faces==v}">${t}</button>`).join('')}</div>
+      <div class="resultat-code"><span><span class="code">${c}</span><small>${LIB[c].l}</small></span><button class="mini" data-ajout="${c}">Ajouter</button></div></div>`;
+  }
+  if(C.cat==='Endodontie'){
+    const c=ENDO[C.dent][C.vital];
+    return `<div class="compteur"><h3>Traitement endodontique</h3>
+      <div class="seg" data-k="dent">${[['ic','Inc./canine'],['pm1','1re PM max.'],['pm','Prémolaire'],['m','Molaire']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.dent===v}">${t}</button>`).join('')}</div>
+      <div class="seg" data-k="vital">${[['v','Pulpe vivante'],['n','Non vivante']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.vital===v}">${t}</button>`).join('')}</div>
+      <div class="resultat-code"><span><span class="code">${c||'—'}</span><small>${c?LIB[c].l:'Code à ajouter à la base'}</small></span>${c?`<button class="mini" data-ajout="${c}">Ajouter</button>`:''}</div></div>`;
+  }
+  return '';
+}
+function brancherOutils(){
+  if($('#moins')){ $('#moins').onclick=()=>{C.nAv=Math.max(1,C.nAv-1);vCode()}; $('#plus').onclick=()=>{C.nAv=Math.min(12,C.nAv+1);vCode()}; }
+  app.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=s.dataset.k; C[k]= k==='faces'?Number(b.dataset.v):b.dataset.v; vCode();}));
+  app.querySelectorAll('[data-ajout]').forEach(b=>b.onclick=()=>{ if(!C.panier.some(p=>p.c===b.dataset.ajout)) basculer(b.dataset.ajout); else toast('Déjà dans la sélection'); });
+}
+function basculer(c){
+  const i=C.panier.findIndex(p=>p.c===c);
+  if(i>=0) C.panier.splice(i,1); else { C.panier.push({c,mods:new Set()}); toast(c+' ajouté'); }
+  vCode();
+}
+function panierHTML(){
+  if(!C.panier.length) return '';
+  const dispo = [...new Set(C.panier.flatMap(p=>[...(LIB[p.c].m||'')]))];
+  const actifs = new Set(C.panier.flatMap(p=>[...p.mods]));
+  return `<div class="panier"><div class="in">
+    <button class="panier-tete" id="pt" aria-expanded="${C.ouvert}"><b>Sélection<span class="badge">${C.panier.length}</span></b><span>${C.ouvert?'Réduire':'Voir et copier'}</span></button>
+    ${C.ouvert?`<div class="panier-corps">
+      ${C.panier.map(p=>`<div class="p-acte"><span><span class="code">${p.c}</span>${p.mods.size?` <span class="mods">${[...p.mods].join('')}</span>`:''}<br><span style="color:#B9CDD3">${LIB[p.c].l}</span></span><button data-retire="${p.c}" aria-label="Retirer ${p.c}">×</button></div>`).join('')}
+      ${dispo.length?`<p class="mod-titre">Modificateurs possibles pour ces actes</p>${dispo.map(m=>`<div class="mod"><span><b>${m} · ${MODS[m].t}</b>${MODS[m].d?`<small>${MODS[m].d}</small>`:''}</span><button class="switch" role="switch" aria-checked="${actifs.has(m)}" data-m="${m}" aria-label="${MODS[m].t}"></button></div>`).join('')}`:''}
+    </div><button class="copier" id="copier">Copier les codes</button>`:''}
+  </div></div>`;
+}
+function brancherPanier(){
+  if(!$('#pt')) return;
+  $('#pt').onclick=()=>{C.ouvert=!C.ouvert;vCode()};
+  app.querySelectorAll('[data-retire]').forEach(b=>b.onclick=()=>basculer(b.dataset.retire));
+  app.querySelectorAll('.switch').forEach(s=>s.onclick=()=>{
+    const m=s.dataset.m, on=s.getAttribute('aria-checked')!=='true';
+    C.panier.forEach(p=>{ if((LIB[p.c].m||'').includes(m)){ on?p.mods.add(m):p.mods.delete(m); } });
+    vCode();
+  });
+  if($('#copier')) $('#copier').onclick=()=>{
+    const txt=C.panier.map(p=>p.c+(p.mods.size?' '+[...p.mods].join(''):'')).join('\n');
+    navigator.clipboard?.writeText(txt).then(()=>toast('Codes copiés')).catch(()=>toast(txt.replace(/\n/g,' · ')));
+  };
+}
+
+/* ---------------------------------------------------------
+   Assistant (IA branchée plus tard via le relais Cloudflare)
+--------------------------------------------------------- */
+const IA = {fil:[], brouillon:''};
+const IA_URL = ''; // ex. https://drill-ia.<compte>.workers.dev
+async function demanderIA(texte){
+  if(IA_URL){
+    const r = await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:texte})});
+    const j = await r.json(); return {html:esc(j.reponse||'Pas de réponse.'), ia:true};
+  }
+  // Recherche locale en attendant l'IA
+  const t=texte.toLowerCase();
+  const n=(t.match(/(\d+)/)||[])[1];
+  let trouves=[];
+  if(/extra|avuls|enlev/.test(t) && n && AVULSIONS[n]) trouves=[AVULSIONS[n]];
+  if(!trouves.length){
+    const mots=t.split(/\W+/).filter(w=>w.length>3);
+    trouves=Object.values(LIB).map(a=>({a,s:mots.filter(w=>a.l.toLowerCase().includes(w.slice(0,6))).length})).filter(x=>x.s>0).sort((x,y)=>y.s-x.s).slice(0,3).map(x=>x.a.c);
+  }
+  if(!trouves.length) return {html:'Je ne trouve rien dans la base locale. Une fois l’IA branchée, je pourrai raisonner sur les cas non listés.'};
+  return {html:'Piste trouvée dans la base :'+trouves.map(c=>`<button class="acte" data-ajout-ia="${c}" style="margin-top:8px"><span><span class="code">${c}</span><span class="lib" style="display:block">${LIB[c].l}</span></span><span class="plus">+</span></button>`).join('')+'<br><span class="sous" style="font-size:.85rem">Recherche locale. L’IA complètera bientôt avec une explication.</span>'};
+}
+function vIA(){
+  app.innerHTML = `<div class="vue">
+    <header class="top"><div class="logo">${logo}Assistant</div></header>
+    <p class="sous">Décris l'acte comme tu le dirais à un collègue. L'assistant ne reçoit jamais de données patient.</p>
+    ${IA.fil.length?'':`<div class="suggestions">${['J’ai extrait 6 dents','Dent de sagesse mandibulaire incluse','Composite 2 faces sur une molaire','Drainage d’un abcès'].map(s=>`<button class="sugg">${s}</button>`).join('')}</div>`}
+    <div class="fil">${IA.fil.map(m=>`<div class="bulle ${m.moi?'moi':'lui'} ${m.ia?'ia':''}">${m.html}</div>`).join('')}</div>
+    <div style="height:110px"></div>
+  </div>
+  <div class="saisie"><form id="f"><input id="msg" placeholder="Ex. extraction de 6 dents" value="${esc(IA.brouillon)}" autocomplete="off"><button aria-label="Envoyer">${ICO.envoi}</button></form></div>`;
+  IA.brouillon='';
+  app.querySelectorAll('.sugg').forEach(b=>b.onclick=()=>envoyer(b.textContent));
+  app.querySelectorAll('[data-ajout-ia]').forEach(b=>b.onclick=()=>{ const c=b.dataset.ajoutIa; if(!C.panier.some(p=>p.c===c)) C.panier.push({c,mods:new Set()}); C.ouvert=true; aller('code'); toast(c+' ajouté'); });
+  $('#f').onsubmit=e=>{e.preventDefault(); const v=$('#msg').value.trim(); if(v) envoyer(v);};
+}
+async function envoyer(t){
+  IA.fil.push({moi:true, html:esc(t)}); vIA();
+  const r = await demanderIA(t); IA.fil.push(r); vIA();
+  window.scrollTo(0,document.body.scrollHeight);
+}
+
+aller('accueil');
+</script>
+</body>
+</html>
