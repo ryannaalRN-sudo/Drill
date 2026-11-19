@@ -498,6 +498,7 @@ window.addEventListener('afterprint',()=>{ $('#ordo').innerHTML=''; ['nom','pren
 const MODS = {
   N:{t:'Enfant de moins de 13 ans', d:'Restauration ou endodontie sur dent permanente · +15,7 %', pct:0.157},
   E:{t:'Enfant de moins de 5 ans', d:'Radiographie · +49 %', pct:0.49},
+  '9':{t:'Patient de 1 à 26 ans', d:'Soins conservateurs éligibles · +30 %', pct:0.30},
   F:{t:'Urgence dimanche ou jour férié', d:'+19,06 €, une seule fois par séance', fixe:19.06},
   U:{t:'Urgence de nuit (20 h – 8 h)', d:'+25,15 €, une seule fois par séance', fixe:25.15},
 };
@@ -546,6 +547,22 @@ Object.entries(RESTAU).forEach(([s,o])=>Object.entries(o).forEach(([f,c])=>LIB[c
 const DENTS = {ic:'d’une incisive ou canine permanente', pm1:'d’une 1re prémolaire maxillaire', pm:'d’une prémolaire (autre que 1re max.)', m:'d’une molaire permanente'};
 Object.entries(ENDO).forEach(([d,o])=>Object.entries(o).forEach(([v,c])=>{ if(c) LIB[c]={c,l:`${v==='v'?'Exérèse de la pulpe vivante':'Exérèse du contenu canalaire non vivant'} ${DENTS[d]}`,cat:'Endodontie',m:'FNU'}; }));
 
+// Actes éligibles au modificateur 9 (soins conservateurs, 1 à 26 ans)
+const MOD9 = new Set('HBFD006 HBFD001 HBFD003 HBFD024 HBFD297 HBFD008 HBFD021 HBFD033 HBFD035 HBFD015 HBFD017 HBFD019 HBFD474 HBFD326 HBBD001 HBBD002 HBBD003 HBBD234 HBFD150 HBFD395 HBFD458 HBFD010 HBMD042 HBMD038 HBMD044 HBMD047 HBMD049 HBMD050 HBMD053 HBMD054 HBMD058'.split(' '));
+Object.values(LIB).forEach(a=>{ if(MOD9.has(a.c) && !a.m.includes('9')) a.m+='9'; });
+
+// Base complète des actes bucco-dentaires (CCAM V84, fichier officiel CNAM)
+let NB_ACTES = Object.keys(LIB).length;
+fetch('ccam-dentaire.json').then(r=>r.json()).then(liste=>{
+  liste.forEach(x=>{
+    if(!LIB[x.c]) LIB[x.c]={c:x.c, l:x.l, cat:'Base', f:x.f, m:MOD9.has(x.c)?'9':''};
+    else LIB[x.c].f = x.f;
+    if(!(x.c in PRIX)) PRIX[x.c]=x.p;
+  });
+  NB_ACTES = liste.length;
+  if(vue==='code') vCode();
+}).catch(e=>console.warn('Base CCAM non chargée', e));
+
 const euro = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €';
 
 let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:6, nRx:1, sect:'pm', faces:2, dent:'m', vital:'v', mods:new Set()};
@@ -559,7 +576,7 @@ function calcul(){
   const lignes = C.panier.map(p=>{
     const a = LIB[p.c], base = PRIX[p.c] ?? 0, mods=[];
     let montant = base;
-    ['N','E'].forEach(m=>{ if(C.mods.has(m) && a.m.includes(m)){ montant += base*MODS[m].pct; mods.push(m);} });
+    ['N','E','9'].forEach(m=>{ if(C.mods.has(m) && a.m.includes(m)){ montant += base*MODS[m].pct; mods.push(m);} });
     if(urg && !urgPose && a.m.includes(urg)){ montant += MODS[urg].fixe; mods.push(urg); urgPose=true; }
     montant = Math.round(montant*100)/100;
     return {c:p.c, l:a.l, base, mods, montant};
@@ -571,7 +588,11 @@ function calcul(){
 function vCode(){
   const q=C.q.trim().toLowerCase();
   let liste;
-  if(q){ liste = Object.values(LIB).filter(a=>(a.c+' '+a.l).toLowerCase().includes(q) || rechercheNombre(q,a)); }
+  if(q){
+    const sans=t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const mots=sans(q).split(/\s+/).filter(Boolean);
+    liste = Object.values(LIB).filter(a=>{ const t=sans(a.c+' '+a.l+' '+(a.f||'')); return mots.every(w=>t.includes(w)) || rechercheNombre(q,a); }).slice(0,40);
+  }
   else liste = ACTES.filter(a=>a.cat===C.cat);
   app.innerHTML = `<div class="vue">
     <header class="top"><div class="logo">${logo}Codage express</div></header>
@@ -579,7 +600,7 @@ function vCode(){
     ${q?'':`<div class="cats" role="tablist">${CATS.map(c=>`<button class="cat" aria-pressed="${c===C.cat}" data-c="${c}">${c}</button>`).join('')}</div>`}
     ${q?'':outilsCategorie()}
     <div id="liste">${liste.map(carteActe).join('') || `<p class="sous" style="margin-top:20px">Aucun acte trouvé. Décris-le à l'assistant, il cherchera pour toi.</p><button class="btn ia" style="margin-top:12px;width:100%" id="versIA">Demander à l'assistant</button>`}</div>
-    <p class="sous" style="font-size:.8rem;margin-top:16px">Tarifs : base de remboursement CCAM V84 (31/07/2026), tarifs opposables en métropole.</p>
+    <p class="sous" style="font-size:.8rem;margin-top:16px">Recherche dans ${NB_ACTES} actes bucco-dentaires. Tarifs : base de remboursement CCAM V84 (31/07/2026), fichier officiel CNAM, métropole.</p>
     <div style="height:${C.panier.length?150:20}px"></div>
   </div>${panierHTML()}`;
   const qi=$('#q'); qi.oninput=()=>{C.q=qi.value; const p=qi.selectionStart; vCode(); const n=$('#q'); n.focus(); n.setSelectionRange(p,p);};
@@ -589,7 +610,7 @@ function vCode(){
   app.querySelectorAll('.acte').forEach(b=>b.onclick=()=>basculer(b.dataset.c));
 }
 function rechercheNombre(q,a){ const m=q.match(/(\d+)\s*dent/); return m && a.l.toLowerCase().startsWith(`avulsion de ${m[1]} dent`); }
-function prixHTML(c){ return PRIX[c]!=null ? `<span class="prix">${euro(PRIX[c])}</span>` : ''; }
+function prixHTML(c){ return PRIX[c]!=null ? `<span class="prix">${euro(PRIX[c])}</span>` : `<span class="prix">non remboursable</span>`; }
 function carteActe(a){ const dans=C.panier.some(p=>p.c===a.c); return `<button class="acte ${dans?'dans':''}" data-c="${a.c}"><span><span class="code">${a.c}</span>${prixHTML(a.c)}<span class="lib" style="display:block">${a.l}</span></span><span class="plus">${dans?'✓':'+'}</span></button>`; }
 function resultat(c, vide){
   return `<div class="resultat-code"><span><span class="code">${c||'—'}</span>${c?` <span class="prix fort">${euro(PRIX[c])}</span>`:''}<small>${c?LIB[c].l:vide}</small></span>${c?`<button class="mini" data-ajout="${c}">Ajouter</button>`:''}</div>`;
@@ -636,12 +657,13 @@ function basculer(c){
 }
 function panierHTML(){
   if(!C.panier.length) return '';
-  const dispo = ['N','E','F','U'].filter(m=>C.panier.some(p=>(LIB[p.c].m||'').includes(m)));
+  const dispo = ['N','9','E','F','U'].filter(m=>C.panier.some(p=>(LIB[p.c].m||'').includes(m)));
   const {lignes,total} = calcul();
   return `<div class="panier"><div class="in">
     <button class="panier-tete" id="pt" aria-expanded="${C.ouvert}"><b>Sélection<span class="badge">${C.panier.length}</span></b><span class="total-tete">${euro(total)}</span></button>
     ${C.ouvert?`<div class="panier-corps">
       ${lignes.map(x=>`<div class="p-acte"><span><span class="code">${x.c}</span>${x.mods.length?` <span class="mods">${x.mods.join('')}</span>`:''}<br><span style="color:#B9CDD3">${x.l}</span></span><span class="p-droite"><b>${euro(x.montant)}</b>${x.montant!==x.base?`<small>base ${euro(x.base)}</small>`:''}<button data-retire="${x.c}" aria-label="Retirer ${x.c}">×</button></span></div>`).join('')}
+      ${lignes.some(x=>PRIX[x.c]==null)?'<p class="mod-titre">Les actes non remboursables comptent pour 0 € dans le total.</p>':''}
       ${dispo.length?`<p class="mod-titre">Modificateurs possibles pour ces actes</p>${dispo.map(m=>`<div class="mod"><span><b>${m} · ${MODS[m].t}</b><small>${MODS[m].d}</small></span><button class="switch" role="switch" aria-checked="${C.mods.has(m)}" data-m="${m}" aria-label="${MODS[m].t}"></button></div>`).join('')}`:''}
     </div>
     <div class="total"><span>Total de la séance<small>Actes cumulés à taux plein</small></span><b>${euro(total)}</b></div>
