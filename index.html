@@ -771,7 +771,7 @@ function brancherPanier(){
    Aucune donnée patient n'est envoyée.
 --------------------------------------------------------- */
 const IA = {fil:[], brouillon:'', attente:false};
-const IA_URL = ''; // à remplir après installation du relais : https://drill-ia.<compte>.workers.dev
+const IA_URL = 'https://drill-ia.ryan-naal-rn.workers.dev/';
 
 const norm = t => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[’`]/g,"'");
 const NOMBRES = {un:1,une:1,deux:2,trois:3,quatre:4,cinq:5,six:6,sept:7,huit:8,neuf:9,dix:10,onze:11,douze:12,treize:13,quatorze:14,quinze:15,seize:16,'dix-sept':17,'dix-huit':18,'dix-neuf':19,vingt:20};
@@ -1009,8 +1009,9 @@ async function demanderIA(texte){
       const hist=IA.fil.slice(-6).map(m=>({role:m.moi?'user':'model', texte:m.brut||''}));
       const r = await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:texte, pistes, historique:hist})});
       const j = await r.json();
+      if(!j.reponse) console.warn('Relais IA : pas de réponse', j);
       if(j.reponse) html = `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>`;
-    }catch(e){ /* l'IA ne répond pas : on garde la réponse locale */ }
+    }catch(e){ console.warn('Relais IA indisponible', e); }
   }
   html += R.codes.map(carteIA).join('');
   if(R.alternatives.length) html += `<p class="sous" style="margin-top:12px;font-size:.88rem">Selon le cas :</p>`+R.alternatives.map(carteIA).join('');
