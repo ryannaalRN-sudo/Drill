@@ -344,6 +344,7 @@ R.decider = function(rep){
       if(grav.length){ O.hospit=true; alerte('forte','Adresser à l’hôpital','Signe de gravité ou prise en charge ambulatoire difficile : prise en charge hospitalière, avec antibiothérapie IV possible.','HAS 2026'); }
       O.gestes.push('Traiter la cause dentaire (drainage endodontique, incision si collection, avulsion) : l’antibiotique ne remplace pas le geste.');
       curatifMetro('Une cellulite, séreuse ou collectée, comporte par définition une tuméfaction : c’est un signe d’extension régionale qui justifie l’antibiotique.', true);
+      if(!enfant) alerte('moy','Molécule à confirmer','La lecture du tableau 14 de la HAS 2026 est ambiguë pour la cellulite de l’adulte (métronidazole seul proposé ici). Vérifie avec ton senior avant de prescrire. La bithérapie (Augmentin, amoxicilline + métronidazole) n’est pas listée par la HAS pour la cellulite.','HAS 2026');
       break; }
     case 'sinusite':
       O.atb = true;
