@@ -4,6 +4,7 @@
   "description": "Prescription et codage CCAM pour étudiants en chirurgie dentaire",
   "start_url": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#F5F8F8",
   "theme_color": "#F5F8F8",
   "lang": "fr",

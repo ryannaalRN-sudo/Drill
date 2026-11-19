@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#F5F8F8">
 <title>Drill</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -155,6 +155,23 @@ h3{font-size:1.1rem;font-weight:700}
 .total small{display:block;color:#9FB6BD;font-size:.78rem}
 .total b{font-family:var(--display);font-size:1.6rem;font-weight:800;color:#7FE3D3}
 .total-tete{font-family:var(--display);font-weight:800;font-size:1.1rem;color:#7FE3D3}
+.mcode{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:7px;background:#7FE3D3;color:var(--encre);font-family:var(--display);font-weight:800;font-size:.85rem;vertical-align:1px}
+.mcode.grand{min-width:34px;height:34px;font-size:1.05rem;border-radius:10px;flex:none}
+.mod{gap:12px}
+.ddn-c{display:grid;gap:6px;padding:4px 2px 10px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:4px}
+.ddn-c label{font-weight:700;font-size:.9rem}
+.ddn-c input{padding:12px;border-radius:12px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:16px;color-scheme:dark}
+.ddn-c small{color:#9FB6BD;font-size:.8rem;line-height:1.35}
+.deux-btn{display:flex;gap:8px}
+.deux-btn .copier{width:auto;flex:1}
+.deux-btn .copier.sec{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.3);flex:0 0 auto;padding:13px 18px}
+.bulle p+p{margin-top:8px}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+.paysage{display:none}
+@media (orientation:landscape) and (max-height:520px){
+  .paysage{display:flex;position:fixed;inset:0;z-index:50;background:var(--email);flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;font-family:var(--display);font-weight:700;font-size:1.2rem}
+  .paysage svg{width:48px;height:48px;color:var(--lagon)}
+}
 /* panier */
 .panier{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));padding:0 12px 10px}
 .panier .in{max-width:536px;margin:0 auto;background:var(--encre);color:#fff;border-radius:var(--r-l);padding:14px 16px;box-shadow:0 10px 30px rgba(15,42,51,.25)}
@@ -228,8 +245,8 @@ h3{font-size:1.1rem;font-weight:700}
   <button class="onglet ia" data-vue="ia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg>Assistant</button>
 </div></nav>
 
+<div class="paysage" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Drill s’utilise en mode portrait.<br>Tourne ton téléphone.</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<div id="ordo"></div>
 
 <script>
 /* =========================================================
@@ -239,6 +256,9 @@ h3{font-size:1.1rem;font-weight:700}
    ========================================================= */
 
 const $ = (s, el=document) => el.querySelector(s);
+// Bloque le zoom à deux doigts (iOS ignore user-scalable=no)
+['gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev, e=>e.preventDefault(), {passive:false}));
+document.addEventListener('touchmove', e=>{ if(e.scale && e.scale!==1) e.preventDefault(); }, {passive:false});
 const app = $('#app');
 const ICO = {
   fleche:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
@@ -458,15 +478,17 @@ function vOrdo(){
         </button>`).join('')}</div>
       <div class="patient">
         <h3>Patient</h3>
-        <p>Utilisé uniquement pour l'impression, puis effacé. Rien n'est enregistré.</p>
+        <p>Sert uniquement à remplir le PDF, puis effacé. Rien n'est enregistré ni envoyé.</p>
         <div class="deux"><div class="champ"><label for="nom">Nom</label><input id="nom" autocomplete="off"></div>
         <div class="champ"><label for="prenom">Prénom</label><input id="prenom" autocomplete="off"></div></div>
         <div class="champ"><label for="ddn">Date de naissance</label><input id="ddn" type="date" autocomplete="off"></div>
       </div>
+      <div id="lienPDF"></div>
       <p class="demo">Protocoles de démonstration : seront remplacés par les recommandations HAS/ANSM sourcées et la mise en page de l'ordonnance du CHU.</p>
     </section>
   </div>
-  <div class="barre-action"><div class="in"><button class="btn" id="imprimer">Imprimer l'ordonnance</button></div></div>`;
+  <div class="barre-action"><div class="in"><button class="btn" id="imprimer">Créer l'ordonnance (PDF)</button></div></div>`;
+  chargerPDF().catch(()=>{});
   app.querySelectorAll('.ligne').forEach(b=>b.onclick=e=>{
     if(e.target.closest('.vidal')) return;
     const id=b.dataset.id; P.lignesOff.has(id)?P.lignesOff.delete(id):P.lignesOff.add(id);
@@ -474,21 +496,54 @@ function vOrdo(){
   });
   $('#prec').onclick=()=>{P.etape--;vPrescri()};
   $('#raz').onclick=()=>{P={etape:0,rep:{},poids:'',lignesOff:new Set()};vPrescri()};
-  $('#imprimer').onclick=()=>imprimer(lignes.filter(l=>!P.lignesOff.has(l.id)));
+  $('#imprimer').onclick=()=>genererOrdo(lignes.filter(l=>!P.lignesOff.has(l.id)));
 }
 
-function imprimer(lignes){
-  const nom=$('#nom').value.trim(), prenom=$('#prenom').value.trim(), ddn=$('#ddn').value;
-  const d = ddn ? new Date(ddn+'T12:00').toLocaleDateString('fr-FR') : '';
-  $('#ordo').innerHTML = `
-    <div class="entete"><div><b>En-tête du CHU</b><br>(modèle à venir)</div><div style="text-align:right">Le ${new Date().toLocaleDateString('fr-FR')}</div></div>
-    <div class="bloc-patient"><b>${esc(nom.toUpperCase())} ${esc(prenom)}</b>${d?`<br>Né(e) le ${d}`:''}</div>
-    ${lignes.map(l=>`<div class="med">${esc(l.med)}</div><div>${esc(l.pos)}</div><div>QSP ${esc(l.qsp.toLowerCase())}</div>`).join('')}
-    <div class="signature">Signature et tampon</div>`;
-  window.print();
+/* Ordonnance en PDF : générée sur le téléphone, partagée ou ouverte,
+   puis les données patient sont effacées. Rien n'est envoyé ni enregistré. */
+let jsPDFpret = null;
+function chargerPDF(){
+  if(!jsPDFpret) jsPDFpret = new Promise((ok,ko)=>{ const sc=document.createElement('script'); sc.src='lib/jspdf.umd.min.js'; sc.onload=()=>ok(window.jspdf.jsPDF); sc.onerror=ko; document.head.appendChild(sc); });
+  return jsPDFpret;
 }
-// Effacement des données patient après impression
-window.addEventListener('afterprint',()=>{ $('#ordo').innerHTML=''; ['nom','prenom','ddn'].forEach(id=>{const i=$('#'+id); if(i) i.value='';}); toast('Données patient effacées'); });
+const pdfTxt = t => String(t).replace(/[’‘]/g,"'").replace(/[“”«»]/g,'"').replace(/[–—]/g,'-').replace(/ /g,' ').replace(/≥/g,'>=').replace(/≤/g,'<=');
+function construirePDF(jsPDF, lignes, patient){
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const G=20, L=170; let y=22;
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(pdfTxt('En-tête du service (modèle CHU à venir)'), G, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text(pdfTxt('Le '+new Date().toLocaleDateString('fr-FR')), G+L, y, {align:'right'});
+  y+=6; doc.setDrawColor(0); doc.setLineWidth(.4); doc.line(G,y,G+L,y);
+  y+=14; doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text(pdfTxt(`${patient.nom.toUpperCase()} ${patient.prenom}`.trim() || 'Patient : ........................................'), G, y);
+  if(patient.ddn){ y+=6; doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.text(pdfTxt('Né(e) le '+patient.ddn), G, y); }
+  y+=16; doc.setFontSize(11);
+  lignes.forEach(l=>{
+    doc.setFont('helvetica','bold'); doc.text(pdfTxt(l.med), G, y); y+=5.5;
+    doc.setFont('helvetica','normal');
+    doc.splitTextToSize(pdfTxt(l.pos), L).forEach(r=>{ doc.text(r, G+4, y); y+=5; });
+    doc.text(pdfTxt('QSP '+l.qsp.toLowerCase()), G+4, y); y+=10;
+  });
+  y=Math.max(y+10, 230);
+  doc.setFontSize(9); doc.setTextColor(90); doc.text(pdfTxt('Signature et tampon'), G+L, y, {align:'right'});
+  doc.setDrawColor(150); doc.rect(G+L-70, y+3, 70, 30);
+  return doc.output('blob');
+}
+async function genererOrdo(lignes){
+  const patient = { nom:$('#nom').value.trim(), prenom:$('#prenom').value.trim(), ddn: $('#ddn').value ? new Date($('#ddn').value+'T12:00').toLocaleDateString('fr-FR') : '' };
+  let jsPDF; try{ jsPDF = await chargerPDF(); }catch(e){ toast('Impossible de préparer le PDF'); return; }
+  const blob = construirePDF(jsPDF, lignes, patient);
+  const nomFichier = 'ordonnance.pdf';
+  const fichier = new File([blob], nomFichier, {type:'application/pdf'});
+  effacerPatient();
+  try{
+    if(navigator.canShare && navigator.canShare({files:[fichier]})){ await navigator.share({files:[fichier], title:'Ordonnance'}); return; }
+  }catch(e){ if(e && e.name==='AbortError') return; }
+  const url = URL.createObjectURL(blob);
+  const zone = $('#lienPDF');
+  if(zone){ zone.innerHTML = `<a class="btn" style="display:block;margin-top:14px;text-decoration:none" href="${url}" target="_blank" rel="noopener" download="${nomFichier}">Ouvrir l'ordonnance (PDF)</a><p class="sous" style="font-size:.85rem;margin-top:8px">Depuis le PDF, utilise Partager puis Imprimer.</p>`; zone.scrollIntoView({behavior:'smooth', block:'center'}); }
+  setTimeout(()=>URL.revokeObjectURL(url), 5*60*1000);
+}
+function effacerPatient(){ ['nom','prenom','ddn'].forEach(id=>{const i=$('#'+id); if(i) i.value='';}); toast('Données patient effacées'); }
 
 /* ---------------------------------------------------------
    Codage express
@@ -565,7 +620,7 @@ fetch('ccam-dentaire.json').then(r=>r.json()).then(liste=>{
 
 const euro = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €';
 
-let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:6, nRx:1, sect:'pm', faces:2, dent:'m', vital:'v', mods:new Set()};
+let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:6, nRx:1, sect:'pm', faces:2, dent:'m', vital:'v', mods:new Set(), ddn:''};
 
 /* Calcul du panier : actes cumulés à taux plein (dérogation bucco-dentaire),
    N et E en pourcentage sur chaque acte éligible,
@@ -662,13 +717,31 @@ function panierHTML(){
   return `<div class="panier"><div class="in">
     <button class="panier-tete" id="pt" aria-expanded="${C.ouvert}"><b>Sélection<span class="badge">${C.panier.length}</span></b><span class="total-tete">${euro(total)}</span></button>
     ${C.ouvert?`<div class="panier-corps">
-      ${lignes.map(x=>`<div class="p-acte"><span><span class="code">${x.c}</span>${x.mods.length?` <span class="mods">${x.mods.join('')}</span>`:''}<br><span style="color:#B9CDD3">${x.l}</span></span><span class="p-droite"><b>${euro(x.montant)}</b>${x.montant!==x.base?`<small>base ${euro(x.base)}</small>`:''}<button data-retire="${x.c}" aria-label="Retirer ${x.c}">×</button></span></div>`).join('')}
+      <div class="ddn-c"><label for="ddnC">Date de naissance du patient</label><input id="ddnC" type="date" value="${C.ddn}" autocomplete="off"><small>${C.ddn?ageTexte():'Les modificateurs liés à l’âge (N, E, 9) s’appliquent tout seuls. Rien n’est enregistré.'}</small></div>
+      ${lignes.map(x=>`<div class="p-acte"><span><span class="code">${x.c}</span>${x.mods.map(m=>` <span class="mcode">${m}</span>`).join('')}<br><span style="color:#B9CDD3">${x.l}</span></span><span class="p-droite"><b>${euro(x.montant)}</b>${x.montant!==x.base?`<small>base ${euro(x.base)}</small>`:''}<button data-retire="${x.c}" aria-label="Retirer ${x.c}">×</button></span></div>`).join('')}
       ${lignes.some(x=>PRIX[x.c]==null)?'<p class="mod-titre">Les actes non remboursables comptent pour 0 € dans le total.</p>':''}
-      ${dispo.length?`<p class="mod-titre">Modificateurs possibles pour ces actes</p>${dispo.map(m=>`<div class="mod"><span><b>${m} · ${MODS[m].t}</b><small>${MODS[m].d}</small></span><button class="switch" role="switch" aria-checked="${C.mods.has(m)}" data-m="${m}" aria-label="${MODS[m].t}"></button></div>`).join('')}`:''}
+      ${dispo.length?`<p class="mod-titre">Modificateurs possibles pour ces actes</p>${dispo.map(m=>`<div class="mod"><span class="mcode grand">${m}</span><span style="flex:1"><b>${MODS[m].t}</b><small>${MODS[m].d}${C.ddn && 'NE9'.includes(m)?' · réglé selon l’âge':''}</small></span><button class="switch" role="switch" aria-checked="${C.mods.has(m)}" data-m="${m}" aria-label="${MODS[m].t}"></button></div>`).join('')}`:''}
     </div>
     <div class="total"><span>Total de la séance<small>Actes cumulés à taux plein</small></span><b>${euro(total)}</b></div>
-    <button class="copier" id="copier">Copier les codes et le total</button>`:''}
+    <div class="deux-btn"><button class="copier sec" id="vider">Nouveau patient</button><button class="copier" id="copier">Copier</button></div>`:''}
   </div></div>`;
+}
+function ageAns(ddn){
+  if(!ddn) return null; const n=new Date(ddn+'T12:00'), a=new Date();
+  let ans=a.getFullYear()-n.getFullYear(); if(a.getMonth()<n.getMonth() || (a.getMonth()===n.getMonth() && a.getDate()<n.getDate())) ans--;
+  return ans;
+}
+function appliquerAge(){
+  const age=ageAns(C.ddn); ['N','E','9'].forEach(m=>C.mods.delete(m));
+  if(age==null || age<0) return;
+  if(age<13) C.mods.add('N');
+  if(age<5) C.mods.add('E');
+  if(age>=1 && age<=26) C.mods.add('9');
+}
+function ageTexte(){
+  const age=ageAns(C.ddn); if(age==null||age<0) return 'Date invalide';
+  const m=['N','E','9'].filter(x=>C.mods.has(x));
+  return `${age} an${age>1?'s':''} : ${m.length?'modificateur'+(m.length>1?'s ':' ')+m.join(', ')+' appliqué'+(m.length>1?'s':'')+' aux actes éligibles':'aucun modificateur d’âge'}. N ne vaut que pour les dents permanentes : désactive-le si besoin.`;
 }
 function brancherPanier(){
   if(!$('#pt')) return;
@@ -680,53 +753,290 @@ function brancherPanier(){
     else { C.mods.add(m); if(m==='F') C.mods.delete('U'); if(m==='U') C.mods.delete('F'); }
     vCode();
   });
+  const di=$('#ddnC'); if(di) di.onchange=()=>{ C.ddn=di.value; appliquerAge(); vCode(); };
+  if($('#vider')) $('#vider').onclick=()=>{ C.panier=[]; C.mods=new Set(); C.ddn=''; C.ouvert=false; vCode(); toast('Sélection et date de naissance effacées'); };
   if($('#copier')) $('#copier').onclick=()=>{
     const {lignes,total}=calcul();
-    const txt=lignes.map(x=>`${x.c}${x.mods.length?' '+x.mods.join(''):''} : ${euro(x.montant)}`).join('\n')+`\nTotal : ${euro(total)}`;
+    const txt=lignes.map(x=>`${x.c}${x.mods.length?' (modif. '+x.mods.join(', ')+')':''} : ${euro(x.montant)}`).join('\n')+`\nTotal : ${euro(total)}`;
     navigator.clipboard?.writeText(txt).then(()=>toast('Codes et total copiés')).catch(()=>toast('Copie impossible sur ce navigateur'));
   };
 }
 
 /* ---------------------------------------------------------
-   Assistant (IA branchée plus tard via le relais Cloudflare)
+   Assistant de cotation
+   1. Un moteur local qui comprend la demande (acte, nombre, dent,
+      contexte) et raisonne sur la base CCAM V84 complète.
+   2. Si le relais IA est configuré (IA_URL), l'IA rédige la réponse
+      à partir des codes trouvés par le moteur local.
+   Aucune donnée patient n'est envoyée.
 --------------------------------------------------------- */
-const IA = {fil:[], brouillon:''};
-const IA_URL = ''; // ex. https://drill-ia.<compte>.workers.dev
-async function demanderIA(texte){
-  if(IA_URL){
-    const r = await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:texte})});
-    const j = await r.json(); return {html:esc(j.reponse||'Pas de réponse.'), ia:true};
-  }
-  // Recherche locale en attendant l'IA
-  const t=texte.toLowerCase();
-  const n=(t.match(/(\d+)/)||[])[1];
-  let trouves=[];
-  if(/extra|avuls|enlev/.test(t) && n && AVULSIONS[n]) trouves=[AVULSIONS[n]];
-  if(!trouves.length){
-    const mots=t.split(/\W+/).filter(w=>w.length>3);
-    trouves=Object.values(LIB).map(a=>({a,s:mots.filter(w=>a.l.toLowerCase().includes(w.slice(0,6))).length})).filter(x=>x.s>0).sort((x,y)=>y.s-x.s).slice(0,3).map(x=>x.a.c);
-  }
-  if(!trouves.length) return {html:'Je ne trouve rien dans la base locale. Une fois l’IA branchée, je pourrai raisonner sur les cas non listés.'};
-  return {html:'Piste trouvée dans la base :'+trouves.map(c=>`<button class="acte" data-ajout-ia="${c}" style="margin-top:8px"><span><span class="code">${c}</span><span class="lib" style="display:block">${LIB[c].l}</span></span><span class="plus">+</span></button>`).join('')+'<br><span class="sous" style="font-size:.85rem">Recherche locale. L’IA complètera bientôt avec une explication.</span>'};
+const IA = {fil:[], brouillon:'', attente:false};
+const IA_URL = ''; // à remplir après installation du relais : https://drill-ia.<compte>.workers.dev
+
+const norm = t => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[’`]/g,"'");
+const NOMBRES = {un:1,une:1,deux:2,trois:3,quatre:4,cinq:5,six:6,sept:7,huit:8,neuf:9,dix:10,onze:11,douze:12,treize:13,quatorze:14,quinze:15,seize:16,'dix-sept':17,'dix-huit':18,'dix-neuf':19,vingt:20};
+const fmt = c => PRIX[c]!=null ? euro(PRIX[c]) : 'non remboursable';
+
+// --- Lecture de la demande ---------------------------------
+function analyser(texte){
+  let t = ' '+norm(texte)+' ';
+  Object.entries(NOMBRES).sort((a,b)=>b[0].length-a[0].length).forEach(([m,n])=>{ t=t.replace(new RegExp('\\b'+m+'\\b','g'), String(n)); });
+  const A = {t};
+  // nombre d'éléments : « 18 dents », « 3 radios », « 2 faces », « 2 secteurs »
+  const nb = t.match(/(\d+)\s*(dents?|racines?|molaires?|canines?|incisives?|premolaires?|avulsions?|extractions?)\b/);
+  A.n = nb ? Number(nb[1]) : null;
+  A.faces = (t.match(/(\d)\s*faces?/)||[])[1]; A.faces = A.faces?Number(A.faces):null;
+  if(!A.faces){ if(/\bmod\b|\bmodl?\b|\bodm\b/.test(t)) A.faces=3; else if(/\b(mo|od|do|om)\b/.test(t)) A.faces=2; else if(/\b(occlusale?|o)\b/.test(t) && /compo|restau|obtur|amalg|carie|soin/.test(t)) A.faces=1; }
+  A.secteurs = Number((t.match(/(\d+)\s*(secteurs?|radios?|retros?|cliches?|rx)\b/)||[])[1])||null;
+  A.sextants = Number((t.match(/(\d+)\s*sextants?/)||[])[1])||null;
+  // numéro de dent (notation FDI), en évitant les nombres suivis de « dents »
+  const dents=[...t.matchAll(/\b([1-4][1-8]|[5-8][1-5])\b(?!\s*(dents?|faces?|ans?|secteurs?|h\b|heures?|sextants?|racines?|molaires?))/g)].map(m=>Number(m[1]));
+  A.dent = dents[0]||null; A.dents=dents;
+  A.age = Number((t.match(/(\d+)\s*ans?\b/)||[])[1])||null;
+  A.temp = /lait|temporaire|deciduale/.test(t) || (A.dent && A.dent>=51);
+  A.urgDim = /dimanche|ferie/.test(t); A.urgNuit = /\bnuit\b|minuit|2[0-3]\s*h|\b[0-7]\s*h\b/.test(t);
+  A.aod = /\baod\b|avk|anticoag|apixaban|rivaroxaban|dabigatran|eliquis|xarelto|pradaxa|warfarine|previscan|fluindione/.test(t);
+  A.ald = /\bald\b|affection longue/.test(t);
+  return A;
 }
+function typeDent(d){
+  if(!d) return null;
+  const q=Math.floor(d/10), u=d%10;
+  if(q>=5) return u<=3 ? 'tic' : 'tm';               // temporaire : incisive/canine ou molaire
+  if(u<=3) return 'ic';
+  if(u===4 && (q===1||q===2)) return 'pm1';
+  if(u<=5) return 'pm';
+  return 'm';
+}
+function typeMots(t){
+  if(/premiere premolaire max|1re premolaire max|1ere premolaire max/.test(t)) return 'pm1';
+  if(/premolaire/.test(t)) return 'pm';
+  if(/molaire/.test(t)) return 'm';
+  if(/incisive|canine|anterieure|bloc incisivo/.test(t)) return 'ic';
+  return null;
+}
+
+// Index des avulsions à partir des libellés officiels
+let AV_IDX=null;
+function indexAvulsions(){
+  AV_IDX=[];
+  Object.values(LIB).forEach(a=>{
+    const l=norm(a.l);
+    const m=l.match(/^avulsion (?:d'1|de\s*(\d+)(?: dents?)?(?: a (\d+))?) dents? (permanentes?|temporaires?|ankylosees?) sur arcade(.*)$/);
+    if(!m) return;
+    const min=m[1]?Number(m[1]):1, max=m[2]?Number(m[2]):min;
+    let type = /^perm/.test(m[3]) ? 'perm' : /^temp/.test(m[3]) ? 'temp' : 'ankylose';
+    let qual = /avec alveolectomie/.test(m[4]) ? 'alveo' : /separation/.test(m[4]) ? 'separation' : 'simple';
+    AV_IDX.push({c:a.c,min,max,type,qual});
+  });
+}
+function avulsion(n,type,qual){
+  if(!AV_IDX || AV_IDX.length<10) indexAvulsions();
+  return (AV_IDX.find(x=>x.type===type && x.qual===qual && n>=x.min && n<=x.max)||{}).c;
+}
+
+// --- Raisonnement par type d'acte ---------------------------
+function raisonner(A){
+  const t=A.t, R={texte:[], codes:[], alternatives:[], questions:[]};
+  const code = (c, pourquoi) => { if(c && LIB[c]) R.codes.push({c,pourquoi}); };
+  const alt = (c, pourquoi) => { if(c && LIB[c]) R.alternatives.push({c,pourquoi}); };
+
+  // Conversation
+  if(/^\s*(bonjour|salut|hello|coucou|bonsoir|hey)\b/.test(t) && t.trim().split(/\s+/).length<=3){ R.texte.push('Bonjour ! Décris-moi l’acte réalisé (par exemple « j’ai extrait 18 dents » ou « composite MOD sur la 36 ») et je te donne le code, le prix et les modificateurs à mettre.'); return R; }
+  if(/^\s*(merci|top|parfait|super|nickel|ok)\b/.test(t) && t.trim().split(/\s+/).length<=4){ R.texte.push('Avec plaisir. Tu peux ajouter les codes à ta sélection pour avoir le total de la séance.'); return R; }
+  const modQ = t.match(/modificateur\s*([a-z0-9])\b/);
+  if(modQ || /c'est quoi (le|les) modif|quels? modificateurs?/.test(t)){
+    const k = modQ ? modQ[1].toUpperCase() : null;
+    const liste = k && MODS[k] ? [k] : Object.keys(MODS);
+    R.texte.push(liste.map(m=>`Modificateur ${m} : ${MODS[m].t.toLowerCase()} (${MODS[m].d}).`).join('<br>'));
+    R.texte.push('Dans Codage express, entre la date de naissance du patient : N, E et 9 s’activent tout seuls selon l’âge. F et U sont à activer à la main en cas d’urgence.');
+    return R;
+  }
+
+  const ext = /extra|avuls|enlev|arrach|retir|avulsion/.test(t);
+  const sagesse = /sagesse|troisieme molaire|3e molaire|3eme molaire|dds\b/.test(t) || (ext && A.dents.some(d=>[18,28,38,48].includes(d)));
+  const incluse = /inclu|enclav|retenu|germe|semi|sous[- ]muqueu|osteotomie|lambeau/.test(t);
+
+  const degagement = /degag|traction|exposition/.test(t);
+  if((ext || (sagesse && !degagement)) && sagesse && (incluse || !/arcade|erupt|sortie|sur l'arcade/.test(t))){
+    const n = A.n || Math.max(1, A.dents.filter(d=>[18,28,38,48].includes(d)).length) || 1;
+    if(n===1){
+      const mand = /mandib|du bas|en bas/.test(t) || A.dents.some(d=>d===38||d===48);
+      const maxi = /maxill|du haut|en haut/.test(t) || A.dents.some(d=>d===18||d===28);
+      if(mand && !maxi) code('HBGD004','dent de sagesse mandibulaire retenue ou à l’état de germe');
+      else if(maxi && !mand) code('HBGD018','dent de sagesse maxillaire retenue ou à l’état de germe');
+      else { code('HBGD004','si elle est mandibulaire'); code('HBGD018','si elle est maxillaire'); R.questions.push('Elle était en haut ou en bas ?'); }
+    } else {
+      code({2:'HBGD025',3:'HBGD021',4:'HBGD038'}[Math.min(n,4)], `${n} dents de sagesse retenues dans la même séance : un seul code pour l’ensemble`);
+      if(n===4) alt('YYYY755','supplément si les 4 ont été faites au cabinet sous anesthésie (vérifie les conditions)');
+    }
+    R.texte.push('La CCAM a des codes spécifiques pour les troisièmes molaires retenues ou à l’état de germe.' + (incluse?'':' Je pars du principe qu’elle n’était pas sur l’arcade.'));
+    if(!incluse){ const c=avulsion(n,'perm','simple'); alt(c,'si la dent était en fait sortie sur l’arcade : avulsion simple'); }
+    return R;
+  }
+
+  if(ext && /canine/.test(t) && incluse){ code(A.n>=2?'HBGD015':'HBGD014', 'canine retenue ou à l’état de germe'); return R; }
+  if(ext && /racine/.test(t) && /inclu/.test(t)){ code({1:'HBGD016',2:'HBGD466',3:'HBGD299',4:'HBGD102',5:'HBGD159',6:'HBGD465'}[A.n||1],'racine incluse'); return R; }
+
+  if(ext){
+    const n = A.n || (A.dents.length || null);
+    if(!n){ R.texte.push('Combien de dents as-tu extraites dans la séance ? La CCAM code les avulsions par nombre de dents, avec un seul code pour l’ensemble.'); code(avulsion(1,A.temp?'temp':'perm','simple'),'si c’était une seule dent'); return R; }
+    const type = A.temp ? 'temp' : /ankylos/.test(t) ? 'ankylose' : 'perm';
+    let qual = /alveolect|alveolot|fraisa|osteotom|lambeau/.test(t) ? 'alveo' : /separ|section|coronoradic/.test(t) ? 'separation' : 'simple';
+    if(type!=='perm') qual = type==='ankylose' ? 'separation' : 'simple';
+    const c = avulsion(n,type,qual);
+    const quoi = type==='temp' ? `${n} dent${n>1?'s':''} temporaire${n>1?'s':''}` : type==='ankylose' ? `${n} dent${n>1?'s':''} ankylosée${n>1?'s':''}` : `${n} dent${n>1?'s':''} permanente${n>1?'s':''}`;
+    if(c){
+      R.texte.push(`Pour ${quoi} extraite${n>1?'s':''} dans la même séance${type==='perm'? (qual==='alveo'?', avec alvéolectomie':qual==='separation'?', avec séparation des racines':', sans alvéolectomie'):''}, c’est un seul code : <b>${c}</b> (${fmt(c)}).` + (n>1?' Les avulsions se codent par nombre total de dents, pas dent par dent.':''));
+      code(c, LIB[c].l);
+      if(type==='perm' && qual==='simple'){ alt(avulsion(n,'perm','alveo'),'si tu as dû faire une alvéolectomie'); alt(avulsion(n,'perm','separation'),'si tu as séparé les racines'); }
+      if(type==='perm' && qual!=='simple') alt(avulsion(n,'perm','simple'),'sans alvéolectomie');
+      if(!A.temp && /enfant|\d+\s*ans/.test(t) && A.age && A.age<12) R.questions.push('S’il s’agit de dents de lait, dis-le moi : les codes sont différents.');
+    } else R.texte.push(`Je ne trouve pas de code pour ${quoi} dans la base. Vérifie le nombre, ou découpe en plusieurs séances.`);
+    return R;
+  }
+
+  // Implants
+  if(/implant/.test(t) && !/couronne|prothese|supra|pilier|depose|retrait|degagement|cicatris/.test(t)){
+    const n=Math.max(1,A.n||Number((t.match(/(\d+)\s*implants?/)||[])[1])||1);
+    const enfant = /enfant/.test(t) || (A.age!=null && A.age<18);
+    const c = enfant ? {1:'LBLD075',2:'LBLD066',3:'LBLD281',4:'LBLD117'}[Math.min(n,4)] : {1:'LBLD015',2:'LBLD010',3:'LBLD013',4:'LBLD004',5:'LBLD020',6:'LBLD025'}[Math.min(n,6)];
+    code(c, LIB[c]?.l);
+    R.texte.push(`Pose de ${n} implant${n>1?'s':''} ${enfant?'chez l\u2019enfant':'chez l\u2019adulte'} : <b>${c}</b> (${fmt(c)}). Attention, la prise en charge par l\u2019Assurance maladie est limitée à certaines indications : vérifie les conditions avant de coter.`);
+    if(!enfant) alt({1:'LBLD075',2:'LBLD066',3:'LBLD281',4:'LBLD117'}[Math.min(n,4)],'si le patient est un enfant');
+    return R;
+  }
+
+  // Restaurations
+  if(/compo|restau|obtur|amalgam|carie|cvi|verre ionomere|inlay|onlay|angle/.test(t) && !/canal|endo|devital|pulpe/.test(t)){
+    if(/inlay|onlay/.test(t)){ code('HBMD351','inlay-onlay composite ou alliage non précieux, 2 faces ou plus'); alt('HBMD460','inlay-onlay céramique ou alliage précieux'); return R; }
+    const sect = A.dent ? (['ic','tic'].includes(typeDent(A.dent))?'ic':'pm') : (typeMots(t)==='ic'?'ic':typeMots(t)?'pm':null);
+    const angles = Number((t.match(/(\d)\s*angles?/)||[])[1]) || (/angle/.test(t)?1:0);
+    if(angles && sect!=='pm'){ code(angles>=2?'HBMD047':'HBMD044', `restauration incisivo-canine sur ${angles>=2?2:1} angle${angles>=2?'s':''}`); return R; }
+    if(!A.faces){ R.questions.push('Combien de faces ? (1, 2, ou 3 et plus, par exemple MOD)'); }
+    const f = Math.min(A.faces||1,3);
+    if(sect){
+      const c=RESTAU[sect][f]; code(c, `${f===3?'3 faces ou plus':f+' face'+(f>1?'s':'')}, secteur ${sect==='ic'?'incisivo-canin':'prémolo-molaire'}`);
+      R.texte.push(`Composite ou amalgame${A.dent?' sur la '+A.dent:''} : <b>${c}</b> (${fmt(c)}).`);
+      if(!A.faces) [1,2,3].filter(x=>x!==f).forEach(x=>alt(RESTAU[sect][x], `${x===3?'3 faces ou plus':x+' face'+(x>1?'s':'')}`));
+    } else {
+      R.questions.push('Sur quelle dent ? (numéro, ou incisive / prémolaire / molaire)');
+      code(RESTAU.pm[f],'si c’est une prémolaire ou une molaire'); code(RESTAU.ic[f],'si c’est une incisive ou une canine');
+    }
+    R.texte.push('Le modificateur 9 (+30 %) s’applique si le patient a entre 1 et 26 ans, et N (+15,7 %) sur dent permanente avant 13 ans.');
+    return R;
+  }
+
+  // Endodontie
+  if(/canal|endo|devital|pulpect|pulpe|pulpite|necro|mortif|retraitement|biopulp|pulpotomie|parodontite apicale|lesion apicale/.test(t)){
+    const td = A.dent ? typeDent(A.dent) : (A.temp ? (typeMots(t)==='m'?'tm':'tic') : typeMots(t));
+    if(/pulpotomie|biopulpotomie/.test(t)){ if(A.temp||td==='tm'||td==='tic') code('HBFD006','biopulpotomie sur dent temporaire'); else code('HBFD425','biopulpotomie sur dent permanente mature'); return R; }
+    const nonVivante = /necro|mortif|non vivante|retraitement|granulome|lesion apicale|parodontite apicale|abces|desobtur/.test(t);
+    const vivante = /pulpite|vivante|biopulp|pulpectomie|vitale/.test(t);
+    const v = nonVivante ? 'n' : 'v';
+    if(td==='tic'||td==='tm'){
+      const c = {tic:{v:'HBFD017',n:'HBFD015'}, tm:{v:'HBFD019',n:'HBFD474'}}[td][v];
+      code(c, `dent temporaire, pulpe ${v==='v'?'vivante':'non vivante'}`); return R;
+    }
+    if(!td){ R.questions.push('Sur quelle dent ? Le code dépend du type de dent (incisive/canine, prémolaire, molaire).'); ['ic','pm','m'].forEach(k=>code(ENDO[k][v], {ic:'incisive ou canine',pm:'prémolaire',m:'molaire'}[k])); }
+    else { const c=ENDO[td][v]; code(c, `${DENTS[td].replace(/^d’une /,'')}, ${v==='v'?'pulpe vivante':'contenu canalaire non vivant'}`); R.texte.push(`Traitement endodontique${A.dent?' de la '+A.dent:''} : <b>${c}</b> (${fmt(c)}).`); }
+    if(!nonVivante && !vivante) R.questions.push('La pulpe était vivante (pulpite) ou nécrosée ? J’ai mis « vivante » par défaut.');
+    if(/retraitement|desobtur/.test(t)) R.texte.push('Pour un retraitement, on code l’exérèse du contenu non vivant. La désobturation canalaire existe aussi mais n’est pas remboursable.');
+    alt('HBQK303','forfait radios endo : préopératoire, peropératoire et finale');
+    alt('HBQK040','forfait radios endo : préopératoire et finale');
+    return R;
+  }
+
+  // Radiologie
+  if(/radio|retro|pano|panoramique|cone beam|cbct|occlusale|rx\b|cliche/.test(t)){
+    if(/pano/.test(t)) code('HBQK002','radiographie panoramique');
+    else if(/cone|cbct/.test(t)) code('LAQK027','cone beam (prise en charge selon les cas)');
+    else if(/occlusal/.test(t)) code('HBQK001','radiographie occlusale');
+    else {
+      const n = A.secteurs || A.n || 1; const c = RADIOS[Math.min(n,14)];
+      code(c, `${n} secteur${n>1?'s':''} de 1 à 3 dents contiguës`);
+      R.texte.push('Un secteur, c’est 1 à 3 dents contiguës sur le même cliché. Pour une endo, utilise plutôt les forfaits radios endo.');
+      alt('HBQK040','forfait endo : préopératoire et finale'); alt('HBQK303','forfait endo : pré, per et finale');
+    }
+    if(A.age && A.age<5) R.texte.push('Patient de moins de 5 ans : ajoute le modificateur E (+49 %).');
+    return R;
+  }
+
+  // Parodontologie
+  if(/detartr|surfac|dsr|assainissement/.test(t) && !/abces/.test(t)){
+    if(/surfac|dsr|assainissement/.test(t)){ const n=Math.min(A.sextants||1,3); code({1:'HBJA003',2:'HBJA171',3:'HBJA634'}[n], `${n===3?'3 sextants ou plus':n+' sextant'+(n>1?'s':'')}`); }
+    else code('HBJD001','détartrage et polissage');
+    return R;
+  }
+
+  // Abcès
+  if(/abces|cellulite|collection|drainage|incision/.test(t)){
+    if(/parodont/.test(t)) code('HBJB001','abcès parodontal');
+    else { code('LCJA003','collection périmaxillaire ou périmandibulaire, par voie intrabuccale'); alt('HBJB001','si c’était un abcès parodontal'); }
+    return R;
+  }
+
+  // Recherche générale
+  const SYN = {couronne:'couronne',bridge:'bridge',implant:'implant',prothese:'prothese',appareil:'prothese amovible',stellite:'chassis metallique',gouttiere:'gouttiere',frein:'frein',biopsie:'biopsie',sinus:'sinus',greffe:'greffe',kyste:'kyste',scellement:'scellement',vernis:'vernis',fluor:'fluor',mainteneur:'mainteneur',inlay:'inlay',facette:'facette',blanchiment:'eclaircissement',eclaircissement:'eclaircissement',contention:'contention',attelle:'contention',suture:'suture',reimplant:'reimplantation',fracture:'fracture',apicectomie:'apicectomie',resection:'resection'};
+  const mots = t.split(/[^a-z0-9]+/).filter(w=>w.length>3 && !['avec','sans','pour','dans','une','des','les','fait','faire','faite','patient','dent','dents','code','ccam','quel','quelle','pose','mise','realise','realisee','acte','quoi','comment','coter','cotation'].includes(w)).map(w=>SYN[w]||w);
+  const debut = w => new RegExp('(^|[^a-z])'+w.replace(/[^a-z0-9]/g,''));
+  const rx = mots.map(w=>[debut(w), debut(w.slice(0,5))]);
+  const scores = Object.values(LIB).map(a=>{ const l=norm(a.l+' '+(a.f||'')); return {a, s:rx.reduce((s,[r1,r2])=>s+(r1.test(l)?2:r2.test(l)?1:0),0)}; }).filter(x=>x.s>0).sort((x,y)=>y.s-x.s || (PRIX[y.a.c]!=null)-(PRIX[x.a.c]!=null)).slice(0,4);
+  if(scores.length){ const complet = scores[0].s>=2*mots.length; R.texte.push(complet ? 'Voici les actes de la CCAM qui correspondent :' : 'Je n’ai pas reconnu l’acte avec certitude. Voici les actes de la CCAM qui s’en rapprochent le plus :'); scores.forEach(x=>code(x.a.c, '')); R.questions.push('Si ce n’est pas ça, précise l’acte, le nombre et la dent.'); }
+  else R.texte.push('Je n’ai rien trouvé. Reformule avec l’acte, le nombre de dents et le numéro de dent (ex. « endo sur la 46, dent nécrosée »).');
+  return R;
+}
+
+function contexte(A,R){
+  if(A.urgDim) R.texte.push('Urgence un dimanche ou un jour férié : modificateur F (+19,06 €, une fois par séance).');
+  else if(A.urgNuit) R.texte.push('Urgence de nuit (20 h – 8 h) : modificateur U (+25,15 €, une fois par séance).');
+  if(A.aod && /extra|avuls|chirurg|enlev/.test(A.t)) { R.alternatives.push({c:'YYYY614', pourquoi:'supplément si le patient est en ALD et sous AOD ou AVK (une fois par séance)'}); }
+  if(A.age!=null && !/radio|pano|modificateur/.test(A.t)){
+    const m=[]; if(A.age<13) m.push('N (dent permanente)'); if(A.age>=1 && A.age<=26) m.push('9');
+    if(m.length && /compo|restau|obtur|endo|canal|pulp|devital|carie|coiff/.test(A.t)) R.texte.push(`Patient de ${A.age} ans : modificateur${m.length>1?'s':''} ${m.join(' et ')} à ajouter.`);
+  }
+}
+
+function carteIA(x){ return `<button class="acte" data-ajout-ia="${x.c}" style="margin-top:8px"><span><span class="code">${x.c}</span>${prixHTML(x.c)}<span class="lib" style="display:block">${x.pourquoi||LIB[x.c].l}</span></span><span class="plus">+</span></button>`; }
+
+async function demanderIA(texte){
+  const A = analyser(texte), R = raisonner(A); contexte(A,R);
+  const vus=new Set(); R.codes=R.codes.filter(x=>!vus.has(x.c)&&vus.add(x.c)); R.alternatives=R.alternatives.filter(x=>!vus.has(x.c)&&vus.add(x.c));
+  let html = R.texte.map(p=>`<p>${p}</p>`).join('');
+  if(IA_URL){
+    try{
+      const pistes=[...R.codes,...R.alternatives].map(x=>({code:x.c, libelle:LIB[x.c].l, tarif:PRIX[x.c], note:x.pourquoi}));
+      const hist=IA.fil.slice(-6).map(m=>({role:m.moi?'user':'model', texte:m.brut||''}));
+      const r = await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:texte, pistes, historique:hist})});
+      const j = await r.json();
+      if(j.reponse) html = `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>`;
+    }catch(e){ /* l'IA ne répond pas : on garde la réponse locale */ }
+  }
+  html += R.codes.map(carteIA).join('');
+  if(R.alternatives.length) html += `<p class="sous" style="margin-top:12px;font-size:.88rem">Selon le cas :</p>`+R.alternatives.map(carteIA).join('');
+  if(R.questions.length) html += `<p style="margin-top:12px">${R.questions.join('<br>')}</p>`;
+  return {html, brut: R.texte.join(' ').replace(/<[^>]+>/g,''), ia:true};
+}
+
 function vIA(){
   app.innerHTML = `<div class="vue">
-    <header class="top"><div class="logo">${logo}Assistant</div></header>
-    <p class="sous">Décris l'acte comme tu le dirais à un collègue. L'assistant ne reçoit jamais de données patient.</p>
-    ${IA.fil.length?'':`<div class="suggestions">${['J’ai extrait 6 dents','Dent de sagesse mandibulaire incluse','Composite 2 faces sur une molaire','Drainage d’un abcès'].map(s=>`<button class="sugg">${s}</button>`).join('')}</div>`}
-    <div class="fil">${IA.fil.map(m=>`<div class="bulle ${m.moi?'moi':'lui'} ${m.ia?'ia':''}">${m.html}</div>`).join('')}</div>
+    <header class="top"><div class="logo">${logo}Assistant</div>${IA.fil.length?'<button class="retour" id="effacer" style="padding-left:12px">Effacer</button>':''}</header>
+    <p class="sous">Décris l'acte comme tu le dirais à un collègue. N'écris pas le nom du patient.</p>
+    ${IA.fil.length?'':`<div class="suggestions">${['J’ai extrait 18 dents','Dent de sagesse 38 incluse','Composite MOD sur la 36','Endo sur la 46 nécrosée','2 radios rétro','Patient en ALD sous Eliquis, 3 extractions'].map(s=>`<button class="sugg">${s}</button>`).join('')}</div>`}
+    <div class="fil">${IA.fil.map(m=>`<div class="bulle ${m.moi?'moi':'lui'} ${m.ia?'ia':''}">${m.html}</div>`).join('')}${IA.attente?'<div class="bulle lui ia">…</div>':''}</div>
     <div style="height:110px"></div>
   </div>
-  <div class="saisie"><form id="f"><input id="msg" placeholder="Ex. extraction de 6 dents" value="${esc(IA.brouillon)}" autocomplete="off"><button aria-label="Envoyer">${ICO.envoi}</button></form></div>`;
+  <div class="saisie"><form id="f"><input id="msg" placeholder="Ex. j'ai extrait 18 dents" value="${esc(IA.brouillon)}" autocomplete="off"><button aria-label="Envoyer">${ICO.envoi}</button></form></div>`;
   IA.brouillon='';
   app.querySelectorAll('.sugg').forEach(b=>b.onclick=()=>envoyer(b.textContent));
-  app.querySelectorAll('[data-ajout-ia]').forEach(b=>b.onclick=()=>{ const c=b.dataset.ajoutIa; if(!C.panier.some(p=>p.c===c)) C.panier.push({c,mods:new Set()}); C.ouvert=true; aller('code'); toast(c+' ajouté'); });
+  app.querySelectorAll('[data-ajout-ia]').forEach(b=>b.onclick=()=>{ const c=b.dataset.ajoutIa; if(!C.panier.some(p=>p.c===c)) C.panier.push({c}); C.ouvert=true; aller('code'); toast(c+' ajouté'); });
+  if($('#effacer')) $('#effacer').onclick=()=>{IA.fil=[];vIA();};
   $('#f').onsubmit=e=>{e.preventDefault(); const v=$('#msg').value.trim(); if(v) envoyer(v);};
 }
 async function envoyer(t){
-  IA.fil.push({moi:true, html:esc(t)}); vIA();
-  const r = await demanderIA(t); IA.fil.push(r); vIA();
-  window.scrollTo(0,document.body.scrollHeight);
+  IA.fil.push({moi:true, html:esc(t), brut:t}); IA.attente=true; vIA(); window.scrollTo(0,document.body.scrollHeight);
+  const r = await demanderIA(t); IA.attente=false; IA.fil.push(r); vIA();
+  const bulles=app.querySelectorAll('.bulle'); bulles[bulles.length-1]?.scrollIntoView({block:'start', behavior:'smooth'});
 }
 
 aller('accueil');
