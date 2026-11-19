@@ -166,12 +166,33 @@ h3{font-size:1.1rem;font-weight:700}
 .deux-btn .copier{width:auto;flex:1}
 .deux-btn .copier.sec{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.3);flex:0 0 auto;padding:13px 18px}
 .bulle p+p{margin-top:8px}
+.bulle ul.rx{margin:6px 0 4px 18px;display:grid;gap:4px}
+.bulle .btn.sec{display:block;padding:12px}
 html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .paysage{display:none}
 @media (orientation:landscape) and (max-height:520px){
   .paysage{display:flex;position:fixed;inset:0;z-index:50;background:var(--email);flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;font-family:var(--display);font-weight:700;font-size:1.2rem}
   .paysage svg{width:48px;height:48px;color:var(--lagon)}
 }
+.groupe{margin:16px 2px 2px;font-family:var(--display);font-weight:700;font-size:.95rem;color:var(--encre-2)}
+.choix .groupe:first-child{margin-top:4px}
+.verdict{margin-top:14px;padding:16px;border-radius:var(--r-m);border:1.5px solid var(--trait);background:var(--carte)}
+.verdict b{display:block;font-family:var(--display);font-size:1.15rem;margin-bottom:4px}
+.verdict.oui b{color:#8E1F31}.verdict.non b{color:#065E54}
+.verdict p{font-size:.93rem;margin-top:6px}
+.gestes{margin:12px 0 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.gestes li{padding:12px 14px;border-radius:var(--r-m);background:var(--lagon-pale);color:#065E54;font-size:.93rem}
+.src{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;background:rgba(15,42,51,.08);color:var(--encre-2);font-size:.72rem;font-weight:700;white-space:nowrap;vertical-align:1px}
+.date-saisie{font-size:16px;letter-spacing:.04em}
+.patient .champ input{width:100%;min-width:0}
+.question.entre-d{animation:glisseD .32s cubic-bezier(.2,.8,.2,1)}
+.question.entre-g{animation:glisseG .32s cubic-bezier(.2,.8,.2,1)}
+.question.sortie{animation:sortie .22s ease-in forwards}
+@keyframes glisseD{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes glisseG{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes sortie{to{opacity:0;transform:translateX(-24px)}}
+.opt{transition:border-color .15s, background .15s, transform .12s}
+.opt:active{transform:scale(.985)}
 /* panier */
 .panier{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));padding:0 12px 10px}
 .panier .in{max-width:536px;margin:0 auto;background:var(--encre);color:#fff;border-radius:var(--r-l);padding:14px 16px;box-shadow:0 10px 30px rgba(15,42,51,.25)}
@@ -248,6 +269,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 <div class="paysage" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Drill s’utilise en mode portrait.<br>Tourne ton téléphone.</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="recos.js"></script>
 <script>
 /* =========================================================
    Drill — prototype
@@ -317,186 +339,174 @@ function vAccueil(){
       <div class="outil bientot"><span class="ico a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></svg></span><span><h3>Logbook de clinique</h3><p>Tes actes validés, ton niveau, tes séries</p></span><span class="pastille">V2</span></div>
       <div class="outil bientot"><span class="ico g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><span><h3>Mode urgence</h3><p>De la douleur au diagnostic et à la conduite à tenir</p></span><span class="pastille">V2</span></div>
     </div>
-    <p class="demo">Prototype : protocoles et codes de démonstration, pas encore validés. Ne pas utiliser au fauteuil.</p>
+    <p class="demo">Outil d'aide à la décision fondé sur la HAS, la SFCO, l'ANSM et la CCAM officielle. Il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
   </div>`;
   app.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>aller(b.dataset.go));
 }
 
 /* ---------------------------------------------------------
-   Prescri'Dent : questionnaire
+   Prescri'Dent : questionnaire (règles dans recos.js)
 --------------------------------------------------------- */
-const ETAPES = [
-  { id:'acte', titre:'Pour quel acte ou motif ?', aide:'Une seule réponse.', type:'un', options:[
-    {v:'ext', t:'Extraction ou chirurgie buccale', d:'Avulsion, dent de sagesse, lambeau'},
-    {v:'infect', t:'Infection', d:'Abcès, cellulite débutante, péricoronarite'},
-    {v:'endo', t:'Douleur pulpaire', d:'Pulpite, après pulpectomie'},
-    {v:'paro', t:'Détartrage ou surfaçage', d:'Acte parodontal non chirurgical'},
-    {v:'impl', t:'Pose d’implant', d:''},
-  ]},
-  { id:'profil', titre:'Qui est le patient ?', aide:'Une seule réponse.', type:'un', options:[
-    {v:'adulte', t:'Adulte', d:''},
-    {v:'enfant', t:'Enfant', d:'Les doses seront calculées au poids'},
-    {v:'enceinte', t:'Femme enceinte', d:''},
-    {v:'allaite', t:'Femme qui allaite', d:''},
-  ]},
-  { id:'allergies', titre:'Allergies connues ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucune', options:[
-    {v:'peni', t:'Pénicillines', d:''},
-    {v:'ains', t:'AINS ou aspirine', d:''},
-    {v:'aucune', t:'Aucune allergie connue', d:''},
-  ]},
-  { id:'terrain', titre:'Antécédents médicaux ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options:[
-    {v:'ei', t:'Haut risque d’endocardite infectieuse', d:'Prothèse valvulaire, antécédent d’endocardite, cardiopathie congénitale cyanogène'},
-    {v:'immuno', t:'Immunodépression', d:'Chimiothérapie, corticothérapie au long cours, greffe…'},
-    {v:'diab', t:'Diabète déséquilibré', d:''},
-    {v:'resorb', t:'Traitement anti-résorbeur osseux', d:'Bisphosphonates, dénosumab'},
-    {v:'radio', t:'Radiothérapie cervico-faciale', d:''},
-    {v:'ir', t:'Insuffisance rénale', d:''},
-    {v:'ih', t:'Insuffisance hépatique', d:''},
-    {v:'ulcere', t:'Ulcère gastro-duodénal', d:''},
-    {v:'aucun', t:'Aucun antécédent notable', d:''},
-  ]},
-  { id:'ttt', titre:'Traitements qui jouent sur le saignement ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options:[
-    {v:'avk', t:'Antivitamine K', d:'Warfarine, fluindione…'},
-    {v:'aod', t:'Anticoagulant oral direct', d:'Apixaban, rivaroxaban, dabigatran'},
-    {v:'aap', t:'Antiplaquettaire', d:'Aspirine, clopidogrel…'},
-    {v:'aucun', t:'Aucun de ces traitements', d:''},
-  ]},
-];
-let P = {etape:0, rep:{}, poids:'', lignesOff:new Set()};
+let P = {i:0, rep:{}, lignesOff:new Set(), sens:1};
+const nouveauP = () => ({i:0, rep:{}, lignesOff:new Set(), sens:1});
 
+function etapes(){
+  const r=P.rep, M=RECO.MOTIF[r.motif]||{}, L=[];
+  L.push({id:'motif', titre:'Pour quel acte ou quelle affection ?', aide:'Une seule réponse.', type:'un', groupes:RECO.MOTIFS});
+  if(RECO.AVEC_EXTENSION.includes(r.motif)) L.push({id:'extension', titre:'Signes d’extension ?', aide:'Ils décident de l’antibiotique. Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options:RECO.EXTENSION});
+  if(r.motif==='cellulite') L.push({id:'gravite', titre:'Signes de gravité ?', aide:'Un seul suffit pour adresser à l’hôpital.', type:'multi', aucun:'aucun', options:RECO.GRAVITE_CELLULITE});
+  if(r.motif==='implant') L.push({id:'implant', titre:'Pose complexe ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options:RECO.IMPLANT_FACTEURS});
+  L.push({id:'profil', titre:'Qui est le patient ?', aide:'Une seule réponse.', type:'un', options:[
+    {v:'adulte',t:'Adulte',d:''},{v:'enfant',t:'Enfant',d:'Doses calculées au poids'},{v:'enceinte',t:'Femme enceinte',d:''},{v:'allaite',t:'Femme qui allaite',d:''}]});
+  L.push({id:'allergies', titre:'Allergies connues ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucune', options:RECO.ALLERGIES});
+  L.push({id:'atcd', titre:'Antécédents médicaux ?', aide:'Plusieurs réponses possibles. Chaque antécédent coché est pris en compte.', type:'multi', aucun:'aucun', groupes:RECO.ATCD});
+  L.push({id:'ttt', titre:'Traitements en cours ?', aide:'Antithrombotiques et médicaments qui interagissent.', type:'multi', aucun:'aucun', options:RECO.TTT});
+  return L;
+}
+function etapeValide(e){
+  const r=P.rep, v=r[e.id];
+  if(e.type==='multi' ? !(v&&v.length) : !v) return false;
+  if(e.id==='profil' && v==='enfant') return Number(r.poids)>0 && Number(r.age)>=0 && r.age!=='' && r.age!=null;
+  if(e.id==='profil' && v==='enceinte') return !!r.terme;
+  if(e.id==='ttt' && besoinRisqueHemo()) return !!r.risque_hemo;
+  return true;
+}
+function besoinRisqueHemo(){
+  const r=P.rep, M=RECO.MOTIF[r.motif]||{};
+  return !!M.chir && (r.ttt||[]).some(x=>['aap','aap2','avk','aod','heparine'].includes(x));
+}
+
+function optHTML(o, e, rep){
+  const on = e.type==='multi' ? (rep||[]).includes(o.v) : rep===o.v;
+  return `<button class="opt ${e.type==='multi'?'multi':''}" data-v="${o.v}" aria-pressed="${on}"><span class="coche"></span><span><b>${o.t}</b>${o.d?`<small>${o.d}</small>`:''}</span></button>`;
+}
 function vPrescri(){
-  if (P.etape >= ETAPES.length) return vOrdo();
-  const e = ETAPES[P.etape];
-  const rep = P.rep[e.id] || (e.type==='multi' ? [] : null);
-  const total = 14, allumees = Math.round(total * P.etape / ETAPES.length);
-  const arcade = Array.from({length:total},(_,i)=>`<svg viewBox="0 0 18 22" class="${i<allumees?'on':''}" aria-hidden="true">${ICO.dent}</svg>`).join('');
-  const ok = e.type==='multi' ? rep.length>0 : !!rep;
-  const poidsOk = !(e.id==='profil' && rep==='enfant') || Number(P.poids)>0;
+  const L = etapes();
+  if(P.i >= L.length) return vOrdo();
+  const e = L[P.i], rep = P.rep[e.id];
+  const total=14, allumees=Math.round(total*P.i/L.length);
+  const arcade = Array.from({length:total},(_,k)=>`<svg viewBox="0 0 18 22" class="${k<allumees?'on':''}" aria-hidden="true">${ICO.dent}</svg>`).join('');
+  let corps = e.groupes ? e.groupes.map(g=>`<p class="groupe">${g.groupe}</p>${g.items.map(o=>optHTML(o,e,rep)).join('')}`).join('') : e.options.map(o=>optHTML(o,e,rep)).join('');
+  let extra='';
+  if(e.id==='profil' && rep==='enfant') extra = `<div class="deux"><div class="champ"><label for="age">Âge (ans)</label><input id="age" inputmode="numeric" value="${esc(P.rep.age??'')}" placeholder="ex. 8"></div><div class="champ"><label for="poids">Poids (kg)</label><input id="poids" inputmode="decimal" value="${esc(P.rep.poids??'')}" placeholder="ex. 25"></div></div>`;
+  if(e.id==='profil' && rep==='enceinte') extra = `<p class="groupe">Terme</p><div class="seg" data-k="terme">${[['avant','Avant le 6e mois'],['apres','6e mois ou plus (≥ 24 SA)']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${P.rep.terme===v}">${t}</button>`).join('')}</div>`;
+  if(e.id==='ttt' && besoinRisqueHemo()) extra = `<p class="groupe">Risque hémorragique de l’acte</p>${RECO.RISQUE_HEMO.map(o=>`<button class="opt" data-rh="${o.v}" aria-pressed="${P.rep.risque_hemo===o.v}"><span class="coche"></span><span><b>${o.t}</b><small>${o.d}</small></span></button>`).join('')}`;
 
-  app.innerHTML = `<div class="vue">
+  app.innerHTML = `<div class="vue-q">
     <header class="top">
-      ${P.etape>0 ? `<button class="retour" id="prec">${ICO.retour}Retour</button>` : `<div class="logo">${logo}Prescri'Dent</div>`}
+      ${P.i>0 ? `<button class="retour" id="prec">${ICO.retour}Retour</button>` : `<div class="logo">${logo}Prescri'Dent</div>`}
       <button class="retour" id="raz" style="padding-left:12px">Recommencer</button>
     </header>
-    <div class="arcade" role="progressbar" aria-valuemin="0" aria-valuemax="${ETAPES.length}" aria-valuenow="${P.etape}">${arcade}</div>
-    <p class="etape-n">Question ${P.etape+1} sur ${ETAPES.length}</p>
-    <section class="question">
+    <div class="arcade" role="progressbar" aria-valuemin="0" aria-valuemax="${L.length}" aria-valuenow="${P.i}">${arcade}</div>
+    <p class="etape-n">Question ${P.i+1} sur ${L.length}</p>
+    <section class="question ${P.sens>0?'entre-d':'entre-g'}">
       <h2>${e.titre}</h2><p class="sous">${e.aide}</p>
-      <div class="choix">${e.options.map(o=>{
-        const on = e.type==='multi' ? rep.includes(o.v) : rep===o.v;
-        return `<button class="opt ${e.type==='multi'?'multi':''}" data-v="${o.v}" aria-pressed="${on}"><span class="coche"></span><span><b>${o.t}</b>${o.d?`<small>${o.d}</small>`:''}</span></button>`;
-      }).join('')}</div>
-      ${e.id==='profil' && rep==='enfant' ? `<div class="champ"><label for="poids">Poids de l'enfant (kg)</label><input id="poids" inputmode="decimal" value="${esc(P.poids)}" placeholder="ex. 24"></div>`:''}
+      <div class="choix">${corps}</div>
+      <div class="choix" style="margin-top:6px">${extra}</div>
     </section>
   </div>
-  <div class="barre-action"><div class="in"><button class="btn" id="suiv" ${ok&&poidsOk?'':'disabled'}>${P.etape===ETAPES.length-1?'Voir l’ordonnance':'Continuer'}</button></div></div>`;
+  <div class="barre-action"><div class="in"><button class="btn" id="suiv" ${etapeValide(e)?'':'disabled'}>${P.i===L.length-1?'Voir la conduite à tenir':'Continuer'}</button></div></div>`;
 
-  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+  app.querySelectorAll('.opt[data-v]').forEach(b=>b.onclick=()=>{
     const v=b.dataset.v;
-    if(e.type==='un'){ P.rep[e.id]=v; if(e.id!=='profil' || v!=='enfant'){ vPrescri(); return setTimeout(suivant,180);} }
-    else{
+    if(e.type==='un'){
+      P.rep[e.id]=v;
+      app.querySelectorAll('.opt[data-v]').forEach(x=>x.setAttribute('aria-pressed', x===b));
+      const sousChamp = (e.id==='profil' && (v==='enfant'||v==='enceinte'));
+      if(sousChamp){ vPrescri(); return; }
+      $('#suiv').disabled = !etapeValide(e);
+      clearTimeout(vPrescri.t); vPrescri.t=setTimeout(suivant, 550);
+    } else {
       let r=[...(P.rep[e.id]||[])];
       if(v===e.aucun) r = r.includes(v)?[]:[v];
-      else{ r=r.filter(x=>x!==e.aucun); r = r.includes(v)? r.filter(x=>x!==v) : [...r,v]; }
+      else { r=r.filter(x=>x!==e.aucun); r = r.includes(v)? r.filter(x=>x!==v) : [...r,v]; }
       P.rep[e.id]=r;
+      if(e.id==='ttt'){ vPrescri(); return; }
+      app.querySelectorAll('.opt[data-v]').forEach(x=>x.setAttribute('aria-pressed', r.includes(x.dataset.v)));
+      $('#suiv').disabled = !etapeValide(e);
     }
-    vPrescri();
   });
-  const pi=$('#poids'); if(pi){ pi.oninput=()=>{P.poids=pi.value.replace(',','.'); $('#suiv').disabled=!(Number(P.poids)>0)}; }
+  app.querySelectorAll('[data-rh]').forEach(b=>b.onclick=()=>{ P.rep.risque_hemo=b.dataset.rh; app.querySelectorAll('[data-rh]').forEach(x=>x.setAttribute('aria-pressed',x===b)); $('#suiv').disabled=!etapeValide(e); });
+  app.querySelectorAll('.seg[data-k="terme"] button').forEach(b=>b.onclick=()=>{ P.rep.terme=b.dataset.v; app.querySelectorAll('.seg[data-k="terme"] button').forEach(x=>x.setAttribute('aria-pressed',x===b)); $('#suiv').disabled=!etapeValide(e); });
+  ['age','poids'].forEach(id=>{ const i=$('#'+id); if(i) i.oninput=()=>{ P.rep[id]=i.value.replace(',','.'); $('#suiv').disabled=!etapeValide(e); }; });
   $('#suiv').onclick=suivant;
-  if($('#prec')) $('#prec').onclick=()=>{P.etape--;vPrescri()};
-  $('#raz').onclick=()=>{P={etape:0,rep:{},poids:'',lignesOff:new Set()};vPrescri()};
+  if($('#prec')) $('#prec').onclick=()=>{ clearTimeout(vPrescri.t); P.sens=-1; P.i--; vPrescri(); window.scrollTo(0,0); };
+  $('#raz').onclick=()=>{ clearTimeout(vPrescri.t); P=nouveauP(); vPrescri(); };
 }
-function suivant(){ P.etape++; P.lignesOff=new Set(); vPrescri(); window.scrollTo(0,0); }
-
-/* ---------------------------------------------------------
-   Moteur de règles (DÉMO — à sourcer HAS/ANSM)
---------------------------------------------------------- */
-function moteur(){
-  const r=P.rep, a=r.acte, pr=r.profil, al=r.allergies||[], te=r.terrain||[], tt=r.ttt||[];
-  const enfant = pr==='enfant', kg=Number(P.poids)||0, enceinte = pr==='enceinte';
-  const allPeni = al.includes('peni'), allAins = al.includes('ains');
-  const invasif = ['ext','paro','impl','infect'].includes(a);
-  const alertes=[], lignes=[];
-  const mg=(parKg,max)=>Math.min(Math.round(parKg*kg/50)*50, max);
-
-  // Alertes
-  if(te.includes('ei') && a==='impl') alertes.push({n:'forte',t:'Implant contre-indiqué',d:'Patient à haut risque d’endocardite infectieuse.'});
-  if(te.includes('resorb') && ['ext','impl'].includes(a)) alertes.push({n:'forte',t:'Risque d’ostéonécrose des mâchoires',d:'Préciser le contexte (ostéoporose ou cancer) et la durée du traitement avant tout geste osseux.'});
-  if(te.includes('radio') && ['ext','impl'].includes(a)) alertes.push({n:'forte',t:'Risque d’ostéoradionécrose',d:'Avis spécialisé et protocole hospitalier avant tout geste osseux.'});
-  if(tt.includes('avk')) alertes.push({n:'moy',t:'Antivitamine K : ne pas arrêter',d:'Contrôler l’INR dans les 24 h avant l’acte. Hémostase locale systématique.'});
-  if(tt.includes('aod')) alertes.push({n:'moy',t:'AOD : ne pas arrêter',d:'Programmer l’acte à distance de la dernière prise. Hémostase locale systématique.'});
-  if(tt.includes('aap')) alertes.push({n:'moy',t:'Antiplaquettaire : ne pas arrêter',d:'Hémostase locale systématique.'});
-  if(te.includes('diab')) alertes.push({n:'moy',t:'Diabète déséquilibré',d:'Risque infectieux et de cicatrisation retardée.'});
-  if(enceinte) alertes.push({n:'info',t:'Grossesse',d:'AINS exclus de la proposition. Paracétamol en première intention.'});
-
-  // Antibioprophylaxie
-  const prophy = invasif && a!=='infect' && (te.includes('ei') || te.includes('immuno')) && !(a==='impl' && te.includes('ei'));
-  if(prophy){
-    if(!allPeni) lignes.push({id:'abp', med:'Amoxicilline', pos: enfant ? `${mg(50,2000)} mg en une prise, 30 à 60 min avant l’acte (50 mg/kg)` : '2 g en une prise, 30 à 60 min avant l’acte', qsp:'Dose unique', cat:'Antibioprophylaxie'});
-    else lignes.push({id:'abp', med:'Clindamycine', pos: enfant ? `${mg(15,600)} mg en une prise, 30 à 60 min avant l’acte (15 mg/kg)` : '600 mg en une prise, 30 à 60 min avant l’acte', qsp:'Dose unique', cat:'Antibioprophylaxie'});
-  }
-  // Antibiothérapie curative
-  if(a==='infect'){
-    if(!allPeni) lignes.push({id:'abc', med:'Amoxicilline', pos: enfant ? `${mg(25,1000)} mg matin et soir (50 mg/kg/j)` : '1 g matin et soir', qsp:'7 jours', cat:'Antibiothérapie'});
-    else if(!enfant) lignes.push({id:'abc', med:'Clindamycine', pos:'600 mg matin et soir', qsp:'7 jours', cat:'Antibiothérapie'});
-    else alertes.push({n:'moy',t:'Enfant allergique aux pénicillines',d:'Choisir l’alternative avec le praticien référent.'});
-  }
-  // Antalgie
-  const ihSevere = te.includes('ih');
-  lignes.push({id:'para', med:'Paracétamol', pos: enfant ? `${Math.round(15*kg)} mg toutes les 6 h si douleur (15 mg/kg, max 60 mg/kg/j)` : (ihSevere ? '500 mg toutes les 6 h si douleur, max 2 g/j (insuffisance hépatique)' : '1 g toutes les 6 h si douleur, max 4 g/j'), qsp:'5 jours', cat:'Antalgique'});
-  const ainsCI = enceinte || allAins || te.includes('ir') || te.includes('ulcere') || tt.includes('avk') || tt.includes('aod') || tt.includes('aap');
-  if(['ext','endo','impl'].includes(a) && !ainsCI){
-    lignes.push({id:'ibu', med:'Ibuprofène', pos: enfant ? `${Math.round(10*kg)} mg toutes les 8 h pendant le repas (10 mg/kg)` : '400 mg toutes les 8 h pendant le repas', qsp:'3 jours', cat:'Anti-inflammatoire'});
-  } else if(['ext','endo','impl'].includes(a) && ainsCI && !enceinte){
-    alertes.push({n:'info',t:'Ibuprofène exclu',d:'Allergie, anticoagulant/antiplaquettaire, insuffisance rénale ou ulcère.'});
-  }
-  // Bain de bouche
-  if(['ext','impl','paro'].includes(a) && !enfant){
-    lignes.push({id:'bdb', med:'Chlorhexidine 0,12 % bain de bouche', pos:'1 bain de bouche de 30 s, 3 fois par jour, à commencer le lendemain', qsp:'7 jours', cat:'Antiseptique'});
-  }
-  return {alertes, lignes};
+function suivant(){
+  clearTimeout(vPrescri.t);
+  const L=etapes(); if(P.i<L.length && !etapeValide(L[P.i])) return;
+  const q=app.querySelector('.question');
+  const go=()=>{ P.sens=1; P.i++; P.lignesOff=new Set(); vPrescri(); window.scrollTo(0,0); };
+  if(q && !matchMedia('(prefers-reduced-motion: reduce)').matches){ q.classList.add('sortie'); setTimeout(go, 220); } else go();
 }
 
 function vOrdo(){
-  const {alertes,lignes} = moteur();
+  const r=P.rep, O=RECO.decider(r), M=RECO.MOTIF[r.motif]||{};
   const total=14;
+  const icone = n => n==='info'?ICO.info:ICO.alerte;
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="prec">${ICO.retour}Retour</button><button class="retour" id="raz" style="padding-left:12px">Nouveau patient</button></header>
     <div class="arcade" aria-hidden="true">${Array.from({length:total},()=>`<svg viewBox="0 0 18 22" class="on">${ICO.dent}</svg>`).join('')}</div>
-    <section class="question">
-      <h2>Ordonnance proposée</h2>
-      <p class="sous">Touche une ligne pour la retirer ou la remettre.</p>
-      ${alertes.map(x=>`<div class="alerte ${x.n}">${x.n==='info'?ICO.info:ICO.alerte}<span><b>${x.t}</b>${x.d}</span></div>`).join('')}
-      <div class="lignes">${lignes.map(l=>`
+    <section class="question" style="padding-bottom:120px">
+      <p class="sous">${M.t||''}</p>
+      <h2>Conduite à tenir</h2>
+      ${O.hospit?`<div class="alerte forte">${ICO.alerte}<span><b>Prise en charge hospitalière</b>Adresser le patient aux urgences ou en chirurgie maxillo-faciale.</span></div>`:''}
+      ${O.gestes.length?`<ul class="gestes">${O.gestes.map(g=>`<li>${g}</li>`).join('')}</ul>`:''}
+      <div class="verdict ${O.atb?'oui':'non'}"><b>${O.atb?'Antibiotique : oui':'Antibiotique : non'}</b>${O.pourquoi.map(x=>`<p>${x}</p>`).join('')}</div>
+      ${[...O.alertes].sort((x,y)=>({forte:0,moy:1,info:2}[x.n])-({forte:0,moy:1,info:2}[y.n])).map(x=>`<div class="alerte ${x.n}">${icone(x.n)}<span><b>${x.t}</b>${x.d}</span></div>`).join('')}
+      ${O.lignes.length?`<h2 style="margin-top:22px">Ordonnance proposée</h2><p class="sous">Touche une ligne pour la retirer ou la remettre.</p>
+      <div class="lignes">${O.lignes.map(l=>`
         <button class="ligne" data-id="${l.id}" aria-pressed="${!P.lignesOff.has(l.id)}">
           <span class="coche"></span>
           <span style="text-align:left"><small class="sous" style="font-size:.78rem">${l.cat}</small>
             <span class="med" style="display:block">${l.med}</span>
             <span class="pos" style="display:block">${l.pos} · ${l.qsp}</span>
-            <a class="vidal" href="https://www.vidal.fr/recherche.html?query=${encodeURIComponent(l.med.split(' ')[0])}" target="_blank" rel="noopener">Voir sur Vidal</a></span>
+            <a class="vidal" href="https://www.vidal.fr/recherche.html?query=${encodeURIComponent(l.med.split(/[ (]/)[0])}" target="_blank" rel="noopener">Voir sur Vidal</a></span>
         </button>`).join('')}</div>
       <div class="patient">
         <h3>Patient</h3>
         <p>Sert uniquement à remplir le PDF, puis effacé. Rien n'est enregistré ni envoyé.</p>
-        <div class="deux"><div class="champ"><label for="nom">Nom</label><input id="nom" autocomplete="off"></div>
-        <div class="champ"><label for="prenom">Prénom</label><input id="prenom" autocomplete="off"></div></div>
-        <div class="champ"><label for="ddn">Date de naissance</label><input id="ddn" type="date" autocomplete="off"></div>
+        <div class="champ"><label for="nom">Nom</label><input id="nom" autocomplete="off" autocapitalize="characters"></div>
+        <div class="champ"><label for="prenom">Prénom</label><input id="prenom" autocomplete="off"></div>
+        <div class="champ"><label for="ddn">Date de naissance</label><input id="ddn" class="date-saisie" inputmode="numeric" placeholder="JJ/MM/AAAA" maxlength="10" autocomplete="off"></div>
       </div>
-      <div id="lienPDF"></div>
-      <p class="demo">Protocoles de démonstration : seront remplacés par les recommandations HAS/ANSM sourcées et la mise en page de l'ordonnance du CHU.</p>
+      <div id="lienPDF"></div>`:''}
+      <p class="demo">Sources : HAS 2026 (antibiotiques en pratique bucco-dentaire), HAS 2024 (endocardite), SFCO 2015 (antithrombotiques), ANSM, RCP. Outil d'aide à la décision : il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
     </section>
   </div>
-  <div class="barre-action"><div class="in"><button class="btn" id="imprimer">Créer l'ordonnance (PDF)</button></div></div>`;
-  chargerPDF().catch(()=>{});
-  app.querySelectorAll('.ligne').forEach(b=>b.onclick=e=>{
-    if(e.target.closest('.vidal')) return;
+  ${O.lignes.length?`<div class="barre-action"><div class="in"><button class="btn" id="imprimer">Créer l'ordonnance (PDF)</button></div></div>`:''}`;
+  if(O.lignes.length) chargerPDF().catch(()=>{});
+  brancherDate($('#ddn'));
+  app.querySelectorAll('.ligne').forEach(b=>b.onclick=ev=>{
+    if(ev.target.closest('.vidal')) return;
     const id=b.dataset.id; P.lignesOff.has(id)?P.lignesOff.delete(id):P.lignesOff.add(id);
     b.setAttribute('aria-pressed', !P.lignesOff.has(id));
   });
-  $('#prec').onclick=()=>{P.etape--;vPrescri()};
-  $('#raz').onclick=()=>{P={etape:0,rep:{},poids:'',lignesOff:new Set()};vPrescri()};
-  $('#imprimer').onclick=()=>genererOrdo(lignes.filter(l=>!P.lignesOff.has(l.id)));
+  $('#prec').onclick=()=>{ P.sens=-1; P.i=etapes().length-1; vPrescri(); };
+  $('#raz').onclick=()=>{ P=nouveauP(); vPrescri(); };
+  if($('#imprimer')) $('#imprimer').onclick=()=>{
+    const lignes=O.lignes.filter(l=>!P.lignesOff.has(l.id));
+    const notes=[]; if((r.atcd||[]).includes('ei_haut') && lignes.some(l=>l.cat.startsWith('Antibioprophylaxie'))) notes.push('Délivrance à l’unité.');
+    genererOrdo(lignes, notes);
+  };
+}
+
+/* Saisie de date au clavier : JJ/MM/AAAA */
+function brancherDate(i, quandComplet){
+  if(!i) return;
+  i.addEventListener('input', ()=>{
+    const ch=i.value.replace(/\D/g,'').slice(0,8);
+    let v=ch.slice(0,2); if(ch.length>2) v+='/'+ch.slice(2,4); if(ch.length>4) v+='/'+ch.slice(4,8);
+    i.value=v;
+    if(quandComplet && v.length===10) quandComplet(v);
+    if(quandComplet && v.length===0) quandComplet('');
+  });
+}
+function dateISO(jjmmaaaa){
+  const m=String(jjmmaaaa).match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(!m) return '';
+  const d=new Date(`${m[3]}-${m[2]}-${m[1]}T12:00`); if(isNaN(d) || d.getDate()!==Number(m[1])) return '';
+  return `${m[3]}-${m[2]}-${m[1]}`;
 }
 
 /* Ordonnance en PDF : générée sur le téléphone, partagée ou ouverte,
@@ -507,7 +517,7 @@ function chargerPDF(){
   return jsPDFpret;
 }
 const pdfTxt = t => String(t).replace(/[’‘]/g,"'").replace(/[“”«»]/g,'"').replace(/[–—]/g,'-').replace(/ /g,' ').replace(/≥/g,'>=').replace(/≤/g,'<=');
-function construirePDF(jsPDF, lignes, patient){
+function construirePDF(jsPDF, lignes, patient, notes){
   const doc = new jsPDF({unit:'mm', format:'a4'});
   const G=20, L=170; let y=22;
   doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text(pdfTxt('En-tête du service (modèle CHU à venir)'), G, y);
@@ -523,15 +533,18 @@ function construirePDF(jsPDF, lignes, patient){
     doc.splitTextToSize(pdfTxt(l.pos), L).forEach(r=>{ doc.text(r, G+4, y); y+=5; });
     doc.text(pdfTxt('QSP '+l.qsp.toLowerCase()), G+4, y); y+=10;
   });
+  if(notes && notes.length){ doc.setFont('helvetica','bold'); notes.forEach(n=>{ doc.text(pdfTxt(n), G, y); y+=6; }); doc.setFont('helvetica','normal'); }
   y=Math.max(y+10, 230);
   doc.setFontSize(9); doc.setTextColor(90); doc.text(pdfTxt('Signature et tampon'), G+L, y, {align:'right'});
   doc.setDrawColor(150); doc.rect(G+L-70, y+3, 70, 30);
   return doc.output('blob');
 }
-async function genererOrdo(lignes){
-  const patient = { nom:$('#nom').value.trim(), prenom:$('#prenom').value.trim(), ddn: $('#ddn').value ? new Date($('#ddn').value+'T12:00').toLocaleDateString('fr-FR') : '' };
+async function genererOrdo(lignes, notes){
+  const dv=$('#ddn').value.trim();
+  if(dv && !dateISO(dv)){ toast('Date de naissance incomplète : JJ/MM/AAAA'); return; }
+  const patient = { nom:$('#nom').value.trim(), prenom:$('#prenom').value.trim(), ddn: dv };
   let jsPDF; try{ jsPDF = await chargerPDF(); }catch(e){ toast('Impossible de préparer le PDF'); return; }
-  const blob = construirePDF(jsPDF, lignes, patient);
+  const blob = construirePDF(jsPDF, lignes, patient, notes);
   const nomFichier = 'ordonnance.pdf';
   const fichier = new File([blob], nomFichier, {type:'application/pdf'});
   effacerPatient();
@@ -717,7 +730,7 @@ function panierHTML(){
   return `<div class="panier"><div class="in">
     <button class="panier-tete" id="pt" aria-expanded="${C.ouvert}"><b>Sélection<span class="badge">${C.panier.length}</span></b><span class="total-tete">${euro(total)}</span></button>
     ${C.ouvert?`<div class="panier-corps">
-      <div class="ddn-c"><label for="ddnC">Date de naissance du patient</label><input id="ddnC" type="date" value="${C.ddn}" autocomplete="off"><small>${C.ddn?ageTexte():'Les modificateurs liés à l’âge (N, E, 9) s’appliquent tout seuls. Rien n’est enregistré.'}</small></div>
+      <div class="ddn-c"><label for="ddnC">Date de naissance du patient</label><input id="ddnC" class="date-saisie" inputmode="numeric" placeholder="JJ/MM/AAAA" maxlength="10" value="${C.ddnTxt||''}" autocomplete="off"><small>${C.ddn?ageTexte():'Les modificateurs liés à l’âge (N, E, 9) s’appliquent tout seuls. Rien n’est enregistré.'}</small></div>
       ${lignes.map(x=>`<div class="p-acte"><span><span class="code">${x.c}</span>${x.mods.map(m=>` <span class="mcode">${m}</span>`).join('')}<br><span style="color:#B9CDD3">${x.l}</span></span><span class="p-droite"><b>${euro(x.montant)}</b>${x.montant!==x.base?`<small>base ${euro(x.base)}</small>`:''}<button data-retire="${x.c}" aria-label="Retirer ${x.c}">×</button></span></div>`).join('')}
       ${lignes.some(x=>PRIX[x.c]==null)?'<p class="mod-titre">Les actes non remboursables comptent pour 0 € dans le total.</p>':''}
       ${dispo.length?`<p class="mod-titre">Modificateurs possibles pour ces actes</p>${dispo.map(m=>`<div class="mod"><span class="mcode grand">${m}</span><span style="flex:1"><b>${MODS[m].t}</b><small>${MODS[m].d}${C.ddn && 'NE9'.includes(m)?' · réglé selon l’âge':''}</small></span><button class="switch" role="switch" aria-checked="${C.mods.has(m)}" data-m="${m}" aria-label="${MODS[m].t}"></button></div>`).join('')}`:''}
@@ -753,8 +766,8 @@ function brancherPanier(){
     else { C.mods.add(m); if(m==='F') C.mods.delete('U'); if(m==='U') C.mods.delete('F'); }
     vCode();
   });
-  const di=$('#ddnC'); if(di) di.onchange=()=>{ C.ddn=di.value; appliquerAge(); vCode(); };
-  if($('#vider')) $('#vider').onclick=()=>{ C.panier=[]; C.mods=new Set(); C.ddn=''; C.ouvert=false; vCode(); toast('Sélection et date de naissance effacées'); };
+  const di=$('#ddnC'); if(di) brancherDate(di, v=>{ C.ddnTxt=v; C.ddn=dateISO(v); appliquerAge(); vCode(); if(!v){ const n=$('#ddnC'); n&&n.focus(); } });
+  if($('#vider')) $('#vider').onclick=()=>{ C.panier=[]; C.mods=new Set(); C.ddn=''; C.ddnTxt=''; C.ouvert=false; vCode(); toast('Sélection et date de naissance effacées'); };
   if($('#copier')) $('#copier').onclick=()=>{
     const {lignes,total}=calcul();
     const txt=lignes.map(x=>`${x.c}${x.mods.length?' (modif. '+x.mods.join(', ')+')':''} : ${euro(x.montant)}`).join('\n')+`\nTotal : ${euro(total)}`;
@@ -999,7 +1012,67 @@ function contexte(A,R){
 
 function carteIA(x){ return `<button class="acte" data-ajout-ia="${x.c}" style="margin-top:8px"><span><span class="code">${x.c}</span>${prixHTML(x.c)}<span class="lib" style="display:block">${x.pourquoi||LIB[x.c].l}</span></span><span class="plus">+</span></button>`; }
 
+/* --- Questions de prescription --- */
+function intentionPrescription(texte){
+  const t=norm(texte);
+  if(/\bcode|ccam|coter|cotation|tarif|prix|combien (ca|ça) (coute|rapporte)|modificateur/.test(t)) return false;
+  if(/prescri|antibio|ordonnance|que (donner|mettre|faire)|quoi (donner|prescrire|faire)|faut-?il|dois-?je|je (peux|dois)|puis-?je|on peut|arret|stopp|suspend|antalg|antidouleur|ibuprof|paracetamol|amoxi|allergi|enceinte|grossesse|allait|bain de bouche|prophylax|risque|inr|conduite a tenir/.test(t)) return true;
+  const rep=RECO.analyserQuestion(texte); const M=RECO.MOTIF[rep.motif];
+  if(rep.ttt.some(x=>x!=='aucun')) return true;
+  return !!M && !['Acte prévu'].includes(M.groupe) && !/\d+\s*dents?/.test(t);
+}
+function repondrePrescription(texte){
+  const rep = RECO.analyserQuestion(texte);
+  const t = norm(texte), hyp = [];
+  const antithrombo = (rep.ttt||[]).some(x=>['aap','aap2','avk','aod','heparine'].includes(x));
+  if(!rep.motif && antithrombo && /avuls|extrai|extraction|enlever|arracher|chirurg|operer|implant/.test(t)) rep.motif = /implant/.test(t)?'implant':'avulsion';
+  if(!rep.motif){
+    return {html:`<p>Je peux t’aider, mais j’ai besoin de la situation clinique : quel acte ou quelle affection (abcès, cellulite, alvéolite, avulsion, péricoronarite, candidose…) ? Précise aussi l’âge si c’est un enfant, les allergies, les antécédents et les traitements.</p>`, brut:'', ia:true};
+  }
+  if(!rep.profil){ rep.profil='adulte'; hyp.push('adulte'); }
+  if(rep.profil==='enfant' && !rep.poids) hyp.push('poids non précisé (doses à calculer)');
+  if(rep.profil==='enceinte' && !rep.terme){ rep.terme='avant'; hyp.push('terme non précisé'); }
+  if(rep.alvAmbigu) hyp.push('alvéolite sèche, sans pus (si elle est suppurée, dis-le moi : la règle change)');
+  if(rep.allergies[0]==='aucune') hyp.push('pas d’allergie');
+  if(rep.atcd[0]==='aucun') hyp.push('pas d’antécédent particulier');
+  if(RECO.AVEC_EXTENSION.includes(rep.motif) && !rep.extension.length){ rep.extension=['aucun']; hyp.push('pas de signe d’extension (ni pus, ni tuméfaction, ni fièvre)'); }
+  if(rep.motif==='cellulite' && !rep.gravite){ rep.gravite=['aucun']; hyp.push('pas de signe de gravité'); }
+  const M=RECO.MOTIF[rep.motif];
+  if(M && M.chir && antithrombo && !rep.risque_hemo){ rep.risque_hemo='faible'; hyp.push('acte à risque hémorragique faible'); }
+  const O = RECO.decider(rep);
+  const strip = x=>String(x);
+  let h = '';
+  // Réponse directe à « je peux… ? » sous antithrombotique
+  const alerteAT = O.alertes.find(a=>/antiplaquettaire|Antivitamine|Anticoagulant|Héparine|Bithérapie/i.test(a.t));
+  if(antithrombo && alerteAT && /peux|puis|possible|arret|stopp|suspend|faut/.test(t)) h += `<p><b>${alerteAT.t}.</b> ${alerteAT.d}</p>`;
+  if(O.hospit) h += `<p><b>Adresser à l’hôpital :</b> un signe de gravité est présent.</p>`;
+  h += `<p><b>${O.atb?'Antibiotique : oui.':'Antibiotique : non.'}</b> ${O.pourquoi.map(strip).join(' ')}</p>`;
+  if(O.gestes.length) h += `<p><b>Geste :</b> ${O.gestes.join(' ')}</p>`;
+  if(O.lignes.length) h += `<p><b>À prescrire :</b></p><ul class="rx">${O.lignes.map(l=>`<li><b>${l.med}</b> : ${l.pos}, ${l.qsp.toLowerCase()}</li>`).join('')}</ul>`;
+  const autres = O.alertes.filter(a=>a!==alerteAT && (a.n!=='info' || /écarté|Grossesse|moins de 6 ans/.test(a.t))).slice(0,5);
+  if(autres.length) h += autres.map(a=>`<p><b>${a.t} :</b> ${a.d}</p>`).join('');
+  if(hyp.length) h += `<p class="sous" style="font-size:.85rem">J’ai supposé : ${hyp.join(', ')}. Si ce n’est pas le cas, précise-le.</p>`;
+  h += `<button class="btn sec" data-ouvrir-prescri style="margin-top:10px;width:100%">Ouvrir dans Prescri'Dent</button>`;
+  IA.derniere = rep;
+  return {html:h, brut:RECO.resumer(rep,O), contexte:RECO.resumer(rep,O)+(hyp.length?'\nHypothèses : '+hyp.join(', '):''), ia:true};
+}
+
 async function demanderIA(texte){
+  if(intentionPrescription(texte)){
+    const R0 = repondrePrescription(texte);
+    if(IA_URL && R0.contexte){
+      try{
+        const hist=IA.fil.slice(-6).map(m=>({role:m.moi?'user':'model', texte:m.brut||''}));
+        const r = await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:texte, pistes:[], contexte:R0.contexte, historique:hist})});
+        const j = await r.json();
+        if(j.reponse){
+          const suite = R0.html.includes('<ul class="rx">') ? R0.html.slice(R0.html.indexOf('<p><b>À prescrire')) : R0.html.slice(R0.html.indexOf('<button'));
+          R0.html = `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>` + suite;
+        }
+      }catch(e){ console.warn('Relais IA indisponible', e); }
+    }
+    return R0;
+  }
   const A = analyser(texte), R = raisonner(A); contexte(A,R);
   const vus=new Set(); R.codes=R.codes.filter(x=>!vus.has(x.c)&&vus.add(x.c)); R.alternatives=R.alternatives.filter(x=>!vus.has(x.c)&&vus.add(x.c));
   let html = R.texte.map(p=>`<p>${p}</p>`).join('');
@@ -1023,7 +1096,7 @@ function vIA(){
   app.innerHTML = `<div class="vue">
     <header class="top"><div class="logo">${logo}Assistant</div>${IA.fil.length?'<button class="retour" id="effacer" style="padding-left:12px">Effacer</button>':''}</header>
     <p class="sous">Décris l'acte comme tu le dirais à un collègue. N'écris pas le nom du patient.</p>
-    ${IA.fil.length?'':`<div class="suggestions">${['J’ai extrait 18 dents','Dent de sagesse 38 incluse','Composite MOD sur la 36','Endo sur la 46 nécrosée','2 radios rétro','Patient en ALD sous Eliquis, 3 extractions'].map(s=>`<button class="sugg">${s}</button>`).join('')}</div>`}
+    ${IA.fil.length?'':`<div class="suggestions">${['J’ai extrait 18 dents','Cellulite séreuse depuis 2 jours, que prescrire ?','Patient sous Eliquis, je peux avulser ?','Composite MOD sur la 36','Alvéolite, antibiotique ?','Enfant 6 ans 20 kg, abcès avec fièvre'].map(s=>`<button class="sugg">${s}</button>`).join('')}</div>`}
     <div class="fil">${IA.fil.map(m=>`<div class="bulle ${m.moi?'moi':'lui'} ${m.ia?'ia':''}">${m.html}</div>`).join('')}${IA.attente?'<div class="bulle lui ia">…</div>':''}</div>
     <div style="height:110px"></div>
   </div>
@@ -1032,6 +1105,7 @@ function vIA(){
   app.querySelectorAll('.sugg').forEach(b=>b.onclick=()=>envoyer(b.textContent));
   app.querySelectorAll('[data-ajout-ia]').forEach(b=>b.onclick=()=>{ const c=b.dataset.ajoutIa; if(!C.panier.some(p=>p.c===c)) C.panier.push({c}); C.ouvert=true; aller('code'); toast(c+' ajouté'); });
   if($('#effacer')) $('#effacer').onclick=()=>{IA.fil=[];vIA();};
+  app.querySelectorAll('[data-ouvrir-prescri]').forEach(b=>b.onclick=()=>{ if(!IA.derniere) return; P=nouveauP(); P.rep=JSON.parse(JSON.stringify(IA.derniere)); P.i=etapes().length; aller('prescri'); });
   $('#f').onsubmit=e=>{e.preventDefault(); const v=$('#msg').value.trim(); if(v) envoyer(v);};
 }
 async function envoyer(t){
