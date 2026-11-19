@@ -147,6 +147,14 @@ h3{font-size:1.1rem;font-weight:700}
 .resultat-code small{display:block;font-size:.82rem;color:#065E54}
 .mini{padding:10px 14px;border-radius:999px;background:var(--lagon);color:#fff;font-weight:700;font-size:.85rem;flex:none}
 
+.acte .prix{margin-left:8px;font-weight:700;font-size:.85rem;color:var(--encre-2)}
+.resultat-code .prix.fort{font-family:var(--display);font-weight:700;color:#065E54;margin-left:6px}
+.p-droite{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none;text-align:right}
+.p-droite small{color:#9FB6BD;font-size:.75rem}
+.total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
+.total small{display:block;color:#9FB6BD;font-size:.78rem}
+.total b{font-family:var(--display);font-size:1.6rem;font-weight:800;color:#7FE3D3}
+.total-tete{font-family:var(--display);font-weight:800;font-size:1.1rem;color:#7FE3D3}
 /* panier */
 .panier{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));padding:0 12px 10px}
 .panier .in{max-width:536px;margin:0 auto;background:var(--encre);color:#fff;border-radius:var(--r-l);padding:14px 16px;box-shadow:0 10px 30px rgba(15,42,51,.25)}
@@ -483,32 +491,48 @@ function imprimer(lignes){
 window.addEventListener('afterprint',()=>{ $('#ordo').innerHTML=''; ['nom','prenom','ddn'].forEach(id=>{const i=$('#'+id); if(i) i.value='';}); toast('Données patient effacées'); });
 
 /* ---------------------------------------------------------
-   Codage express — base de DÉMO (codes issus de la CCAM v34,
-   à remplacer par la version en vigueur sur ameli)
+   Codage express
+   Tarifs : base de remboursement CCAM V84 (applicable au 31/07/2026),
+   tarifs opposables métropole. À mettre à jour à chaque version CCAM.
 --------------------------------------------------------- */
 const MODS = {
-  N:{t:'Enfant de moins de 13 ans', d:'Soins conservateurs sur dent permanente'},
-  E:{t:'Enfant de moins de 5 ans', d:'Radiographie'},
-  F:{t:'Urgence dimanche ou jour férié', d:''},
-  U:{t:'Urgence de nuit (20 h – 8 h)', d:''},
+  N:{t:'Enfant de moins de 13 ans', d:'Restauration ou endodontie sur dent permanente · +15,7 %', pct:0.157},
+  E:{t:'Enfant de moins de 5 ans', d:'Radiographie · +49 %', pct:0.49},
+  F:{t:'Urgence dimanche ou jour férié', d:'+19,06 €, une seule fois par séance', fixe:19.06},
+  U:{t:'Urgence de nuit (20 h – 8 h)', d:'+25,15 €, une seule fois par séance', fixe:25.15},
 };
-const AVULSIONS = {1:'HBGD036',2:'HBGD043',3:'HBGD319',4:'HBGD489',5:'HBGD497',6:'HBGD106',7:'HBGD076',8:'HBGD422',9:'HBGD420',10:'HBGD064',11:'HBGD356'};
+const AVULSIONS = {1:'HBGD036',2:'HBGD043',3:'HBGD319',4:'HBGD489',5:'HBGD497',6:'HBGD106',7:'HBGD076',8:'HBGD422',9:'HBGD420',10:'HBGD064',11:'HBGD356',12:'HBGD146',13:'HBGD382',14:'HBGD247',15:'HBGD197',16:'HBGD333'};
+const RADIOS = {1:'HBQK389',2:'HBQK191',3:'HBQK331',4:'HBQK443',5:'HBQK428',6:'HBQK480',7:'HBQK430',8:'HBQK142',9:'HBQK046',10:'HBQK065',11:'HBQK424',12:'HBQK476',13:'HBQK093',14:'HBQK041'};
 const RESTAU = { ic:{1:'HBMD058',2:'HBMD050',3:'HBMD054'}, pm:{1:'HBMD053',2:'HBMD049',3:'HBMD038'} };
-const ENDO = { ic:{v:'HBFD033',n:'HBFD001'}, pm1:{v:'HBFD021',n:null}, pm:{v:'HBFD035',n:'HBFD003'}, m:{v:'HBFD008',n:'HBFD024'} };
+const ENDO = { ic:{v:'HBFD033',n:'HBFD001'}, pm1:{v:'HBFD021',n:'HBFD297'}, pm:{v:'HBFD035',n:'HBFD003'}, m:{v:'HBFD008',n:'HBFD024'} };
+const PRIX = {
+  // avulsions de dents permanentes sans alvéolectomie
+  HBGD036:39, HBGD043:57, HBGD319:75, HBGD489:93, HBGD497:108, HBGD106:123, HBGD076:138, HBGD422:153,
+  HBGD420:168, HBGD064:183.92, HBGD356:200.64, HBGD146:217.36, HBGD382:234.08, HBGD247:250.80, HBGD197:267.52, HBGD333:284.24,
+  // autres actes de chirurgie
+  HBGD022:43, HBGD034:61, HBGD018:96.14, HBGD004:96.14, HBGD025:144.21, HBGD021:192.28, HBGD038:240.35, HBJB001:40, LCJA003:20.90,
+  // soins
+  HBMD058:30.47, HBMD050:52, HBMD054:68.12, HBMD053:30.47, HBMD049:52, HBMD038:68.12, HBFD010:62.40,
+  // endodontie
+  HBFD033:41.60, HBFD001:48.88, HBFD021:63.44, HBFD297:70.72, HBFD035:63.44, HBFD003:70.72, HBFD008:104, HBFD024:114.40, HBFD006:36,
+  // radiologie
+  HBQK001:7.98, HBQK002:20, HBJD001:28.92,
+};
+Object.entries(RADIOS).forEach(([n,c])=>PRIX[c]=Math.round(7.98*n*100)/100);
+
 const CATS = ['Chirurgie','Soins','Endodontie','Radiologie','Parodontologie'];
 const ACTES = [
   {c:'HBGD018',l:'Avulsion d’une troisième molaire maxillaire retenue ou à l’état de germe',cat:'Chirurgie',m:'FU'},
   {c:'HBGD004',l:'Avulsion d’une troisième molaire mandibulaire retenue ou à l’état de germe',cat:'Chirurgie',m:'FU'},
   {c:'HBGD025',l:'Avulsion de 2 troisièmes molaires retenues ou à l’état de germe',cat:'Chirurgie',m:'FU'},
+  {c:'HBGD021',l:'Avulsion de 3 troisièmes molaires mandibulaires retenues ou à l’état de germe',cat:'Chirurgie',m:'FU'},
   {c:'HBGD038',l:'Avulsion de 4 troisièmes molaires retenues ou à l’état de germe',cat:'Chirurgie',m:'FU'},
   {c:'HBGD022',l:'Avulsion d’1 dent permanente sur arcade avec alvéolectomie',cat:'Chirurgie',m:'FU'},
   {c:'HBGD034',l:'Avulsion de 2 dents permanentes sur arcade avec alvéolectomie',cat:'Chirurgie',m:'FU'},
-  {c:'HBJB001',l:'Évacuation d’abcès parodontal',cat:'Chirurgie',m:''},
-  {c:'LCJA003',l:'Évacuation de collection périmaxillaire ou périmandibulaire, par abord intrabuccal',cat:'Chirurgie',m:''},
+  {c:'HBJB001',l:'Évacuation d’abcès parodontal',cat:'Chirurgie',m:'F'},
+  {c:'LCJA003',l:'Évacuation de collection périmaxillaire ou périmandibulaire, par abord intrabuccal',cat:'Chirurgie',m:'FU'},
   {c:'HBFD010',l:'Parage de plaie de la pulpe d’une dent avec coiffage',cat:'Soins',m:''},
   {c:'HBFD006',l:'Biopulpotomie d’une dent temporaire',cat:'Endodontie',m:'FU'},
-  {c:'HBQK389',l:'Radiographie rétroalvéolaire d’un secteur de 1 à 3 dents contiguës',cat:'Radiologie',m:'EFU'},
-  {c:'HBQK191',l:'Radiographies rétroalvéolaires de 2 secteurs distincts de 1 à 3 dents contiguës',cat:'Radiologie',m:'EFU'},
   {c:'HBQK002',l:'Radiographie panoramique dentomaxillaire',cat:'Radiologie',m:'EFU'},
   {c:'HBQK001',l:'Radiographie pelvibuccale (occlusale)',cat:'Radiologie',m:'EFU'},
   {c:'HBJD001',l:'Détartrage et polissage des dents',cat:'Parodontologie',m:''},
@@ -516,12 +540,33 @@ const ACTES = [
 const LIB = {};
 ACTES.forEach(a=>LIB[a.c]=a);
 Object.entries(AVULSIONS).forEach(([n,c])=>LIB[c]={c,l:`Avulsion de ${n} dent${n>1?'s':''} permanente${n>1?'s':''} sur arcade sans alvéolectomie`,cat:'Chirurgie',m:'FU'});
+Object.entries(RADIOS).forEach(([n,c])=>LIB[c]={c,l: n==1 ? 'Radiographie rétroalvéolaire d’un secteur de 1 à 3 dents contiguës' : `Radiographies rétroalvéolaires de ${n} secteurs distincts de 1 à 3 dents contiguës`,cat:'Radiologie',m:'EFU'});
 const SECT = {ic:'incisivocanin', pm:'prémolomolaire'};
 Object.entries(RESTAU).forEach(([s,o])=>Object.entries(o).forEach(([f,c])=>LIB[c]={c,l:`Restauration d’une dent du secteur ${SECT[s]} sur ${f==3?'3 faces ou plus':f+' face'+(f>1?'s':'')}, matériau en phase plastique`,cat:'Soins',m:'N'}));
 const DENTS = {ic:'d’une incisive ou canine permanente', pm1:'d’une 1re prémolaire maxillaire', pm:'d’une prémolaire (autre que 1re max.)', m:'d’une molaire permanente'};
 Object.entries(ENDO).forEach(([d,o])=>Object.entries(o).forEach(([v,c])=>{ if(c) LIB[c]={c,l:`${v==='v'?'Exérèse de la pulpe vivante':'Exérèse du contenu canalaire non vivant'} ${DENTS[d]}`,cat:'Endodontie',m:'FNU'}; }));
 
-let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:6, sect:'pm', faces:2, dent:'m', vital:'v'};
+const euro = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €';
+
+let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:6, nRx:1, sect:'pm', faces:2, dent:'m', vital:'v', mods:new Set()};
+
+/* Calcul du panier : actes cumulés à taux plein (dérogation bucco-dentaire),
+   N et E en pourcentage sur chaque acte éligible,
+   F ou U (exclusifs) une seule fois par séance, sur le premier acte éligible. */
+function calcul(){
+  const urg = ['F','U'].find(m=>C.mods.has(m));
+  let urgPose = false;
+  const lignes = C.panier.map(p=>{
+    const a = LIB[p.c], base = PRIX[p.c] ?? 0, mods=[];
+    let montant = base;
+    ['N','E'].forEach(m=>{ if(C.mods.has(m) && a.m.includes(m)){ montant += base*MODS[m].pct; mods.push(m);} });
+    if(urg && !urgPose && a.m.includes(urg)){ montant += MODS[urg].fixe; mods.push(urg); urgPose=true; }
+    montant = Math.round(montant*100)/100;
+    return {c:p.c, l:a.l, base, mods, montant};
+  });
+  const total = Math.round(lignes.reduce((s,x)=>s+x.montant,0)*100)/100;
+  return {lignes, total};
+}
 
 function vCode(){
   const q=C.q.trim().toLowerCase();
@@ -534,7 +579,8 @@ function vCode(){
     ${q?'':`<div class="cats" role="tablist">${CATS.map(c=>`<button class="cat" aria-pressed="${c===C.cat}" data-c="${c}">${c}</button>`).join('')}</div>`}
     ${q?'':outilsCategorie()}
     <div id="liste">${liste.map(carteActe).join('') || `<p class="sous" style="margin-top:20px">Aucun acte trouvé. Décris-le à l'assistant, il cherchera pour toi.</p><button class="btn ia" style="margin-top:12px;width:100%" id="versIA">Demander à l'assistant</button>`}</div>
-    <div style="height:${C.panier.length?140:20}px"></div>
+    <p class="sous" style="font-size:.8rem;margin-top:16px">Tarifs : base de remboursement CCAM V84 (31/07/2026), tarifs opposables en métropole.</p>
+    <div style="height:${C.panier.length?150:20}px"></div>
   </div>${panierHTML()}`;
   const qi=$('#q'); qi.oninput=()=>{C.q=qi.value; const p=qi.selectionStart; vCode(); const n=$('#q'); n.focus(); n.setSelectionRange(p,p);};
   app.querySelectorAll('.cat').forEach(b=>b.onclick=()=>{C.cat=b.dataset.c;vCode()});
@@ -543,51 +589,63 @@ function vCode(){
   app.querySelectorAll('.acte').forEach(b=>b.onclick=()=>basculer(b.dataset.c));
 }
 function rechercheNombre(q,a){ const m=q.match(/(\d+)\s*dent/); return m && a.l.toLowerCase().startsWith(`avulsion de ${m[1]} dent`); }
-function carteActe(a){ const dans=C.panier.some(p=>p.c===a.c); return `<button class="acte ${dans?'dans':''}" data-c="${a.c}"><span><span class="code">${a.c}</span><span class="lib" style="display:block">${a.l}</span></span><span class="plus">${dans?'✓':'+'}</span></button>`; }
+function prixHTML(c){ return PRIX[c]!=null ? `<span class="prix">${euro(PRIX[c])}</span>` : ''; }
+function carteActe(a){ const dans=C.panier.some(p=>p.c===a.c); return `<button class="acte ${dans?'dans':''}" data-c="${a.c}"><span><span class="code">${a.c}</span>${prixHTML(a.c)}<span class="lib" style="display:block">${a.l}</span></span><span class="plus">${dans?'✓':'+'}</span></button>`; }
+function resultat(c, vide){
+  return `<div class="resultat-code"><span><span class="code">${c||'—'}</span>${c?` <span class="prix fort">${euro(PRIX[c])}</span>`:''}<small>${c?LIB[c].l:vide}</small></span>${c?`<button class="mini" data-ajout="${c}">Ajouter</button>`:''}</div>`;
+}
+function stepper(id, val, label){
+  return `<div class="rangee"><span class="sous">${label}</span><div class="stepper"><button data-step="${id}" data-d="-1" aria-label="Moins">−</button><output>${val}</output><button data-step="${id}" data-d="1" aria-label="Plus">+</button></div></div>`;
+}
 
 function outilsCategorie(){
   if(C.cat==='Chirurgie'){
-    const c=AVULSIONS[C.nAv];
-    return `<div class="compteur"><h3>Avulsions de dents permanentes</h3><p class="sous" style="font-size:.88rem">Sur arcade, sans alvéolectomie. Choisis le nombre de dents.</p>
-      <div class="rangee"><span class="sous">Nombre de dents</span><div class="stepper"><button id="moins" aria-label="Une dent de moins">−</button><output id="nAv">${C.nAv}</output><button id="plus" aria-label="Une dent de plus">+</button></div></div>
-      <div class="resultat-code"><span><span class="code">${c||'—'}</span><small>${c?LIB[c].l:'Au-delà de 11 dents : code à ajouter à la base'}</small></span>${c?`<button class="mini" data-ajout="${c}">Ajouter</button>`:''}</div></div>`;
+    return `<div class="compteur"><h3>Avulsions de dents permanentes</h3><p class="sous" style="font-size:.88rem">Sur arcade, sans alvéolectomie, dans la même séance.</p>
+      ${stepper('nAv', C.nAv, 'Nombre de dents')}
+      ${resultat(AVULSIONS[C.nAv], 'Au-delà de 16 dents : code à ajouter à la base')}</div>`;
+  }
+  if(C.cat==='Radiologie'){
+    return `<div class="compteur"><h3>Radios rétroalvéolaires</h3><p class="sous" style="font-size:.88rem">Un secteur = 1 à 3 dents contiguës.</p>
+      ${stepper('nRx', C.nRx, 'Nombre de secteurs')}
+      ${resultat(RADIOS[C.nRx], '')}</div>`;
   }
   if(C.cat==='Soins'){
-    const c=RESTAU[C.sect][C.faces];
     return `<div class="compteur"><h3>Restauration en phase plastique</h3><p class="sous" style="font-size:.88rem">Composite ou amalgame, sans ancrage radiculaire.</p>
       <div class="seg" data-k="sect">${[['ic','Incisivo-canin'],['pm','Prémolo-molaire']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.sect===v}">${t}</button>`).join('')}</div>
       <div class="seg" data-k="faces">${[[1,'1 face'],[2,'2 faces'],[3,'3 faces ou +']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.faces==v}">${t}</button>`).join('')}</div>
-      <div class="resultat-code"><span><span class="code">${c}</span><small>${LIB[c].l}</small></span><button class="mini" data-ajout="${c}">Ajouter</button></div></div>`;
+      ${resultat(RESTAU[C.sect][C.faces])}</div>`;
   }
   if(C.cat==='Endodontie'){
-    const c=ENDO[C.dent][C.vital];
     return `<div class="compteur"><h3>Traitement endodontique</h3>
       <div class="seg" data-k="dent">${[['ic','Inc./canine'],['pm1','1re PM max.'],['pm','Prémolaire'],['m','Molaire']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.dent===v}">${t}</button>`).join('')}</div>
       <div class="seg" data-k="vital">${[['v','Pulpe vivante'],['n','Non vivante']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.vital===v}">${t}</button>`).join('')}</div>
-      <div class="resultat-code"><span><span class="code">${c||'—'}</span><small>${c?LIB[c].l:'Code à ajouter à la base'}</small></span>${c?`<button class="mini" data-ajout="${c}">Ajouter</button>`:''}</div></div>`;
+      ${resultat(ENDO[C.dent][C.vital], 'Code à ajouter à la base')}</div>`;
   }
   return '';
 }
 function brancherOutils(){
-  if($('#moins')){ $('#moins').onclick=()=>{C.nAv=Math.max(1,C.nAv-1);vCode()}; $('#plus').onclick=()=>{C.nAv=Math.min(12,C.nAv+1);vCode()}; }
+  const max={nAv:16,nRx:14};
+  app.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{const k=b.dataset.step; C[k]=Math.min(max[k],Math.max(1,C[k]+Number(b.dataset.d))); vCode();});
   app.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=s.dataset.k; C[k]= k==='faces'?Number(b.dataset.v):b.dataset.v; vCode();}));
   app.querySelectorAll('[data-ajout]').forEach(b=>b.onclick=()=>{ if(!C.panier.some(p=>p.c===b.dataset.ajout)) basculer(b.dataset.ajout); else toast('Déjà dans la sélection'); });
 }
 function basculer(c){
   const i=C.panier.findIndex(p=>p.c===c);
-  if(i>=0) C.panier.splice(i,1); else { C.panier.push({c,mods:new Set()}); toast(c+' ajouté'); }
+  if(i>=0) C.panier.splice(i,1); else { C.panier.push({c}); toast(c+' ajouté'); }
   vCode();
 }
 function panierHTML(){
   if(!C.panier.length) return '';
-  const dispo = [...new Set(C.panier.flatMap(p=>[...(LIB[p.c].m||'')]))];
-  const actifs = new Set(C.panier.flatMap(p=>[...p.mods]));
+  const dispo = ['N','E','F','U'].filter(m=>C.panier.some(p=>(LIB[p.c].m||'').includes(m)));
+  const {lignes,total} = calcul();
   return `<div class="panier"><div class="in">
-    <button class="panier-tete" id="pt" aria-expanded="${C.ouvert}"><b>Sélection<span class="badge">${C.panier.length}</span></b><span>${C.ouvert?'Réduire':'Voir et copier'}</span></button>
+    <button class="panier-tete" id="pt" aria-expanded="${C.ouvert}"><b>Sélection<span class="badge">${C.panier.length}</span></b><span class="total-tete">${euro(total)}</span></button>
     ${C.ouvert?`<div class="panier-corps">
-      ${C.panier.map(p=>`<div class="p-acte"><span><span class="code">${p.c}</span>${p.mods.size?` <span class="mods">${[...p.mods].join('')}</span>`:''}<br><span style="color:#B9CDD3">${LIB[p.c].l}</span></span><button data-retire="${p.c}" aria-label="Retirer ${p.c}">×</button></div>`).join('')}
-      ${dispo.length?`<p class="mod-titre">Modificateurs possibles pour ces actes</p>${dispo.map(m=>`<div class="mod"><span><b>${m} · ${MODS[m].t}</b>${MODS[m].d?`<small>${MODS[m].d}</small>`:''}</span><button class="switch" role="switch" aria-checked="${actifs.has(m)}" data-m="${m}" aria-label="${MODS[m].t}"></button></div>`).join('')}`:''}
-    </div><button class="copier" id="copier">Copier les codes</button>`:''}
+      ${lignes.map(x=>`<div class="p-acte"><span><span class="code">${x.c}</span>${x.mods.length?` <span class="mods">${x.mods.join('')}</span>`:''}<br><span style="color:#B9CDD3">${x.l}</span></span><span class="p-droite"><b>${euro(x.montant)}</b>${x.montant!==x.base?`<small>base ${euro(x.base)}</small>`:''}<button data-retire="${x.c}" aria-label="Retirer ${x.c}">×</button></span></div>`).join('')}
+      ${dispo.length?`<p class="mod-titre">Modificateurs possibles pour ces actes</p>${dispo.map(m=>`<div class="mod"><span><b>${m} · ${MODS[m].t}</b><small>${MODS[m].d}</small></span><button class="switch" role="switch" aria-checked="${C.mods.has(m)}" data-m="${m}" aria-label="${MODS[m].t}"></button></div>`).join('')}`:''}
+    </div>
+    <div class="total"><span>Total de la séance<small>Actes cumulés à taux plein</small></span><b>${euro(total)}</b></div>
+    <button class="copier" id="copier">Copier les codes et le total</button>`:''}
   </div></div>`;
 }
 function brancherPanier(){
@@ -595,13 +653,15 @@ function brancherPanier(){
   $('#pt').onclick=()=>{C.ouvert=!C.ouvert;vCode()};
   app.querySelectorAll('[data-retire]').forEach(b=>b.onclick=()=>basculer(b.dataset.retire));
   app.querySelectorAll('.switch').forEach(s=>s.onclick=()=>{
-    const m=s.dataset.m, on=s.getAttribute('aria-checked')!=='true';
-    C.panier.forEach(p=>{ if((LIB[p.c].m||'').includes(m)){ on?p.mods.add(m):p.mods.delete(m); } });
+    const m=s.dataset.m;
+    if(C.mods.has(m)) C.mods.delete(m);
+    else { C.mods.add(m); if(m==='F') C.mods.delete('U'); if(m==='U') C.mods.delete('F'); }
     vCode();
   });
   if($('#copier')) $('#copier').onclick=()=>{
-    const txt=C.panier.map(p=>p.c+(p.mods.size?' '+[...p.mods].join(''):'')).join('\n');
-    navigator.clipboard?.writeText(txt).then(()=>toast('Codes copiés')).catch(()=>toast(txt.replace(/\n/g,' · ')));
+    const {lignes,total}=calcul();
+    const txt=lignes.map(x=>`${x.c}${x.mods.length?' '+x.mods.join(''):''} : ${euro(x.montant)}`).join('\n')+`\nTotal : ${euro(total)}`;
+    navigator.clipboard?.writeText(txt).then(()=>toast('Codes et total copiés')).catch(()=>toast('Copie impossible sur ce navigateur'));
   };
 }
 
