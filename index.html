@@ -353,7 +353,7 @@ const nouveauP = () => ({i:0, rep:{}, lignesOff:new Set(), sens:1});
 function etapes(){
   const r=P.rep, M=RECO.MOTIF[r.motif]||{}, L=[];
   L.push({id:'motif', titre:'Pour quel acte ou quelle affection ?', aide:'Une seule réponse.', type:'un', groupes:RECO.MOTIFS});
-  if(RECO.AVEC_EXTENSION.includes(r.motif)) L.push({id:'extension', titre:'Signes d’extension ?', aide:'Ils décident de l’antibiotique. Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options:RECO.EXTENSION});
+  if(RECO.AVEC_EXTENSION.includes(r.motif)) L.push({id:'extension', titre:'Signes d’extension ?', aide:'Ils décident de l’antibiotique. Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options: r.motif==='alveolite_suppuree' ? RECO.EXTENSION.filter(o=>o.v!=='suppuration') : RECO.EXTENSION});
   if(r.motif==='cellulite') L.push({id:'gravite', titre:'Signes de gravité ?', aide:'Un seul suffit pour adresser à l’hôpital.', type:'multi', aucun:'aucun', options:RECO.GRAVITE_CELLULITE});
   if(r.motif==='implant') L.push({id:'implant', titre:'Pose complexe ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucun', options:RECO.IMPLANT_FACTEURS});
   L.push({id:'profil', titre:'Qui est le patient ?', aide:'Une seule réponse.', type:'un', options:[
@@ -487,7 +487,7 @@ function vOrdo(){
   $('#raz').onclick=()=>{ P=nouveauP(); vPrescri(); };
   if($('#imprimer')) $('#imprimer').onclick=()=>{
     const lignes=O.lignes.filter(l=>!P.lignesOff.has(l.id));
-    const notes=[]; if((r.atcd||[]).includes('ei_haut') && lignes.some(l=>l.cat.startsWith('Antibioprophylaxie'))) notes.push('Délivrance à l’unité.');
+    const notes=[]; if(lignes.some(l=>l.cat.startsWith('Antibioprophylaxie'))) notes.push('Antibiotique à délivrer à l’unité.');
     genererOrdo(lignes, notes);
   };
 }
@@ -1018,7 +1018,7 @@ function intentionPrescription(texte){
   if(/\bcode|ccam|coter|cotation|tarif|prix|combien (ca|ça) (coute|rapporte)|modificateur/.test(t)) return false;
   if(/prescri|antibio|ordonnance|que (donner|mettre|faire)|quoi (donner|prescrire|faire)|faut-?il|dois-?je|je (peux|dois)|puis-?je|on peut|arret|stopp|suspend|antalg|antidouleur|ibuprof|paracetamol|amoxi|allergi|enceinte|grossesse|allait|bain de bouche|prophylax|risque|inr|conduite a tenir/.test(t)) return true;
   const rep=RECO.analyserQuestion(texte); const M=RECO.MOTIF[rep.motif];
-  if(rep.ttt.some(x=>x!=='aucun')) return true;
+  if(rep.ttt.some(x=>x!=='aucun') || rep.atcd.some(x=>x!=='aucun') || rep.allergies.some(x=>x!=='aucune') || ['enceinte','allaite'].includes(rep.profil)) return true;
   return !!M && !['Acte prévu'].includes(M.groupe) && !/\d+\s*dents?/.test(t);
 }
 function repondrePrescription(texte){
