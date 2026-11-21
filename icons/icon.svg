@@ -1,1 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#0E9384"/><g transform="translate(136 108) scale(13.3)" fill="#fff"><path d="M7 2.5c-2.6 0-4.3 2-4.3 4.8 0 2.4 1 3.8 1.6 6 .6 2.3.8 7.8 2.6 7.8 1.6 0 1.6-5.2 3.1-5.2s1.5 5.2 3.1 5.2c1.8 0 2-5.5 2.6-7.8.6-2.2 1.6-3.6 1.6-6 0-2.8-1.7-4.8-4.3-4.8-1.4 0-2 .8-3 .8s-1.6-.8-3-.8z"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="fond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2BD0B0"/>
+      <stop offset=".42" stop-color="#0E9384"/>
+      <stop offset="1" stop-color="#0A3556"/>
+    </linearGradient>
+    <radialGradient id="halo1" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#7FF5DD" stop-opacity=".55"/><stop offset="1" stop-color="#7FF5DD" stop-opacity="0"/></radialGradient>
+    <radialGradient id="halo2" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#062B45" stop-opacity=".6"/><stop offset="1" stop-color="#062B45" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ombre" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#04243A" stop-opacity=".5"/><stop offset="1" stop-color="#04243A" stop-opacity="0"/></radialGradient>
+    <linearGradient id="email" x1=".1" y1="0" x2=".7" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset=".55" stop-color="#EEF9F6"/>
+      <stop offset="1" stop-color="#B9E4DA"/>
+    </linearGradient>
+    <linearGradient id="reflet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse">
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="3" seed="11" stitchTiles="stitch" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.1 -0.45"/>
+    </filter>
+    <pattern id="lignes" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="1.2" height="10" fill="#FFFFFF" opacity=".06"/>
+    </pattern>
+    <clipPath id="carre"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#carre)">
+    <rect width="512" height="512" fill="url(#fond)"/>
+    <rect width="512" height="512" fill="url(#lignes)"/>
+    <circle cx="120" cy="90" r="260" fill="url(#halo1)"/>
+    <circle cx="450" cy="470" r="300" fill="url(#halo2)"/>
+    <rect width="512" height="512" filter="url(#grain)" opacity=".22"/>
+  </g>
+  <ellipse cx="256" cy="430" rx="120" ry="26" fill="url(#ombre)"/>
+  <g transform="translate(120 84) scale(15.2)">
+    <path fill="url(#email)" d="M7 2.5c-2.6 0-4.3 2-4.3 4.8 0 2.4 1 3.8 1.6 6 .6 2.3.8 7.8 2.6 7.8 1.6 0 1.6-5.2 3.1-5.2s1.5 5.2 3.1 5.2c1.8 0 2-5.5 2.6-7.8.6-2.2 1.6-3.6 1.6-6 0-2.8-1.7-4.8-4.3-4.8-1.4 0-2 .8-3 .8s-1.6-.8-3-.8z"/>
+    <path fill="url(#reflet)" opacity=".95" d="M5.4 4.3c-1.3.3-1.8 1.5-1.8 2.8 0 .55.65.7.85.15.35-.95.9-1.7 1.75-2.1.55-.3.25-1.1-.8-.85z"/>
+  </g>
+</svg>
