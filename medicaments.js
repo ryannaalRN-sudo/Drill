@@ -329,7 +329,7 @@ const BASE = [
 const LISTE = BASE.map(([dci,classe,tags,marques],i)=>({id:i, dci, classe, tags:new Set(tags.split(/\s+/).filter(Boolean)),
   mots:[N(dci).replace(/\(.*\)/,'').trim(), ...marques.split(',').map(m=>N(m).trim()).filter(Boolean)]}));
 // DCI génériques supplémentaires (dénominations courtes)
-const ALIAS = {'aspirine':'Aspirine (dose antiagrégante)','acide acetylsalicylique':'Aspirine (dose antiagrégante)','alendronique':'Alendronate','risedronique':'Risédronate','ibandronique':'Ibandronate','zoledronique':'Zolédronate (Aclasta)','denosumab':'Dénosumab (Prolia)','paracetamol':'Paracétamol','insuline':'Insuline','heparine':'Héparine calcique','budesonide':'Budésonide inhalé','fluticasone':'Fluticasone inhalée','beclometasone':'Béclométasone inhalée','valproique':'Valproate','acide valproique':'Valproate','divalproate':'Valproate','opium':'Opium + paracétamol','aflibercept':'Aflibercept (cancer)'};
+const ALIAS = {'aspirine':'Aspirine (dose antiagrégante)','acide acetylsalicylique':'Aspirine (dose antiagrégante)','alendronique':'Alendronate','risedronique':'Risédronate','ibandronique':'Ibandronate','zoledronique':'Zolédronate (Aclasta)','denosumab':'Dénosumab (Prolia)','paracetamol':'Paracétamol','insuline':'Insuline','heparine':'Héparine calcique','budesonide':'Budésonide inhalé','fluticasone':'Fluticasone inhalée','beclometasone':'Béclométasone inhalée','valproique':'Valproate','acide valproique':'Valproate','divalproate':'Valproate','opium':'Opium + paracétamol','aflibercept':'Aflibercept (cancer)','codeine':'Codéine + paracétamol','enoxaparine':'Énoxaparine','tinzaparine':'Tinzaparine','acide zoledronique':'Zolédronate (Aclasta)','lithium':'Lithium','acide mycophenolique':'Mycophénolate','mycophenolique':'Mycophénolate','methylprednisolone':'Méthylprednisolone','prednisolone':'Prednisolone'};
 const parNom = Object.fromEntries(LISTE.map(m=>[m.dci,m]));
 const echap = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
@@ -344,10 +344,46 @@ S.reconnaitre = function(texte){
   if(res.some(m=>m.dci.startsWith('Aspirine (dose antiagrégante)')) && /aspirine[^\n]{0,25}(500|1000|1 ?g)/.test(t)){
     res = res.filter(m=>m.dci!=='Aspirine (dose antiagrégante)'); if(!res.includes(parNom['Aspirine (dose antalgique)'])) res.push(parNom['Aspirine (dose antalgique)']);
   }
+  // Zolédronate 4 mg et dénosumab 120 mg = doses oncologiques
+  const swap=(de,vers,rx)=>{ if(res.some(m=>m.dci===de) && rx.test(t)){ res=res.filter(m=>m.dci!==de); if(!res.includes(parNom[vers])) res.push(parNom[vers]); } };
+  swap('Zolédronate (Aclasta)','Zolédronate (Zometa)',/zoledron[^\n]{0,40}\b4 ?mg/);
+  swap('Dénosumab (Prolia)','Dénosumab (Xgeva)',/denosumab[^\n]{0,40}\b120 ?mg|120 ?mg[^\n]{0,40}denosumab/);
   // Une spécialité combinée efface ses composants détectés par la DCI
   if(res.some(m=>m.dci==='Clopidogrel + aspirine')) res = res.filter(m=>!['Clopidogrel','Aspirine (dose antiagrégante)'].includes(m.dci));
   return res;
 };
+
+/* ---------- 2 bis. Toutes les spécialités françaises (BDPM, ANSM) ---------- */
+let BD = null;
+const cleTok = s => N(s).replace(/[^a-z0-9]+/g,' ').trim();
+S.chargerBDPM = async function(){
+  if(BD) return BD;
+  const j = await (await fetch('bdpm.json')).json();
+  const noms = new Map(); for(const [k,sub,cis] of j.noms) noms.set(cleTok(k), {nom:k, subs:sub?sub.split('|'):[], cis});
+  const dci = new Map(); for(const [d,cis] of j.dci) dci.set(cleTok(d), {nom:d, subs:[d], cis});
+  BD = {noms, dci, date:j.date}; return BD;
+};
+S.dateBDPM = () => BD ? BD.date : '';
+const MOTS_VIDES = new Set(['comprime','comprimes','gelule','gelules','sachet','sachets','matin','midi','soir','jour','fois','par','pendant','boite','cp','gel','creme','solution','sirop','suspension','injectable','collyre','pommade']);
+S.identifier = function(ligne){
+  const toks = cleTok(ligne).split(' ').filter(Boolean);
+  let spe = null;
+  if(BD){
+    for(let i=0; i<Math.min(2,toks.length) && !spe; i++){
+      for(let n=Math.min(5,toks.length-i); n>=1 && !spe; n--){
+        const k = toks.slice(i,i+n).join(' ');
+        if(/^\d/.test(k) || (n===1 && (k.length<4 || MOTS_VIDES.has(k)))) continue;
+        spe = BD.noms.get(k) || BD.dci.get(k) || null;
+      }
+    }
+    if(!spe){ // DCI citée n'importe où dans la ligne (ex. « acide folique 5 mg »)
+      for(let n=3; n>=1 && !spe; n--) for(let i=0; i+n<=toks.length && !spe; i++){ const k=toks.slice(i,i+n).join(' '); if(k.length>=5 && !MOTS_VIDES.has(k)) spe = BD.dci.get(k) || null; }
+    }
+  }
+  const meds = S.reconnaitre(ligne + (spe ? ' '+spe.nom+' '+spe.subs.join(' ') : ''));
+  return {spe, meds};
+};
+S.titre = s => s.toLowerCase().replace(/(^|[\s\-'’(])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
 
 /* ---------- 3. Ce que le dentiste peut prescrire ---------- */
 S.DENT = [
@@ -574,10 +610,11 @@ S.analyser = function(meds){
 };
 
 /* ---------- 6. Résumé texte (pour l'assistant IA) ---------- */
-S.resumer = function(meds, R, inconnus){
+S.resumer = function(meds, R, inconnus, specs){
   const strip = s => String(s).replace(/<[^>]+>/g,'');
   const l = [];
-  l.push('Traitement du patient reconnu par Drill : '+(meds.map(m=>`${m.dci} (${m.classe})`).join(' ; ')||'aucun')+'.');
+  if(specs && specs.length) l.push('Spécialités identifiées dans la base officielle (BDPM) : '+specs.map(x=>`${x.nom} (${x.subs.join(' + ')}${x.classe?' ; '+x.classe:''})`).join(' ; ')+'.');
+  l.push('Médicaments couverts par les règles d’interaction de Drill : '+(meds.map(m=>`${m.dci} (${m.classe})`).join(' ; ')||'aucun')+'.');
   if(inconnus.length) l.push('Lignes non reconnues par la base de Drill : '+inconnus.join(' ; ')+'.');
   R.terrain.forEach(t=>l.push(`Terrain — ${t.t} : ${strip(t.d)}`));
   R.presc.forEach(G=>G.items.filter(i=>i.niveau!=='OK').forEach(i=>l.push(`Si prescription de ${i.nom} : ${S.NIVEAU[i.niveau]} — ${i.raisons.map(r=>r.txt+' ['+r.meds.join(', ')+']').join(' ')}`)));

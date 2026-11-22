@@ -304,6 +304,10 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .ia-bulle{background:var(--ia-pale);max-width:100%}
 .lien-scan{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;border-radius:999px;background:var(--lagon-pale);color:#065E54;font-weight:700;font-size:.88rem}
 .lien-scan svg{width:18px;height:18px}
+.mm-c>summary,div.mm-c{align-items:flex-start}
+.mm{display:grid;gap:2px;min-width:0}
+.mm small{font-weight:400;color:var(--encre-2);font-size:.84rem;line-height:1.35}
+.rcp{display:block;font-weight:400;white-space:pre-line;margin-top:2px}
 </style>
 </head>
 <body>
@@ -1177,11 +1181,12 @@ async function envoyer(t){
    Scanner : ordonnance du patient → interactions, terrain, précautions
    (règles dans medicaments.js ; la photo n'est jamais conservée)
 --------------------------------------------------------- */
-const nouveauSC = () => ({etape:'debut', image:null, cadre:{x:.04,y:.22,w:.92,h:.5}, lignes:[], R:null, meds:[], inconnus:[], ia:'', iaAttente:false, lecture:false, erreur:'', depuisPrescri:false});
+const nouveauSC = () => ({etape:'debut', image:null, cadre:{x:.04,y:.22,w:.92,h:.5}, lignes:[], R:null, meds:[], specs:[], fiches:{}, fichesEtat:'', inconnus:[], ia:'', iaAttente:false, lecture:false, erreur:'', depuisPrescri:false});
 let SC = nouveauSC();
 const ICO_SCAN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 9h6M9 12h6M9 15h3"/></svg>';
 
 function vScan(){
+  if(!MEDS.dateBDPM()) MEDS.chargerBDPM().then(()=>{ if(vue==='scan' && SC.etape==='liste') vScanListe(); }).catch(e=>console.warn('Base médicaments indisponible',e));
   if(SC.etape==='cadrage') return vScanCadrage();
   if(SC.etape==='liste') return vScanListe();
   if(SC.etape==='resultat') return vScanResultat();
@@ -1271,9 +1276,11 @@ async function lirePhoto(){
 }
 
 function vScanListe(){
-  const items=SC.lignes.map((l,i)=>{ const m=MEDS.reconnaitre(l);
+  const items=SC.lignes.map((l,i)=>{ const {spe, meds:m}=MEDS.identifier(l);
+    const info = spe ? `${esc(MEDS.titre(spe.nom))} · ${esc(spe.subs.join(' + ')||'composition non précisée')}${m.length?'<br>'+m.map(x=>esc(x.classe)).filter((v,j,a)=>a.indexOf(v)===j).join(' · '):''}`
+               : m.length ? m.map(x=>esc(x.dci)+' · '+esc(x.classe)).join('<br>') : '';
     return `<div class="med-ligne"><div class="med-txt"><input value="${esc(l)}" data-i="${i}" class="med-edit" aria-label="Médicament ${i+1}">
-      ${m.length?`<small class="ok">${m.map(x=>esc(x.dci)+' · '+esc(x.classe)).join('<br>')}</small>`:`<small class="ko">Non reconnu : vérifie l’orthographe ou garde-le, l’assistant le commentera</small>`}</div>
+      ${info?`<small class="ok">${info}</small>`:`<small class="ko">${MEDS.dateBDPM()?'Non trouvé dans la base officielle : vérifie l’orthographe (ou complément alimentaire)':'Chargement de la base des médicaments…'}</small>`}</div>
       <button class="suppr" data-s="${i}" aria-label="Retirer">×</button></div>`; }).join('');
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="ret">${ICO.retour}Retour</button><button class="retour" id="raz" style="padding-left:12px">Effacer</button></header>
@@ -1294,12 +1301,42 @@ function vScanListe(){
   $('#raz').onclick=()=>{ const d=SC.depuisPrescri; SC=nouveauSC(); SC.depuisPrescri=d; SC.etape='liste'; vScan(); };
   $('#analyser').onclick=()=>{
     const pend=$('#ajout').value.trim(); if(pend) SC.lignes.push(...pend.split('\n').map(x=>x.trim()).filter(Boolean));
-    const vus=new Map(); SC.inconnus=[];
-    SC.lignes.forEach(l=>{ const m=MEDS.reconnaitre(l); if(!m.length) SC.inconnus.push(l); m.forEach(x=>vus.set(x.dci,x)); });
-    SC.meds=[...vus.values()]; SC.R=MEDS.analyser(SC.meds); SC.ia=''; SC.etape='resultat'; vScan();
+    const vus=new Map(); SC.inconnus=[]; SC.specs=[];
+    SC.lignes.forEach(l=>{ const {spe, meds:m}=MEDS.identifier(l);
+      if(!spe && !m.length) SC.inconnus.push(l);
+      m.forEach(x=>vus.set(x.dci,x));
+      SC.specs.push({ligne:l, nom:spe?MEDS.titre(spe.nom):(m[0]?.dci||l), subs:spe?spe.subs:m.map(x=>x.dci), cis:spe?.cis||'', classeLocale:[...new Set(m.map(x=>x.classe))].join(' · '), connu:!!(spe||m.length)});
+    });
+    SC.meds=[...vus.values()]; SC.R=MEDS.analyser(SC.meds); SC.ia=''; SC.fiches={}; SC.fichesEtat=''; SC.etape='resultat'; vScan(); chargerFiches();
   };
 }
 
+function htmlMesMeds(){
+  return SC.specs.map(x=>{
+    const f = x.cis ? SC.fiches[x.cis] : null;
+    const classe = f?.classe ? f.classe.toLowerCase().replace(/^./,c=>c.toUpperCase()) : x.classeLocale;
+    const etat = !x.connu ? '<span class="niv asdec">Non trouvé</span>' : (x.cis && !f && SC.fichesEtat==='charge') ? '<span class="niv apec">…</span>' : '';
+    const sous = x.connu ? `<small>${esc(x.subs.join(' + '))}${classe?' · '+esc(classe):''}${f?.atc?' <span class="src">ATC '+esc(f.atc)+'</span>':''}</small>` : `<small>Vérifie l’orthographe, ou c’est un complément alimentaire. L’assistant peut le commenter.</small>`;
+    const corps = [];
+    if(f?.indications) corps.push(`<li><b>Indications</b><span class="rcp">${esc(f.indications)}</span></li>`);
+    if(f?.contreIndications) corps.push(`<li><b>Contre-indications</b><span class="rcp">${esc(f.contreIndications)}</span></li>`);
+    if(x.cis && SC.fichesEtat==='erreur' && !f) corps.push(`<li>Fiche officielle indisponible pour le moment.</li>`);
+    if(x.cis) corps.push(`<li><a class="vidal" href="https://base-donnees-publique.medicaments.gouv.fr/medicament/${x.cis}/extrait" target="_blank" rel="noopener">RCP complet (base publique ANSM) ↗</a></li>`);
+    const tete = `<span class="mm"><span>${esc(x.nom)}</span>${sous}</span>${etat}`;
+    return corps.length ? `<details class="pr mm-c"><summary>${tete}</summary><ul>${corps.join('')}</ul></details>` : `<div class="pr mm-c">${tete}</div>`;
+  }).join('');
+}
+async function chargerFiches(){
+  const cis=[...new Set(SC.specs.map(x=>x.cis).filter(Boolean))]; if(!cis.length) return;
+  SC.fichesEtat='charge'; const maj=()=>{ const z=$('#mesMeds'); if(z && vue==='scan' && SC.etape==='resultat') z.innerHTML=htmlMesMeds(); };
+  maj();
+  try{
+    const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'fiche', cis})});
+    const j=await r.json(); if(!j.fiches) throw new Error('réponse inattendue');
+    j.fiches.forEach(f=>{ if(!f.erreur) SC.fiches[f.cis]=f; }); SC.fichesEtat='ok';
+  }catch(e){ console.warn('Fiches indisponibles',e); SC.fichesEtat='erreur'; }
+  maj();
+}
 const PASTILLE = {OK:['ok','Compatible'], APEC:['apec','À prendre en compte'], PE:['pe','Précaution'], ASDEC:['asdec','Déconseillé'], CI:['ci','Contre-indiqué']};
 function vScanResultat(){
   const R=SC.R, src=s=>s?` <span class="src">${esc(s)}</span>`:'';
@@ -1316,8 +1353,9 @@ function vScanResultat(){
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="ret">${ICO.retour}Modifier la liste</button><button class="retour" id="raz" style="padding-left:12px">Nouveau scan</button></header>
     <h2 style="margin-top:6px">Ce que ce traitement change pour toi</h2>
-    <div class="chips">${SC.meds.map(m=>`<span class="chip" title="${esc(m.classe)}">${esc(m.dci)}</span>`).join('')}${SC.inconnus.map(l=>`<span class="chip ko">${esc(l)}</span>`).join('')}</div>
-    ${SC.inconnus.length?`<p class="sous" style="font-size:.88rem;margin-top:6px">${SC.inconnus.length} ligne${SC.inconnus.length>1?'s':''} non reconnue${SC.inconnus.length>1?'s':''} (en rouge) : vérifie-les sur le Vidal ou demande à l’assistant.</p>`:''}
+    <p class="bloc-titre">Ses médicaments</p>
+    <p class="sous" style="font-size:.88rem">Classe, indications et contre-indications tirées du RCP officiel. Touche un médicament.</p>
+    <div id="mesMeds" class="presc" style="margin-top:8px">${htmlMesMeds()}</div>
     ${R.aDemander.length?`<div class="alerte info">${ICO.info}<div><b>À demander au patient</b>${esc(R.aDemander.join(' · '))}</div></div>`:''}
     <p class="bloc-titre">Avant un geste</p>
     ${terrain || `<p class="sous">Rien de particulier repéré dans ce traitement.</p>`}
@@ -1327,7 +1365,7 @@ function vScanResultat(){
     ${bouche?`<p class="bloc-titre">En bouche</p><ul class="gestes bouche">${bouche}</ul>`:''}
     <p class="bloc-titre">Assistant</p>
     <div id="iaZone">${SC.ia?`<div class="bulle ia-bulle">${SC.ia}</div>`:`<button class="btn ia" id="demIA" style="width:100%">${SC.iaAttente?'<span class="roue"></span>L’assistant réfléchit…':'Demander une synthèse à l’assistant'}</button>`}</div>
-    <p class="demo">Interactions : thésaurus ANSM (version du 15/09/2023, la dernière publiée) et RCP. Terrain : HAS 2026, SFCO 2015. L’analyse ne couvre que les médicaments reconnus ; elle ne remplace ni le Vidal ni l’avis du prescripteur.</p>
+    <p class="demo">Médicaments : base de données publique des médicaments (ANSM, ${MEDS.dateBDPM()||'2026'}) et RCP officiels. Interactions : thésaurus ANSM (15/09/2023, dernière version publiée) et RCP. Terrain : HAS 2026, SFCO 2015. Ne remplace ni le Vidal ni l’avis du prescripteur.</p>
     <div style="height:90px"></div>
   </div>
   <div class="barre-action"><div class="in"><button class="btn" id="versP">${SC.depuisPrescri?'Reporter dans Prescri’Dent':'Préparer l’ordonnance'}</button></div></div>`;
@@ -1345,7 +1383,7 @@ function vScanResultat(){
     if(SC.iaAttente) return; SC.iaAttente=true; vScanResultat();
     let html='';
     try{
-      const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'ordo', question:'Analyse ce traitement pour un geste ou une prescription dentaire.', contexte:MEDS.resumer(SC.meds,R,SC.inconnus)})});
+      const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'ordo', question:'Analyse ce traitement pour un geste ou une prescription dentaire.', contexte:MEDS.resumer(SC.meds,R,SC.inconnus,SC.specs.filter(x=>x.connu).map(x=>({nom:x.nom, subs:x.subs, classe:SC.fiches[x.cis]?.classe||x.classeLocale})))})});
       const j=await r.json();
       html = j.reponse ? `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>` : '<p>L’assistant n’a pas répondu. Réessaie dans un instant.</p>';
     }catch(e){ html='<p>Assistant indisponible pour le moment. L’analyse ci-dessus reste valable.</p>'; }

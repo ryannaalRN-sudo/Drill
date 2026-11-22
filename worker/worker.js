@@ -4,6 +4,8 @@
  *  - par défaut : question + ce que le moteur de Drill a trouvé (CCAM ou prescription) → { reponse }
  *  - mode "lecture" : photo recadrée d'une ordonnance → { medicaments: [{nom, dosage, posologie}] }
  *  - mode "ordo" : synthèse de l'analyse d'un traitement faite par Drill → { reponse }
+ *  - mode "fiche" : classe, indications et contre-indications lues dans le RCP officiel
+ *    (base de données publique des médicaments, ANSM) → { fiches: [...] } — sans IA
  * Rien n'est stocké. La photo n'est transmise qu'à Gemini pour la lecture.
  * La clé Gemini reste secrète ici (variable GEMINI_API_KEY), jamais dans l'app.
  */
@@ -73,6 +75,48 @@ async function gemini(env, corps) {
   return derniere;
 }
 
+
+/* ---------- Fiches officielles (RCP de la base publique des médicaments) ---------- */
+const BDPM = cis => `https://base-donnees-publique.medicaments.gouv.fr/medicament/${cis}/extrait`;
+const ENTITES = { nbsp:' ', amp:'&', lt:'<', gt:'>', quot:'"', apos:"'", rsquo:'’', lsquo:'‘', laquo:'«', raquo:'»', hellip:'…', ndash:'–', mdash:'—', deg:'°', micro:'µ', oelig:'œ', eacute:'é', egrave:'è', ecirc:'ê', euml:'ë', agrave:'à', acirc:'â', ccedil:'ç', icirc:'î', iuml:'ï', ocirc:'ô', ucirc:'û', ugrave:'ù', Eacute:'É', Agrave:'À', times:'×', le:'≤', ge:'≥', middot:'·', bull:'•' };
+function texteDe(html) {
+  return html
+    .replace(/<(script|style|noscript)[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<br\s*\/?>|<\/(p|li|h\d|div|tr|td|th|ul|ol|section)>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(+d))
+    .replace(/&([a-z]+);/gi, (m, e) => ENTITES[e] ?? m)
+    .replace(/[ \t\u00a0]+/g, ' ')
+    .replace(/ *\n[ \n]*/g, '\n')
+    .trim();
+}
+function section(t, debut, fin) {
+  let meilleur = '';
+  for (const m of t.matchAll(new RegExp(debut + '([\\s\\S]*?)(?=' + fin + ')', 'gi'))) if (m[1].length > meilleur.length) meilleur = m[1];
+  return meilleur.trim();
+}
+const couper = (s, n) => s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s;
+async function fiche(cis) {
+  const cache = caches.default, cle = new Request('https://drill-cache.local/fiche/' + cis);
+  const deja = await cache.match(cle);
+  if (deja) return deja.json();
+  let f = { cis, url: BDPM(cis) };
+  try {
+    const r = await fetch(BDPM(cis), { headers: { 'User-Agent': 'Drill (outil clinique etudiant)', 'Accept-Language': 'fr' } });
+    if (!r.ok) return { ...f, erreur: r.status };
+    const t = texteDe(await r.text());
+    const cl = t.match(/Classe pharmacoth[ée]rapeutique\s*:?\s*([^\n]*?)\s*[,;.\-–]?\s*code ATC\s*:?\s*([A-Z]\d{2}[A-Z0-9]{0,4})/i)
+            || t.match(/Classe pharmacoth[ée]rapeutique\s*:?\s*([^\n]{3,200})/i);
+    f.classe = cl ? cl[1].replace(/[\s,;:–-]+$/, '').trim() : '';
+    f.atc = cl && cl[2] ? cl[2] : (t.match(/code ATC\s*:?\s*([A-Z]\d{2}[A-Z0-9]{0,4})/i) || [])[1] || '';
+    f.indications = couper(section(t, '4\\.1\\.?\\s*Indications th[ée]rapeutiques', '4\\.2\\.?\\s*Posologie'), 900);
+    f.contreIndications = couper(section(t, '4\\.3\\.?\\s*Contre-?\\s?indications', '4\\.4\\.?\\s*Mises en garde'), 900);
+    await cache.put(cle, new Response(JSON.stringify(f), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=604800' } }));
+  } catch (e) { f.erreur = 'lecture'; }
+  return f;
+}
+
 export default {
   async fetch(request, env) {
     const origine = env.ALLOWED_ORIGIN || 'https://ryannaalrn-sudo.github.io';
@@ -86,6 +130,13 @@ export default {
 
     let corps;
     try { corps = await request.json(); } catch { return json({ erreur: 'JSON invalide' }, 400, cors); }
+    // --- Fiches officielles : aucune IA, lecture du RCP sur la base publique (ANSM) ---
+    if (corps.mode === 'fiche') {
+      const liste = (Array.isArray(corps.cis) ? corps.cis : []).map(String).filter(c => /^\d{8}$/.test(c)).slice(0, 15);
+      const fiches = await Promise.all(liste.map(fiche));
+      return json({ fiches }, 200, cors);
+    }
+
     // --- Lecture d'une photo d'ordonnance ---
     if (corps.mode === 'lecture') {
       const image = String(corps.image || '');
