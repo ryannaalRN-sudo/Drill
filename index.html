@@ -238,13 +238,13 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 
 /* ---------- barre d'onglets ---------- */
 .onglets{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--trait);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:5}
-.onglets .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.onglets .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
 .onglet{display:grid;justify-items:center;gap:3px;padding:6px 0;font-size:.72rem;font-weight:700;color:var(--encre-2)}
 .onglet svg{width:24px;height:24px}
 .onglet[aria-current="page"]{color:var(--lagon)}
 .onglet.ia[aria-current="page"]{color:var(--ia)}
 
-.toast{position:fixed;left:50%;top:18px;transform:translate(-50%,-140%);background:var(--encre);color:#fff;padding:12px 18px;border-radius:999px;font-weight:700;font-size:.9rem;transition:transform .35s cubic-bezier(.3,1.4,.5,1);z-index:20}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,calc(-100% - 60px));background:var(--encre);color:#fff;padding:12px 18px;border-radius:999px;font-weight:700;font-size:.9rem;transition:transform .35s cubic-bezier(.3,1.4,.5,1);z-index:20}
 .toast.vu{transform:translate(-50%,0)}
 .vue{animation:entree .28s ease-out}
 @keyframes entree{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -262,6 +262,48 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
   #ordo .med{font-weight:700;margin-top:6mm}
   #ordo .signature{margin-top:24mm;margin-left:55%;border-top:.5pt solid #999;padding-top:2mm;font-size:9pt;color:#555}
 }
+/* ---------- scanner ---------- */
+.scan-choix{cursor:pointer}
+.zone-photo{position:relative;margin-top:14px;border-radius:var(--r-m);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;background:#000}
+.zone-photo img{display:block;width:100%;height:auto;pointer-events:none}
+.cadre{position:absolute;border:2.5px solid #fff;border-radius:10px;box-shadow:0 0 0 9999px rgba(10,28,36,.62);cursor:move}
+.poignee{position:absolute;width:30px;height:30px;border-radius:50%;background:var(--lagon);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.poignee[data-c="nw"]{left:-15px;top:-15px}.poignee[data-c="ne"]{right:-15px;top:-15px}
+.poignee[data-c="sw"]{left:-15px;bottom:-15px}.poignee[data-c="se"]{right:-15px;bottom:-15px}
+.roue{display:inline-block;width:16px;height:16px;margin-right:8px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;vertical-align:-3px;animation:tourne .8s linear infinite}
+@keyframes tourne{to{transform:rotate(360deg)}}
+.med-liste{display:grid;gap:10px;margin-top:14px}
+.med-ligne{display:flex;gap:10px;align-items:flex-start;padding:12px 12px 12px 14px;border-radius:var(--r-m);background:var(--carte);border:1.5px solid var(--trait)}
+.med-txt{flex:1;min-width:0}
+.med-edit{width:100%;border:0;background:none;font-weight:700;padding:2px 0;font-size:16px}
+.med-edit:focus{outline:none;border-bottom:1.5px solid var(--lagon)}
+.med-ligne small{display:block;font-size:.82rem;line-height:1.35;margin-top:2px}
+.med-ligne small.ok{color:#065E54}.med-ligne small.ko{color:#8E1F31}
+.suppr{flex:none;width:32px;height:32px;border-radius:50%;background:var(--email);color:var(--encre-2);font-size:1.2rem;font-weight:700}
+.ajout-med{display:flex;gap:8px;align-items:flex-end;margin-top:12px;padding:8px 8px 8px 14px;border-radius:var(--r-m);border:1.5px dashed var(--trait);background:var(--carte)}
+.ajout-med textarea{flex:1;border:0;background:none;resize:none;font:inherit;font-size:16px;padding:6px 0;min-height:34px}
+.ajout-med textarea:focus{outline:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{padding:5px 11px;border-radius:999px;background:var(--lagon-pale);color:#065E54;font-weight:700;font-size:.82rem}
+.chip.ko{background:var(--gencive-pale);color:#8E1F31}
+.presc{display:grid;gap:8px;margin-top:6px}
+.pr{border-radius:var(--r-m);background:var(--carte);border:1.5px solid var(--trait)}
+.pr>summary,div.pr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;font-weight:700;font-size:.93rem;list-style:none;cursor:pointer}
+.pr>summary::-webkit-details-marker{display:none}
+.pr.ci,.pr.asdec{border-color:#F4B6C1}.pr.pe{border-color:#F0D29E}
+.pr ul{list-style:none;padding:0 14px 12px;display:grid;gap:8px;font-size:.88rem}
+.pr li{padding-top:8px;border-top:1px solid var(--trait)}
+.niv{flex:none;padding:3px 9px;border-radius:999px;font-size:.74rem;font-weight:800;white-space:nowrap}
+.niv.ok{background:var(--lagon-pale);color:#065E54}
+.niv.apec{background:#E8EEF0;color:var(--encre-2)}
+.niv.pe{background:var(--ambre-pale);color:#7A4A05}
+.niv.asdec{background:var(--gencive-pale);color:#8E1F31}
+.niv.ci{background:var(--gencive);color:#fff}
+.bouche li{background:var(--carte);border:1px solid var(--trait);color:var(--encre)}
+.bouche li b{display:block}
+.ia-bulle{background:var(--ia-pale);max-width:100%}
+.lien-scan{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;border-radius:999px;background:var(--lagon-pale);color:#065E54;font-weight:700;font-size:.88rem}
+.lien-scan svg{width:18px;height:18px}
 </style>
 </head>
 <body>
@@ -271,6 +313,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 <nav class="onglets" aria-label="Navigation principale"><div class="in">
   <button class="onglet" data-vue="accueil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
   <button class="onglet" data-vue="prescri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg>Prescrire</button>
+  <button class="onglet" data-vue="scan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 9h6M9 12h6M9 15h3"/></svg>Scanner</button>
   <button class="onglet" data-vue="code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>Coder</button>
   <button class="onglet ia" data-vue="ia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg>Assistant</button>
 </div></nav>
@@ -279,6 +322,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="recos.js"></script>
+<script src="medicaments.js"></script>
 <script>
 /* =========================================================
    Drill — prototype
@@ -312,7 +356,7 @@ let vue = 'accueil';
 function aller(v){
   vue = v;
   document.querySelectorAll('.onglet').forEach(b=>b.setAttribute('aria-current', b.dataset.vue===v ? 'page':'false'));
-  ({accueil:vAccueil, prescri:vPrescri, code:vCode, ia:vIA})[v]();
+  ({accueil:vAccueil, prescri:vPrescri, scan:vScan, code:vCode, ia:vIA})[v]();
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.onglet').forEach(b=>b.onclick=()=>aller(b.dataset.vue));
@@ -333,6 +377,10 @@ function vAccueil(){
       <button class="outil" data-go="prescri">
         <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg></span>
         <span><h3>Prescri'Dent</h3><p>Profil du patient, alertes et ordonnance prête à imprimer</p></span><span class="fl">${ICO.fleche}</span>
+      </button>
+      <button class="outil" data-go="scan">
+        <span class="ico l">${ICO_SCAN}</span>
+        <span><h3>Scanner une ordonnance</h3><p>Le traitement du patient : interactions, précautions, effets en bouche</p></span><span class="fl">${ICO.fleche}</span>
       </button>
       <button class="outil" data-go="code">
         <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg></span>
@@ -410,12 +458,14 @@ function vPrescri(){
     <p class="etape-n">Question ${P.i+1} sur ${L.length}</p>
     <section class="question ${P.sens>0?'entre-d':'entre-g'}">
       <h2>${e.titre}</h2><p class="sous">${e.aide}</p>
+      ${e.id==='ttt'?`<button class="lien-scan" id="versScan">${ICO_SCAN}Scanner l’ordonnance du patient</button>`:''}
       <div class="choix">${corps}</div>
       <div class="choix" style="margin-top:6px">${extra}</div>
     </section>
   </div>
   <div class="barre-action"><div class="in"><button class="btn" id="suiv" ${etapeValide(e)?'':'disabled'}>${P.i===L.length-1?'Voir la conduite à tenir':'Continuer'}</button></div></div>`;
 
+  const vs=$('#versScan'); if(vs) vs.onclick=()=>{ SC=nouveauSC(); SC.depuisPrescri=true; aller('scan'); };
   app.querySelectorAll('.opt[data-v]').forEach(b=>b.onclick=()=>{
     const v=b.dataset.v;
     if(e.type==='un'){
@@ -1121,6 +1171,186 @@ async function envoyer(t){
   IA.fil.push({moi:true, html:esc(t), brut:t}); IA.attente=true; vIA(); window.scrollTo(0,document.body.scrollHeight);
   const r = await demanderIA(t); IA.attente=false; IA.fil.push(r); vIA();
   const bulles=app.querySelectorAll('.bulle'); bulles[bulles.length-1]?.scrollIntoView({block:'start', behavior:'smooth'});
+}
+
+/* ---------------------------------------------------------
+   Scanner : ordonnance du patient → interactions, terrain, précautions
+   (règles dans medicaments.js ; la photo n'est jamais conservée)
+--------------------------------------------------------- */
+const nouveauSC = () => ({etape:'debut', image:null, cadre:{x:.04,y:.22,w:.92,h:.5}, lignes:[], R:null, meds:[], inconnus:[], ia:'', iaAttente:false, lecture:false, erreur:'', depuisPrescri:false});
+let SC = nouveauSC();
+const ICO_SCAN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 9h6M9 12h6M9 15h3"/></svg>';
+
+function vScan(){
+  if(SC.etape==='cadrage') return vScanCadrage();
+  if(SC.etape==='liste') return vScanListe();
+  if(SC.etape==='resultat') return vScanResultat();
+  app.innerHTML = `<div class="vue">
+    <header class="top"><div class="logo">${logo}Scanner</div></header>
+    <section class="accroche">
+      <h1>L’ordonnance du patient, décryptée.</h1>
+      <p class="sous" style="margin-top:8px">Interactions avec ce que tu vas prescrire, précautions avant le geste, effets en bouche.</p>
+    </section>
+    <div class="outils">
+      <label class="outil scan-choix"><input type="file" accept="image/*" capture="environment" id="photoCam" hidden>
+        <span class="ico l">${ICO_SCAN}</span><span><h3>Prendre en photo</h3><p>Tu cadreras ensuite uniquement les médicaments</p></span><span class="fl">${ICO.fleche}</span></label>
+      <label class="outil scan-choix"><input type="file" accept="image/*" id="photoLib" hidden>
+        <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg></span><span><h3>Depuis mes photos</h3><p>Une ordonnance déjà photographiée</p></span><span class="fl">${ICO.fleche}</span></label>
+      <button class="outil" id="saisie">
+        <span class="ico a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/></svg></span><span><h3>Saisir les médicaments</h3><p>Ou coller le texte copié depuis une photo</p></span><span class="fl">${ICO.fleche}</span></button>
+    </div>
+    <p class="demo" style="margin-top:18px">Rien n’est enregistré. Seule la zone que tu cadres est envoyée à l’IA pour être lue, puis la photo est effacée. Cadre les médicaments, pas le nom du patient.</p>
+  </div>`;
+  ['photoCam','photoLib'].forEach(id=>$('#'+id).onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const lec=new FileReader(); lec.onload=()=>{ SC.image=lec.result; SC.etape='cadrage'; SC.erreur=''; vScan(); }; lec.readAsDataURL(f);
+  });
+  $('#saisie').onclick=()=>{ SC.etape='liste'; vScan(); setTimeout(()=>$('#ajout')?.focus(),50); };
+}
+
+function vScanCadrage(){
+  app.innerHTML = `<div class="vue">
+    <header class="top"><button class="retour" id="ret">${ICO.retour}Retour</button></header>
+    <h2 style="margin-top:6px">Cadre les médicaments</h2>
+    <p class="sous" style="margin-top:4px">Fais glisser le cadre et ses coins. Laisse en dehors le nom du patient et du prescripteur.</p>
+    <div class="zone-photo" id="zone"><img src="${SC.image}" alt="Ordonnance" id="photo" draggable="false">
+      <div class="cadre" id="cadre"><span class="poignee" data-c="nw"></span><span class="poignee" data-c="ne"></span><span class="poignee" data-c="sw"></span><span class="poignee" data-c="se"></span></div>
+    </div>
+    ${SC.erreur?`<div class="alerte forte">${ICO.alerte}<div><b>Lecture impossible</b>${esc(SC.erreur)}</div></div>`:''}
+    <div style="height:90px"></div>
+  </div>
+  <div class="barre-action"><div class="in"><button class="btn sec" id="autre">Autre photo</button><button class="btn" id="lire">${SC.lecture?'<span class="roue"></span>Lecture…':'Lire les médicaments'}</button></div></div>`;
+  const zone=$('#zone'), cadre=$('#cadre');
+  const placer=()=>{ const c=SC.cadre; Object.assign(cadre.style,{left:c.x*100+'%',top:c.y*100+'%',width:c.w*100+'%',height:c.h*100+'%'}); };
+  placer();
+  let geste=null;
+  const borne=(v,a,b)=>Math.max(a,Math.min(b,v));
+  zone.addEventListener('pointerdown',e=>{
+    const r=zone.getBoundingClientRect(), coin=e.target.dataset?.c;
+    if(!coin && e.target!==cadre) return;
+    e.preventDefault(); zone.setPointerCapture(e.pointerId);
+    geste={coin, x0:e.clientX, y0:e.clientY, c0:{...SC.cadre}, W:r.width, H:r.height};
+  });
+  zone.addEventListener('pointermove',e=>{
+    if(!geste) return; e.preventDefault();
+    const dx=(e.clientX-geste.x0)/geste.W, dy=(e.clientY-geste.y0)/geste.H, c0=geste.c0, m=.08; let c={...c0};
+    if(!geste.coin){ c.x=borne(c0.x+dx,0,1-c0.w); c.y=borne(c0.y+dy,0,1-c0.h); }
+    else{
+      if(geste.coin.includes('w')){ c.x=borne(c0.x+dx,0,c0.x+c0.w-m); c.w=c0.x+c0.w-c.x; }
+      if(geste.coin.includes('e')){ c.w=borne(c0.w+dx,m,1-c0.x); }
+      if(geste.coin.includes('n')){ c.y=borne(c0.y+dy,0,c0.y+c0.h-m); c.h=c0.y+c0.h-c.y; }
+      if(geste.coin.includes('s')){ c.h=borne(c0.h+dy,m,1-c0.y); }
+    }
+    SC.cadre=c; placer();
+  });
+  const fin=()=>{ geste=null; }; zone.addEventListener('pointerup',fin); zone.addEventListener('pointercancel',fin);
+  $('#ret').onclick=$('#autre').onclick=()=>{ SC=nouveauSC(); vScan(); };
+  $('#lire').onclick=lirePhoto;
+}
+
+async function lirePhoto(){
+  if(SC.lecture) return;
+  const img=$('#photo'); if(!img||!img.naturalWidth) return;
+  const c=SC.cadre, sx=c.x*img.naturalWidth, sy=c.y*img.naturalHeight, sw=c.w*img.naturalWidth, sh=c.h*img.naturalHeight;
+  const k=Math.min(1, 1600/Math.max(sw,sh)), cv=document.createElement('canvas');
+  cv.width=Math.round(sw*k); cv.height=Math.round(sh*k);
+  cv.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,cv.width,cv.height);
+  const b64=cv.toDataURL('image/jpeg',.85).split(',')[1];
+  SC.lecture=true; SC.erreur=''; vScanCadrage();
+  try{
+    const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'lecture', image:b64, mime:'image/jpeg'})});
+    const j=await r.json();
+    if(!r.ok || j.erreur) throw new Error(j.erreur||'Relais IA indisponible');
+    if(!j.medicaments?.length){ SC.lecture=false; SC.erreur='Aucun médicament lisible dans le cadre. Rapproche-toi, évite les reflets, ou saisis-les à la main.'; return vScanCadrage(); }
+    SC.lignes=j.medicaments.map(m=>[m.nom,m.dosage].filter(Boolean).join(' ')+(m.posologie?' — '+m.posologie:''));
+    SC.image=null; SC.lecture=false; SC.etape='liste'; vScan();
+    toast('Vérifie la liste avant d’analyser');
+  }catch(e){
+    SC.lecture=false; SC.erreur='L’IA n’a pas pu lire la photo ('+e.message+'). Tu peux saisir les médicaments à la main.'; vScanCadrage();
+  }
+}
+
+function vScanListe(){
+  const items=SC.lignes.map((l,i)=>{ const m=MEDS.reconnaitre(l);
+    return `<div class="med-ligne"><div class="med-txt"><input value="${esc(l)}" data-i="${i}" class="med-edit" aria-label="Médicament ${i+1}">
+      ${m.length?`<small class="ok">${m.map(x=>esc(x.dci)+' · '+esc(x.classe)).join('<br>')}</small>`:`<small class="ko">Non reconnu : vérifie l’orthographe ou garde-le, l’assistant le commentera</small>`}</div>
+      <button class="suppr" data-s="${i}" aria-label="Retirer">×</button></div>`; }).join('');
+  app.innerHTML = `<div class="vue">
+    <header class="top"><button class="retour" id="ret">${ICO.retour}Retour</button><button class="retour" id="raz" style="padding-left:12px">Effacer</button></header>
+    <h2 style="margin-top:6px">Traitement du patient</h2>
+    <p class="sous" style="margin-top:4px">${SC.lignes.length?'Vérifie chaque ligne : la lecture peut se tromper.':'Ajoute les médicaments un par un, ou colle une liste (un par ligne).'}</p>
+    <div class="med-liste">${items}</div>
+    <div class="ajout-med"><textarea id="ajout" rows="1" placeholder="Ex. Eliquis 5 mg, Kardégic 75…"></textarea><button class="mini" id="plus">Ajouter</button></div>
+    <div style="height:100px"></div>
+  </div>
+  <div class="barre-action"><div class="in"><button class="btn" id="analyser" ${SC.lignes.length?'':'disabled'}>Analyser le traitement</button></div></div>`;
+  const ajouter=()=>{ const v=$('#ajout').value; const n=v.split(/\n|;|,(?!\d)/).map(x=>x.trim()).filter(x=>x.length>1); if(!n.length) return; SC.lignes.push(...n); vScanListe(); setTimeout(()=>$('#ajout')?.focus(),30); };
+  $('#plus').onclick=ajouter;
+  $('#ajout').addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); ajouter(); } });
+  $('#ajout').addEventListener('input',e=>{ e.target.style.height='auto'; e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'; });
+  app.querySelectorAll('.med-edit').forEach(inp=>inp.onchange=()=>{ SC.lignes[+inp.dataset.i]=inp.value.trim(); if(!SC.lignes[+inp.dataset.i]) SC.lignes.splice(+inp.dataset.i,1); vScanListe(); });
+  app.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ SC.lignes.splice(+b.dataset.s,1); vScanListe(); });
+  $('#ret').onclick=()=>{ const d=SC.depuisPrescri; SC=nouveauSC(); SC.depuisPrescri=d; vScan(); };
+  $('#raz').onclick=()=>{ const d=SC.depuisPrescri; SC=nouveauSC(); SC.depuisPrescri=d; SC.etape='liste'; vScan(); };
+  $('#analyser').onclick=()=>{
+    const pend=$('#ajout').value.trim(); if(pend) SC.lignes.push(...pend.split('\n').map(x=>x.trim()).filter(Boolean));
+    const vus=new Map(); SC.inconnus=[];
+    SC.lignes.forEach(l=>{ const m=MEDS.reconnaitre(l); if(!m.length) SC.inconnus.push(l); m.forEach(x=>vus.set(x.dci,x)); });
+    SC.meds=[...vus.values()]; SC.R=MEDS.analyser(SC.meds); SC.ia=''; SC.etape='resultat'; vScan();
+  };
+}
+
+const PASTILLE = {OK:['ok','Compatible'], APEC:['apec','À prendre en compte'], PE:['pe','Précaution'], ASDEC:['asdec','Déconseillé'], CI:['ci','Contre-indiqué']};
+function vScanResultat(){
+  const R=SC.R, src=s=>s?` <span class="src">${esc(s)}</span>`:'';
+  const ico = n => n==='info'?ICO.info:ICO.alerte;
+  const terrain = R.terrain.map(a=>`<div class="alerte ${a.n}">${ico(a.n)}<div><b>${esc(a.t)}</b>${esc(a.d)}${src(a.src)}</div></div>`).join('');
+  const presc = R.presc.map(G=>`<p class="groupe">${G.groupe}</p><div class="presc">${G.items.map(it=>{
+    const [cl,lib]=PASTILLE[it.niveau];
+    const det = it.raisons.map(r=>`<li><span class="niv ${PASTILLE[r.niv][0]}">${PASTILLE[r.niv][1]}</span> <b>${esc(r.meds.join(', '))}</b> — ${esc(r.txt)}${src(r.src)}</li>`).join('') + (it.note?`<li>${esc(it.note)}</li>`:'');
+    return det ? `<details class="pr ${cl}"><summary><span>${esc(it.nom)}</span><span class="niv ${cl}">${lib}</span></summary><ul>${det}</ul></details>`
+               : `<div class="pr ok"><span>${esc(it.nom)}</span><span class="niv ok">${lib}</span></div>`;
+  }).join('')}</div>`).join('');
+  const bouche = R.bouche.map(b=>`<li><b>${esc(b.t)}</b>${esc(b.d)}</li>`).join('');
+  const prefN = R.prefill.ttt.length + R.prefill.atcd.length;
+  app.innerHTML = `<div class="vue">
+    <header class="top"><button class="retour" id="ret">${ICO.retour}Modifier la liste</button><button class="retour" id="raz" style="padding-left:12px">Nouveau scan</button></header>
+    <h2 style="margin-top:6px">Ce que ce traitement change pour toi</h2>
+    <div class="chips">${SC.meds.map(m=>`<span class="chip" title="${esc(m.classe)}">${esc(m.dci)}</span>`).join('')}${SC.inconnus.map(l=>`<span class="chip ko">${esc(l)}</span>`).join('')}</div>
+    ${SC.inconnus.length?`<p class="sous" style="font-size:.88rem;margin-top:6px">${SC.inconnus.length} ligne${SC.inconnus.length>1?'s':''} non reconnue${SC.inconnus.length>1?'s':''} (en rouge) : vérifie-les sur le Vidal ou demande à l’assistant.</p>`:''}
+    ${R.aDemander.length?`<div class="alerte info">${ICO.info}<div><b>À demander au patient</b>${esc(R.aDemander.join(' · '))}</div></div>`:''}
+    <p class="bloc-titre">Avant un geste</p>
+    ${terrain || `<p class="sous">Rien de particulier repéré dans ce traitement.</p>`}
+    <p class="bloc-titre">Si tu prescris</p>
+    <p class="sous" style="font-size:.88rem">Touche une ligne pour voir pourquoi.</p>
+    ${presc}
+    ${bouche?`<p class="bloc-titre">En bouche</p><ul class="gestes bouche">${bouche}</ul>`:''}
+    <p class="bloc-titre">Assistant</p>
+    <div id="iaZone">${SC.ia?`<div class="bulle ia-bulle">${SC.ia}</div>`:`<button class="btn ia" id="demIA" style="width:100%">${SC.iaAttente?'<span class="roue"></span>L’assistant réfléchit…':'Demander une synthèse à l’assistant'}</button>`}</div>
+    <p class="demo">Interactions : thésaurus ANSM (version du 15/09/2023, la dernière publiée) et RCP. Terrain : HAS 2026, SFCO 2015. L’analyse ne couvre que les médicaments reconnus ; elle ne remplace ni le Vidal ni l’avis du prescripteur.</p>
+    <div style="height:90px"></div>
+  </div>
+  <div class="barre-action"><div class="in"><button class="btn" id="versP">${SC.depuisPrescri?'Reporter dans Prescri’Dent':'Préparer l’ordonnance'}</button></div></div>`;
+  $('#ret').onclick=()=>{ SC.etape='liste'; vScan(); };
+  $('#raz').onclick=()=>{ SC=nouveauSC(); vScan(); };
+  $('#versP').onclick=()=>{
+    const pf=R.prefill;
+    if(!SC.depuisPrescri) P=nouveauP();
+    const fus=(k,vals,aucun)=>{ if(!vals.length) return; const cur=(P.rep[k]||[]).filter(x=>x!==aucun); P.rep[k]=[...new Set([...cur,...vals])]; };
+    fus('ttt',pf.ttt,'aucun'); fus('atcd',pf.atcd,'aucun');
+    SC.depuisPrescri=false;
+    aller('prescri'); if(prefN) toast('Traitements pré-cochés');
+  };
+  const b=$('#demIA'); if(b) b.onclick=async()=>{
+    if(SC.iaAttente) return; SC.iaAttente=true; vScanResultat();
+    let html='';
+    try{
+      const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'ordo', question:'Analyse ce traitement pour un geste ou une prescription dentaire.', contexte:MEDS.resumer(SC.meds,R,SC.inconnus)})});
+      const j=await r.json();
+      html = j.reponse ? `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>` : '<p>L’assistant n’a pas répondu. Réessaie dans un instant.</p>';
+    }catch(e){ html='<p>Assistant indisponible pour le moment. L’analyse ci-dessus reste valable.</p>'; }
+    SC.iaAttente=false; SC.ia=html; if(vue==='scan' && SC.etape==='resultat') vScanResultat();
+  };
 }
 
 aller('accueil');

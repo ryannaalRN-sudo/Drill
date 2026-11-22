@@ -19,3 +19,12 @@ L'assistant fonctionne déjà sans IA grâce au moteur local. Le relais ci-desso
 Envoie l'adresse du worker à Claude : il la mettra dans l'app (constante `IA_URL`).
 
 Optionnel : la variable `GEMINI_MODEL` permet de changer de modèle (par défaut `gemini-2.5-flash`).
+
+## Mise à jour : scanner d'ordonnance (novembre 2026)
+
+Le relais gère maintenant deux nouveaux usages :
+- `mode: "lecture"` : lecture d'une photo recadrée d'ordonnance (Gemini vision), renvoie la liste des médicaments ;
+- `mode: "ordo"` : synthèse de l'analyse d'un traitement.
+
+Pour l'activer : Cloudflare → Workers → drill-ia → Modifier le code → coller le nouveau `worker.js` → Déployer.
+Aucun réglage supplémentaire : la même clé `GEMINI_API_KEY` sert pour tout.
