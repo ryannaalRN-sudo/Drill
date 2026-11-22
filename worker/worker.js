@@ -7,7 +7,9 @@
  * Rien n'est stocké. La photo n'est transmise qu'à Gemini pour la lecture.
  * La clé Gemini reste secrète ici (variable GEMINI_API_KEY), jamais dans l'app.
  */
-const MODELE_PAR_DEFAUT = 'gemini-2.5-flash';
+// Modèles essayés dans l'ordre (le premier disponible pour ta clé est utilisé).
+// Google réserve les modèles 2.5 aux anciens projets : une clé récente reçoit une erreur 404.
+const MODELES = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
 
 const CONSIGNES = `Tu es l'assistant clinique de Drill, une app pour étudiants en chirurgie dentaire en France. Tu réponds aux questions de cotation CCAM et de prescription.
 Règles :
@@ -48,16 +50,27 @@ const SCHEMA_LECTURE = {
 };
 
 async function gemini(env, corps) {
-  const modele = env.GEMINI_MODEL || MODELE_PAR_DEFAUT;
-  if (/flash/.test(modele)) corps.generationConfig = { ...corps.generationConfig, thinkingConfig: { thinkingBudget: 0 } };
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-    body: JSON.stringify(corps),
-  });
-  if (!r.ok) return { erreur: r.status };
-  const d = await r.json();
-  return { texte: d?.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || '' };
+  const liste = env.GEMINI_MODEL ? [env.GEMINI_MODEL, ...MODELES.filter(m => m !== env.GEMINI_MODEL)] : MODELES;
+  let derniere = { erreur: 0, detail: '' };
+  for (const modele of liste) {
+    const c = JSON.parse(JSON.stringify(corps));
+    // Les modèles 2.5 réfléchissent sur le budget de sortie : on coupe la réflexion pour aller vite.
+    if (/^gemini-2\.5-flash/.test(modele)) c.generationConfig = { ...c.generationConfig, thinkingConfig: { thinkingBudget: 0 } };
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+      body: JSON.stringify(c),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      return { texte: d?.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('') || '', modele };
+    }
+    let detail = ''; try { detail = (await r.json())?.error?.message || ''; } catch {}
+    derniere = { erreur: r.status, detail: `${modele} : ${detail}`.slice(0, 300) };
+    // Modèle inconnu ou indisponible pour cette clé : on essaie le suivant. Sinon (clé, quota) : inutile d'insister.
+    if (![404, 400, 403].includes(r.status) || (r.status !== 404 && !/model|not found|not supported|no longer/i.test(detail))) break;
+  }
+  return derniere;
 }
 
 export default {
@@ -81,9 +94,9 @@ export default {
       const g = await gemini(env, {
         systemInstruction: { parts: [{ text: CONSIGNES_LECTURE }] },
         contents: [{ role: 'user', parts: [{ inline_data: { mime_type: mime, data: image } }, { text: 'Liste les médicaments de cette ordonnance.' }] }],
-        generationConfig: { temperature: 0, maxOutputTokens: 1200, responseMimeType: 'application/json', responseSchema: SCHEMA_LECTURE },
+        generationConfig: { temperature: 0, maxOutputTokens: 4096, responseMimeType: 'application/json', responseSchema: SCHEMA_LECTURE },
       });
-      if (g.erreur) return json({ erreur: 'IA indisponible', statut: g.erreur }, 502, cors);
+      if (g.erreur) return json({ erreur: 'IA indisponible', statut: g.erreur, detail: g.detail }, 502, cors);
       let res; try { res = JSON.parse(g.texte); } catch { return json({ erreur: 'Lecture impossible' }, 502, cors); }
       const medicaments = (res.medicaments || []).slice(0, 30).map(m => ({ nom: String(m.nom || '').slice(0, 80), dosage: String(m.dosage || '').slice(0, 60), posologie: String(m.posologie || '').slice(0, 160) }));
       return json({ lisible: !!res.lisible, medicaments }, 200, cors);
@@ -103,9 +116,9 @@ export default {
     const g = await gemini(env, {
       systemInstruction: { parts: [{ text: ordo ? CONSIGNES_ORDO : CONSIGNES }] },
       contents,
-      generationConfig: { temperature: 0.2, maxOutputTokens: ordo ? 900 : 700 },
+      generationConfig: { temperature: 0.2, maxOutputTokens: 4096 },
     });
-    if (g.erreur) return json({ erreur: 'IA indisponible', statut: g.erreur }, 502, cors);
+    if (g.erreur) return json({ erreur: 'IA indisponible', statut: g.erreur, detail: g.detail }, 502, cors);
     return json({ reponse: g.texte }, 200, cors);
   },
 };

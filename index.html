@@ -1260,7 +1260,7 @@ async function lirePhoto(){
   try{
     const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'lecture', image:b64, mime:'image/jpeg'})});
     const j=await r.json();
-    if(!r.ok || j.erreur) throw new Error(j.erreur||'Relais IA indisponible');
+    if(!r.ok || j.erreur) throw new Error([j.erreur||'Relais IA indisponible', j.statut?'code '+j.statut:'', j.detail||''].filter(Boolean).join(' — '));
     if(!j.medicaments?.length){ SC.lecture=false; SC.erreur='Aucun médicament lisible dans le cadre. Rapproche-toi, évite les reflets, ou saisis-les à la main.'; return vScanCadrage(); }
     SC.lignes=j.medicaments.map(m=>[m.nom,m.dosage].filter(Boolean).join(' ')+(m.posologie?' — '+m.posologie:''));
     SC.image=null; SC.lecture=false; SC.etape='liste'; vScan();
