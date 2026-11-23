@@ -308,7 +308,9 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .mm{display:grid;gap:2px;min-width:0}
 .mm small{font-weight:400;color:var(--encre-2);font-size:.84rem;line-height:1.35}
 .rcp{display:block;font-weight:400;white-space:pre-line;margin-top:2px}
-.ordo-texte{margin-top:10px;padding:16px;border-radius:var(--r-m);background:var(--carte);border:1.5px dashed var(--lagon);font-family:var(--texte);font-size:.95rem;line-height:1.5;white-space:pre-wrap;-webkit-user-select:text;user-select:text}
+.ordo-texte{margin-top:10px;padding:18px;border-radius:var(--r-m);background:#fff;border:1.5px dashed var(--lagon);font-size:.95rem;line-height:1.45;-webkit-user-select:text;user-select:text;display:grid;gap:16px}
+.ordo-texte .ol b{display:block}
+.ordo-texte .ol span{display:block;color:var(--encre-2)}
 </style>
 </head>
 <body>
@@ -531,12 +533,12 @@ function vOrdo(){
         </button>`).join('')}</div>
       <h2 style="margin-top:22px">À recopier sur l’ordonnance</h2>
       <p class="sous">Dans l’ordre : traitement de la cause, puis douleur, puis soins locaux.</p>
-      <pre class="ordo-texte" id="ordoTexte"></pre>`:''}
+      <div class="ordo-texte" id="ordoTexte"></div>`:''}
       <p class="demo">Sources : HAS 2026 (antibiotiques en pratique bucco-dentaire), HAS 2024 (endocardite), SFCO 2015 (antithrombotiques), ANSM, RCP. Outil d'aide à la décision : il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
     </section>
   </div>
   ${O.lignes.length?`<div class="barre-action"><div class="in"><button class="btn" id="copierOrdo">Copier l’ordonnance</button></div></div>`:''}`;
-  const majTexte=()=>{ const z=$('#ordoTexte'); if(z) z.textContent=texteOrdo(O.lignes.filter(l=>!P.lignesOff.has(l.id))); };
+  const majTexte=()=>{ const z=$('#ordoTexte'); if(z) z.innerHTML=htmlOrdo(O.lignes.filter(l=>!P.lignesOff.has(l.id))); };
   majTexte();
   app.querySelectorAll('.ligne').forEach(b=>b.onclick=ev=>{
     if(ev.target.closest('.vidal')) return;
@@ -553,18 +555,82 @@ function vOrdo(){
 }
 
 /* Ordonnance : texte à recopier sur l'ordonnance du service (aucun document généré).
-   Ordre usuel : traitement étiologique (anti-infectieux), symptomatique (antalgiques), local (bain de bouche). */
+   Ordre usuel : traitement étiologique (anti-infectieux), symptomatique (antalgiques), local (bain de bouche).
+   Présentations : dosages et formes vérifiés dans la base de données publique des médicaments (ANSM). */
 const ORDRE_ORDO = c => /^Antibioprophylaxie/.test(c)?0 : c==='Antibiotique'?1 : c==='Antifongique'?2 : c==='Antiviral'?3 : c==='Antalgique'?4 : c==='Anti-inflammatoire'?5 : c==='Antiseptique'?6 : 7;
 const trierLignes = L => L.map((l,i)=>({l,i})).sort((a,b)=>ORDRE_ORDO(a.l.cat)-ORDRE_ORDO(b.l.cat)||a.i-b.i).map(x=>x.l);
+// [dosage en mg, intitulé, unité de prise] du plus fort au plus faible ; buv = suspension (mg par mL)
+const PRESENTATIONS = {
+  'Amoxicilline': {cp:[[1000,'Amoxicilline 1 g, comprimé dispersible','comprimé'],[500,'Amoxicilline 500 mg, gélule','gélule']], buv:['Amoxicilline 500 mg/5 mL, poudre pour suspension buvable',100]},
+  'Amoxicilline + acide clavulanique': {cp:[[1000,'Amoxicilline/acide clavulanique 1 g/125 mg, poudre pour suspension buvable en sachet-dose','sachet']], buv:['Amoxicilline/acide clavulanique 100 mg/12,5 mg par mL ENFANTS, poudre pour suspension buvable',100]},
+  'Métronidazole': {cp:[[500,'Métronidazole 500 mg, comprimé pelliculé','comprimé'],[250,'Métronidazole 250 mg, comprimé pelliculé','comprimé']], buv:['Métronidazole 125 mg/5 mL, suspension buvable',25]},
+  'Clarithromycine': {cp:[[500,'Clarithromycine 500 mg, comprimé pelliculé','comprimé']], buv:['Clarithromycine 50 mg/mL, granulés pour suspension buvable',50]},
+  'Azithromycine': {cp:[[250,'Azithromycine 250 mg, comprimé pelliculé','comprimé']], buv:['Azithromycine 40 mg/mL, poudre pour suspension buvable',40]},
+  'Pristinamycine': {cp:[[500,'Pristinamycine 500 mg, comprimé pelliculé','comprimé'],[250,'Pristinamycine 250 mg, comprimé pelliculé','comprimé']]},
+  'Cefpodoxime proxétil': {cp:[[100,'Cefpodoxime 100 mg, comprimé pelliculé','comprimé']], buv:['Cefpodoxime 40 mg/5 mL, poudre pour suspension buvable',8]},
+  'Clindamycine': {cp:[[300,'Clindamycine 300 mg, gélule','gélule'],[150,'Clindamycine 150 mg, gélule','gélule']]},
+  'Paracétamol': {cp:[[1000,'Paracétamol 1 g, comprimé','comprimé'],[500,'Paracétamol 500 mg, gélule','gélule']], buv:['Paracétamol 2,4 %, suspension buvable',24]},
+  'Ibuprofène': {cp:[[400,'Ibuprofène 400 mg, comprimé pelliculé','comprimé'],[200,'Ibuprofène 200 mg, comprimé pelliculé','comprimé']], buv:['Ibuprofène 20 mg/mL, suspension buvable',20]},
+};
+const INTITULES = [
+  [/^Chlorhexidine/,'Chlorhexidine digluconate 0,12 %, solution pour bain de bouche'],
+  [/Loramyc/,'Miconazole 50 mg, comprimé gingival muco-adhésif'],
+  [/Daktarin/,'Miconazole 2 %, gel buccal'],
+  [/^Amphotéricine/,'Amphotéricine B 10 %, suspension buvable'],
+  [/^Aciclovir/,'Aciclovir 200 mg/5 mL, suspension buvable'],
+];
+const nombreFR = n => String(Math.round(n*100)/100).replace('.',',');
+const enMg = (v,u) => parseFloat(v.replace(/\s/g,'').replace(',','.'))*(u==='g'?1000:1);
+const RX_DOSE = /(\d+(?:[ ,]\d+)?)\s?(mg|g)\b(?!\s*\/\s*kg)/g;
+function dureeOrdo(qsp){
+  const q=qsp.replace(/\s*\(.*?\)\s*/g,' ').replace(/,.*$/,'').trim();
+  if(/unique/i.test(q)) return '';
+  const m=q.match(/^(.*?)\s+au moins$/i); if(m) return 'pendant au moins '+m[1];
+  return 'pendant '+q.toLowerCase();
+}
+function formaterLigne(l){
+  const horsAMM=/hors AMM/i.test(l.med), buvable=/forme buvable/i.test(l.med);
+  const base=l.med.replace(/\s*\(.*?\)\s*/g,' ').trim();
+  let pos=l.pos.replace(/\s*\((?![^)]*\bmL\b)[^)]*\)/g,'').replace(/\s+/g,' ').trim();   // on garde « (5 mL) », on retire les notes de calcul
+  const P=PRESENTATIONS[base]; let titre=base;
+  const fixe=INTITULES.find(([rx])=>rx.test(l.med)); if(fixe) titre=fixe[1];
+  if(P && !/renseigner le poids/i.test(l.pos)){
+    pos=pos.replace(/\s*\/\s*125 mg/,'').replace(/\s*\(équivalent amoxicilline\)/,'');
+    const doses=[...pos.matchAll(RX_DOSE)].map(m=>enMg(m[1],m[2]));
+    const pres=P.cp.find(([mg])=>doses.length && doses.every(d=>d%mg===0));
+    if((buvable || !pres) && P.buv){
+      titre=P.buv[0];
+      pos=pos.replace(RX_DOSE,(m,v,u)=>`${m} (soit ${nombreFR(enMg(v,u)/P.buv[1])} mL)`);
+    } else if(pres){
+      const [mg,t,u]=pres; titre=t;
+      pos=pos.replace(RX_DOSE,(m,v,un)=>{ const n=enMg(v,un)/mg; return `${n} ${u}${n>1?'s':''}`; });
+    } // sinon : dose en mg sans forme imposée (le pharmacien choisit le dosage adapté)
+  }
+  const d=dureeOrdo(l.qsp);
+  pos=pos.charAt(0).toUpperCase()+pos.slice(1);
+  if(d) pos+=(/,$/.test(pos)?' ':', ')+d;
+  return {titre, pos:pos.replace(/\s+,/g,',')+'.', horsAMM};
+}
+function blocsOrdo(lignes){
+  const out=[];
+  trierLignes(lignes).forEach(l=>{
+    if(l.med==='Amoxicilline + métronidazole'){ // bithérapie : deux lignes distinctes sur l'ordonnance
+      [['Amoxicilline','500 mg 3 fois par jour'],['Métronidazole','500 mg 3 fois par jour']].forEach(([m,p])=>out.push(formaterLigne({...l,med:m,pos:p})));
+    } else out.push(formaterLigne(l));
+  });
+  return out;
+}
 function texteOrdo(lignes){
   if(!lignes.length) return '';
-  const blocs = trierLignes(lignes).map(l=>{
-    const pos = l.pos.charAt(0).toUpperCase()+l.pos.slice(1);
-    const qsp = l.qsp.replace(/\s*\(.*?\)\s*/g,' ').trim();   // les notes entre parenthèses restent à l'écran, pas sur l'ordonnance
-    return `${l.med}\n${pos}\n${/unique/i.test(qsp) ? 'Prise unique' : 'QSP '+qsp.toLowerCase()}`;
-  });
+  const blocs=blocsOrdo(lignes).map(b=>`${b.titre}\n${b.pos}${b.horsAMM?'\nPrescription hors autorisation de mise sur le marché.':''}`);
   if(lignes.some(l=>/^Antibioprophylaxie/.test(l.cat))) blocs.push('Antibiotique à délivrer à l’unité.');
   return blocs.join('\n\n');
+}
+function htmlOrdo(lignes){
+  if(!lignes.length) return '<p class="sous">Aucune ligne sélectionnée.</p>';
+  let h=blocsOrdo(lignes).map(b=>`<div class="ol"><b>${esc(b.titre)}</b><span>${esc(b.pos)}</span>${b.horsAMM?'<span>Prescription hors autorisation de mise sur le marché.</span>':''}</div>`).join('');
+  if(lignes.some(l=>/^Antibioprophylaxie/.test(l.cat))) h+='<div class="ol"><span>Antibiotique à délivrer à l’unité.</span></div>';
+  return h;
 }
 async function copierTexte(t){
   try{ await navigator.clipboard.writeText(t); return true; }
