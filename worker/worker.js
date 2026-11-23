@@ -54,27 +54,39 @@ const SCHEMA_LECTURE = {
 async function gemini(env, corps) {
   const liste = env.GEMINI_MODEL ? [env.GEMINI_MODEL, ...MODELES.filter(m => m !== env.GEMINI_MODEL)] : MODELES;
   let derniere = { erreur: 0, detail: '' };
-  for (const modele of liste) {
-    const c = JSON.parse(JSON.stringify(corps));
-    // Les modèles 2.5 réfléchissent sur le budget de sortie : on coupe la réflexion pour aller vite.
-    if (/^gemini-2\.5-flash/.test(modele)) c.generationConfig = { ...c.generationConfig, thinkingConfig: { thinkingBudget: 0 } };
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-      body: JSON.stringify(c),
-    });
-    if (r.ok) {
-      const d = await r.json();
-      return { texte: d?.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('') || '', modele };
+  // Deux tours : si tous les modèles sont surchargés, on réessaie une fois après une courte pause.
+  for (let tour = 0; tour < 2; tour++) {
+    if (tour) await new Promise(r => setTimeout(r, 1500));
+    let surcharge = false;
+    for (const modele of liste) {
+      const c = JSON.parse(JSON.stringify(corps));
+      // Les modèles 2.5 réfléchissent sur le budget de sortie : on coupe la réflexion pour aller vite.
+      if (/^gemini-2\.5-flash/.test(modele)) c.generationConfig = { ...c.generationConfig, thinkingConfig: { thinkingBudget: 0 } };
+      let r;
+      try {
+        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+          body: JSON.stringify(c),
+        });
+      } catch (e) { derniere = { erreur: 503, detail: `${modele} : réseau` }; surcharge = true; continue; }
+      if (r.ok) {
+        const d = await r.json();
+        return { texte: d?.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('') || '', modele };
+      }
+      let detail = ''; try { detail = (await r.json())?.error?.message || ''; } catch {}
+      derniere = { erreur: r.status, detail: `${modele} : ${detail}`.slice(0, 300) };
+      // Surcharge ou panne passagère (429, 500, 503…) : on passe au modèle suivant.
+      if (r.status === 429 || r.status >= 500) { surcharge = true; continue; }
+      // Modèle inconnu ou non ouvert à cette clé : modèle suivant.
+      if (r.status === 404 || /model|not found|not supported|no longer/i.test(detail)) continue;
+      // Autre erreur (clé invalide, requête refusée) : inutile d'insister.
+      return derniere;
     }
-    let detail = ''; try { detail = (await r.json())?.error?.message || ''; } catch {}
-    derniere = { erreur: r.status, detail: `${modele} : ${detail}`.slice(0, 300) };
-    // Modèle inconnu ou indisponible pour cette clé : on essaie le suivant. Sinon (clé, quota) : inutile d'insister.
-    if (![404, 400, 403].includes(r.status) || (r.status !== 404 && !/model|not found|not supported|no longer/i.test(detail))) break;
+    if (!surcharge) break;
   }
   return derniere;
 }
-
 
 /* ---------- Fiches officielles (RCP de la base publique des médicaments) ---------- */
 const BDPM = cis => `https://base-donnees-publique.medicaments.gouv.fr/medicament/${cis}/extrait`;

@@ -1263,15 +1263,17 @@ async function lirePhoto(){
   const b64=cv.toDataURL('image/jpeg',.85).split(',')[1];
   SC.lecture=true; SC.erreur=''; vScanCadrage();
   try{
-    const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'lecture', image:b64, mime:'image/jpeg'})});
+    const ctrl=new AbortController(), minuteur=setTimeout(()=>ctrl.abort(),60000);
+    const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'lecture', image:b64, mime:'image/jpeg'}),signal:ctrl.signal}).finally(()=>clearTimeout(minuteur));
     const j=await r.json();
+    if(j.statut===503||j.statut===429) throw new Error('les serveurs de Google sont surchargés en ce moment, réessaie dans une minute');
     if(!r.ok || j.erreur) throw new Error([j.erreur||'Relais IA indisponible', j.statut?'code '+j.statut:'', j.detail||''].filter(Boolean).join(' — '));
     if(!j.medicaments?.length){ SC.lecture=false; SC.erreur='Aucun médicament lisible dans le cadre. Rapproche-toi, évite les reflets, ou saisis-les à la main.'; return vScanCadrage(); }
     SC.lignes=j.medicaments.map(m=>[m.nom,m.dosage].filter(Boolean).join(' ')+(m.posologie?' — '+m.posologie:''));
     SC.image=null; SC.lecture=false; SC.etape='liste'; vScan();
     toast('Vérifie la liste avant d’analyser');
   }catch(e){
-    SC.lecture=false; SC.erreur='L’IA n’a pas pu lire la photo ('+e.message+'). Tu peux saisir les médicaments à la main.'; vScanCadrage();
+    SC.lecture=false; SC.erreur='L’IA n’a pas pu lire la photo ('+(e.name==='AbortError'?'pas de réponse au bout d’une minute':e.message)+'). Réessaie, ou saisis les médicaments à la main.'; vScanCadrage();
   }
 }
 
