@@ -589,7 +589,8 @@ function dureeOrdo(qsp){
   return 'pendant '+q.toLowerCase();
 }
 function formaterLigne(l){
-  const horsAMM=/hors AMM/i.test(l.med), buvable=/forme buvable/i.test(l.med);
+  // HAS juillet 2026, tableaux 11 et 12 : l'antibioprophylaxie en pratique bucco-dentaire est hors AMM (adulte et enfant)
+  const horsAMM=/hors AMM/i.test(l.med) || /^Antibioprophylaxie/.test(l.cat), buvable=/forme buvable/i.test(l.med);
   const base=l.med.replace(/\s*\(.*?\)\s*/g,' ').trim();
   let pos=l.pos.replace(/\s*\((?![^)]*\bmL\b)[^)]*\)/g,'').replace(/\s+/g,' ').trim();   // on garde « (5 mL) », on retire les notes de calcul
   const P=PRESENTATIONS[base]; let titre=base;
