@@ -110,9 +110,8 @@ function section(t, debut, fin) {
 }
 const couper = (s, n) => s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s;
 async function fiche(cis) {
-  const cache = caches.default, cle = new Request('https://drill-cache.local/fiche/' + cis);
-  const deja = await cache.match(cle);
-  if (deja) return deja.json();
+  const cle = new Request('https://drill-cache.local/fiche/' + cis);
+  let cache = null; try { cache = caches.default; const deja = await cache.match(cle); if (deja) return await deja.json(); } catch { cache = null; }
   let f = { cis, url: BDPM(cis) };
   try {
     const r = await fetch(BDPM(cis), { headers: { 'User-Agent': 'Drill (outil clinique etudiant)', 'Accept-Language': 'fr' } });
@@ -124,13 +123,24 @@ async function fiche(cis) {
     f.atc = cl && cl[2] ? cl[2] : (t.match(/code ATC\s*:?\s*([A-Z]\d{2}[A-Z0-9]{0,4})/i) || [])[1] || '';
     f.indications = couper(section(t, '4\\.1\\.?\\s*Indications th[ée]rapeutiques', '4\\.2\\.?\\s*Posologie'), 900);
     f.contreIndications = couper(section(t, '4\\.3\\.?\\s*Contre-?\\s?indications', '4\\.4\\.?\\s*Mises en garde'), 900);
-    await cache.put(cle, new Response(JSON.stringify(f), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=604800' } }));
+    if (cache) { try { await cache.put(cle, new Response(JSON.stringify(f), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=604800' } })); } catch {} }
   } catch (e) { f.erreur = 'lecture'; }
   return f;
 }
 
 export default {
   async fetch(request, env) {
+    try { return await traiter(request, env); }
+    catch (e) {
+      // Toujours répondre en JSON avec les en-têtes CORS, sinon l'app ne voit qu'une erreur réseau.
+      return json({ erreur: 'Erreur du relais', detail: String(e && e.message || e).slice(0, 300) }, 500, {
+        'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || 'https://ryannaalrn-sudo.github.io' });
+    }
+  },
+};
+
+async function traiter(request, env) {
+  {
     const origine = env.ALLOWED_ORIGIN || 'https://ryannaalrn-sudo.github.io';
     const cors = {
       'Access-Control-Allow-Origin': origine,
@@ -179,12 +189,12 @@ export default {
     const g = await gemini(env, {
       systemInstruction: { parts: [{ text: ordo ? CONSIGNES_ORDO : CONSIGNES }] },
       contents,
-      generationConfig: { temperature: 0.2, maxOutputTokens: 4096 },
+      generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
     });
     if (g.erreur) return json({ erreur: 'IA indisponible', statut: g.erreur, detail: g.detail }, 502, cors);
     return json({ reponse: g.texte }, 200, cors);
-  },
-};
+  }
+}
 
 function json(obj, status, cors) {
   return new Response(JSON.stringify(obj), { status, headers: { ...cors, 'Content-Type': 'application/json; charset=utf-8' } });

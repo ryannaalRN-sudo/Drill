@@ -667,7 +667,7 @@ fetch('ccam-dentaire.json').then(r=>r.json()).then(liste=>{
 
 const euro = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €';
 
-let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:6, nRx:1, sect:'pm', faces:2, dent:'m', vital:'v', mods:new Set(), ddn:''};
+let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:1, nRx:1, sect:'pm', faces:2, dent:'m', vital:'v', mods:new Set(), ddn:''};
 
 /* Calcul du panier : actes cumulés à taux plein (dérogation bucco-dentaire),
    N et E en pourcentage sur chaque acte éligible,
@@ -1352,14 +1352,19 @@ function vScanResultat(){
     SC.depuisPrescri=false;
     aller('prescri'); if(prefN) toast('Traitements pré-cochés');
   };
+  const re=$('#reIA'); if(re) re.onclick=()=>{ SC.ia=''; vScanResultat(); $('#demIA')?.click(); };
   const b=$('#demIA'); if(b) b.onclick=async()=>{
     if(SC.iaAttente) return; SC.iaAttente=true; vScanResultat();
     let html='';
     try{
-      const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'ordo', question:'Analyse ce traitement pour un geste ou une prescription dentaire.', contexte:MEDS.resumer(SC.meds,R,SC.inconnus,SC.specs.filter(x=>x.connu).map(x=>({nom:x.nom, subs:x.subs, classe:SC.fiches[x.cis]?.classe||x.classeLocale})))})});
-      const j=await r.json();
-      html = j.reponse ? `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>` : '<p>L’assistant n’a pas répondu. Réessaie dans un instant.</p>';
-    }catch(e){ html='<p>Assistant indisponible pour le moment. L’analyse ci-dessus reste valable.</p>'; }
+      const ctrl=new AbortController(), minuteur=setTimeout(()=>ctrl.abort(),60000);
+      const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body:JSON.stringify({mode:'ordo', question:'Analyse ce traitement pour un geste ou une prescription dentaire.', contexte:MEDS.resumer(SC.meds,R,SC.inconnus,SC.specs.filter(x=>x.connu).map(x=>({nom:x.nom, subs:x.subs, classe:SC.fiches[x.cis]?.classe||x.classeLocale})))})});
+      clearTimeout(minuteur);
+      const brut=await r.text(); let j={}; try{ j=JSON.parse(brut); }catch(_){ throw new Error('réponse illisible du relais (code '+r.status+')'); }
+      if(j.reponse) html = `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>`;
+      else if(j.statut===503||j.statut===429) html='<p>Les serveurs de Google sont surchargés : réessaie dans une minute.</p>';
+      else throw new Error([j.erreur||'pas de réponse', j.statut?'code '+j.statut:'', j.detail||''].filter(Boolean).join(' — '));
+    }catch(e){ html=`<p>Assistant indisponible (${esc(e.name==='AbortError'?'pas de réponse au bout d’une minute':e.message||'réseau')}). L’analyse ci-dessus reste valable.</p><button class="btn sec" id="reIA" style="margin-top:10px;width:100%">Réessayer</button>`; }
     SC.iaAttente=false; SC.ia=html; if(vue==='scan' && SC.etape==='resultat') vScanResultat();
   };
 }
