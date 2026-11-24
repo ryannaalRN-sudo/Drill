@@ -311,6 +311,25 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .ordo-texte{margin-top:10px;padding:18px;border-radius:var(--r-m);background:#fff;border:1.5px dashed var(--lagon);font-size:.95rem;line-height:1.45;-webkit-user-select:text;user-select:text;display:grid;gap:16px}
 .ordo-texte .ol b{display:block}
 .ordo-texte .ol span{display:block;color:var(--encre-2)}
+.q-rech{margin:14px 0 2px}
+.epingle .opt{border-style:dashed}
+.choix .grp{display:grid;gap:10px}
+.choix .grp[hidden],.opt[hidden]{display:none}
+.ajout-med-zone{margin-top:16px;padding:14px;border-radius:var(--r-m);border:1.5px dashed var(--trait);background:var(--carte)}
+.sugg{display:grid;gap:6px;margin-top:8px}
+.sug{display:grid;text-align:left;padding:10px 12px;border-radius:var(--r-s);background:var(--email);border:1px solid var(--trait)}
+.sug small{color:var(--encre-2);font-size:.82rem}
+.ajout-carte{margin-top:12px;display:grid;gap:4px}
+.ajout-nom{font-family:var(--display);font-size:1.15rem}
+.ajout-carte .champ input{font-size:16px}
+.ligne.ajoutee{border-color:#F0D29E}
+.ligne.ajoutee .coche{cursor:pointer}
+.mini-alerte{display:block;margin-top:6px;padding:6px 9px;border-radius:8px;font-size:.84rem}
+.mini-alerte.forte{background:var(--gencive-pale);color:#8E1F31}.mini-alerte.moy{background:var(--ambre-pale);color:#7A4A05}.mini-alerte.info{background:var(--lagon-pale);color:#065E54}
+.retirer{background:none;border:0;padding:0;margin-top:6px;color:var(--gencive)}
+.pres{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
+.chip-pres{padding:6px 10px;border-radius:999px;border:1.5px solid var(--trait);background:var(--email);font-size:.84rem;font-weight:700;color:var(--encre-2)}
+.chip-pres[aria-pressed="true"]{background:var(--lagon-pale);border-color:var(--lagon);color:#065E54}
 </style>
 </head>
 <body>
@@ -411,8 +430,8 @@ function vAccueil(){
 /* ---------------------------------------------------------
    Prescri'Dent : questionnaire (règles dans recos.js)
 --------------------------------------------------------- */
-let P = {i:0, rep:{}, lignesOff:new Set(), sens:1};
-const nouveauP = () => ({i:0, rep:{}, lignesOff:new Set(), sens:1});
+let P = {i:0, rep:{}, lignesOff:new Set(), sens:1, ajouts:[], filtre:{}};
+const nouveauP = () => ({i:0, rep:{}, lignesOff:new Set(), sens:1, ajouts:[], filtre:{}});
 
 function etapes(){
   const r=P.rep, M=RECO.MOTIF[r.motif]||{}, L=[];
@@ -450,7 +469,14 @@ function vPrescri(){
   const e = L[P.i], rep = P.rep[e.id];
   const total=14, allumees=Math.round(total*P.i/L.length);
   const arcade = Array.from({length:total},(_,k)=>`<svg viewBox="0 0 18 22" class="${k<allumees?'on':''}" aria-hidden="true">${ICO.dent}</svg>`).join('');
-  let corps = e.groupes ? e.groupes.map(g=>`<p class="groupe">${g.groupe}</p>${g.items.map(o=>optHTML(o,e,rep)).join('')}`).join('') : e.options.map(o=>optHTML(o,e,rep)).join('');
+  const avecRecherche = ['motif','allergies','atcd','ttt'].includes(e.id);
+  const tous = e.groupes ? e.groupes.flatMap(g=>g.items) : e.options;
+  const epingle = e.aucun ? tous.find(o=>o.v===e.aucun) : null;   // « Aucune allergie », « Aucun antécédent »… en haut
+  const horsEpingle = o => o!==epingle;
+  let corps = (epingle?`<div class="epingle">${optHTML(epingle,e,rep)}</div>`:'')
+    + (e.groupes ? e.groupes.map(g=>{ const it=g.items.filter(horsEpingle); return it.length?`<div class="grp"><p class="groupe">${g.groupe}</p>${it.map(o=>optHTML(o,e,rep)).join('')}</div>`:''; }).join('')
+                 : `<div class="grp">${e.options.filter(horsEpingle).map(o=>optHTML(o,e,rep)).join('')}</div>`)
+    + (avecRecherche?'<p class="sous rien" hidden>Aucun résultat. Essaie un autre mot.</p>':'');
   let extra='';
   if(e.id==='profil' && rep==='enfant') extra = `<div class="deux"><div class="champ"><label for="age">Âge (ans)</label><input id="age" inputmode="numeric" value="${esc(P.rep.age??'')}" placeholder="ex. 8"></div><div class="champ"><label for="poids">Poids (kg)</label><input id="poids" inputmode="decimal" value="${esc(P.rep.poids??'')}" placeholder="ex. 25"></div></div>`;
   if(e.id==='profil' && rep==='enceinte') extra = `<p class="groupe">Terme</p><div class="seg" data-k="terme">${[['avant','Avant le 6e mois'],['apres','6e mois ou plus (≥ 24 SA)']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${P.rep.terme===v}">${t}</button>`).join('')}</div>`;
@@ -466,6 +492,7 @@ function vPrescri(){
     <section class="question ${P.sens>0?'entre-d':'entre-g'}">
       <h2>${e.titre}</h2><p class="sous">${e.aide}</p>
       ${e.id==='ttt'?`<button class="lien-scan" id="versScan">${ICO_SCAN}Scanner l’ordonnance du patient</button>`:''}
+      ${avecRecherche?`<div class="recherche q-rech">${ICO.loupe}<input id="filtreQ" type="search" placeholder="${e.id==='motif'?'Rechercher un acte ou une affection':e.id==='allergies'?'Rechercher une allergie':e.id==='atcd'?'Rechercher un antécédent':'Rechercher un traitement'}" value="${esc(P.filtre[e.id]||'')}" autocomplete="off"></div>`:''}
       <div class="choix">${corps}</div>
       <div class="choix" style="margin-top:6px">${extra}</div>
     </section>
@@ -473,6 +500,7 @@ function vPrescri(){
   <div class="barre-action"><div class="in"><button class="btn" id="suiv" ${etapeValide(e)?'':'disabled'}>${P.i===L.length-1?'Voir la conduite à tenir':'Continuer'}</button></div></div>`;
 
   const vs=$('#versScan'); if(vs) vs.onclick=()=>{ SC=nouveauSC(); SC.depuisPrescri=true; aller('scan'); };
+  const fq=$('#filtreQ'); if(fq){ const f=()=>{ P.filtre[e.id]=fq.value; filtrerOptions(fq.value); }; fq.oninput=f; filtrerOptions(fq.value); }
   app.querySelectorAll('.opt[data-v]').forEach(b=>b.onclick=()=>{
     const v=b.dataset.v;
     if(e.type==='un'){
@@ -499,6 +527,24 @@ function vPrescri(){
   if($('#prec')) $('#prec').onclick=()=>{ clearTimeout(vPrescri.t); P.sens=-1; P.i--; vPrescri(); window.scrollTo(0,0); };
   $('#raz').onclick=()=>{ clearTimeout(vPrescri.t); P=nouveauP(); vPrescri(); };
 }
+/* Recherche dans les options d'une question (sans accents, tous les mots, synonymes courants) */
+const SYN_Q = {extraction:'avulsion', extraire:'avulsion', extrait:'avulsion', sagesse:'incluse', canal:'endodont', devitalisation:'endodont', devit:'endodont', abces:'abces', implants:'implant', gencive:'gingiv', mycose:'candid', muguet:'candid', bouton:'herpes', aphte:'aphte', sinus:'sinus', morsure:'morsure', choc:'trauma', fracture:'fracture', anticoagulant:'anticoagulant', eliquis:'eliquis', xarelto:'xarelto', kardegic:'kardegic', plavix:'plavix', coeur:'cardi', cardiaque:'cardi', cancer:'malign', diabetique:'diabet', greffe:'greffe', valve:'valv', penicilline:'penicill', amoxicilline:'penicill'};
+const normQ = t => String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’']/g,' ');
+function filtrerOptions(q){
+  const mots=normQ(q).split(/\s+/).filter(Boolean);
+  let n=0;
+  app.querySelectorAll('.choix .grp').forEach(g=>{
+    const titreG=normQ(g.querySelector('.groupe')?.textContent||'');
+    let vis=0;
+    g.querySelectorAll('.opt[data-v]').forEach(o=>{
+      const t=normQ(o.textContent)+' '+titreG;
+      const ok=!mots.length || mots.every(w=>t.includes(w) || (SYN_Q[w] && t.includes(SYN_Q[w])));
+      o.hidden=!ok; if(ok) vis++;
+    });
+    g.hidden=!vis; n+=vis;
+  });
+  const r=app.querySelector('.choix .rien'); if(r) r.hidden=!!n || !mots.length;
+}
 function suivant(){
   clearTimeout(vPrescri.t);
   const L=etapes(); if(P.i<L.length && !etapeValide(L[P.i])) return;
@@ -509,9 +555,29 @@ function suivant(){
 
 function vOrdo(){
   const r=P.rep, O=RECO.decider(r), M=RECO.MOTIF[r.motif]||{};
-  O.lignes = trierLignes(O.lignes);
+  if(!P.ajouts) P.ajouts=[];
+  const ajoutsL = P.ajouts.map(a=>({id:a.id, cat:'Ajout', med:a.titre, pos:a.pos, qsp:'', ajout:true, ordre:a.ordre, classe:a.classe, alertes:a.alertes}));
+  const toutes = trierLignes([...O.lignes, ...ajoutsL]);
+  const actives = () => toutes.filter(l=>!P.lignesOff.has(l.id));
   const total=14;
   const icone = n => n==='info'?ICO.info:ICO.alerte;
+  const NIV = {CI:['forte','Contre-indiqué'], ASDEC:['forte','Déconseillé'], PE:['moy','Précaution'], APEC:['info','À prendre en compte']};
+  const carteLigne = l => l.ajout ? `
+        <div class="ligne ajoutee" data-id="${l.id}" aria-pressed="${!P.lignesOff.has(l.id)}">
+          <span class="coche" data-bascule="${l.id}"></span>
+          <span style="text-align:left;min-width:0"><small class="sous" style="font-size:.78rem">${esc(l.classe||'Classe : voir le RCP')} <span class="niv pe" style="margin-left:4px">Hors recommandations</span></small>
+            <span class="med" style="display:block">${esc(l.med)}</span>
+            <span class="pos" style="display:block">${esc(l.pos)}</span>
+            ${(l.alertes||[]).map(x=>`<span class="mini-alerte ${NIV[x.niv][0]}"><b>${NIV[x.niv][1]}</b> ${esc(x.txt)}${x.src?` <span class="src">${esc(x.src)}</span>`:''}</span>`).join('')}
+            <button class="vidal retirer" data-retirer="${l.id}">Retirer de l’ordonnance</button></span>
+        </div>` : `
+        <button class="ligne" data-id="${l.id}" aria-pressed="${!P.lignesOff.has(l.id)}">
+          <span class="coche"></span>
+          <span style="text-align:left"><small class="sous" style="font-size:.78rem">${l.cat}</small>
+            <span class="med" style="display:block">${l.med}</span>
+            <span class="pos" style="display:block">${l.pos} · ${l.qsp}</span>
+            <a class="vidal" href="https://www.vidal.fr/recherche.html?query=${encodeURIComponent(l.med.split(/[ (]/)[0])}" target="_blank" rel="noopener">Voir sur Vidal</a></span>
+        </button>`;
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="prec">${ICO.retour}Retour</button><button class="retour" id="raz" style="padding-left:12px">Nouveau patient</button></header>
     <div class="arcade" aria-hidden="true">${Array.from({length:total},()=>`<svg viewBox="0 0 18 22" class="on">${ICO.dent}</svg>`).join('')}</div>
@@ -522,35 +588,94 @@ function vOrdo(){
       ${O.gestes.length?`<ul class="gestes">${O.gestes.map(g=>`<li>${g}</li>`).join('')}</ul>`:''}
       <div class="verdict ${O.atb?'oui':'non'}"><b>${O.atb?'Antibiotique : oui':'Antibiotique : non'}</b>${O.pourquoi.map(x=>`<p>${x}</p>`).join('')}</div>
       ${[...O.alertes].sort((x,y)=>({forte:0,moy:1,info:2}[x.n])-({forte:0,moy:1,info:2}[y.n])).map(x=>`<div class="alerte ${x.n}">${icone(x.n)}<span><b>${x.t}</b>${x.d}</span></div>`).join('')}
-      ${O.lignes.length?`<h2 style="margin-top:22px">Ordonnance proposée</h2><p class="sous">Touche une ligne pour la retirer ou la remettre.</p>
-      <div class="lignes">${O.lignes.map(l=>`
-        <button class="ligne" data-id="${l.id}" aria-pressed="${!P.lignesOff.has(l.id)}">
-          <span class="coche"></span>
-          <span style="text-align:left"><small class="sous" style="font-size:.78rem">${l.cat}</small>
-            <span class="med" style="display:block">${l.med}</span>
-            <span class="pos" style="display:block">${l.pos} · ${l.qsp}</span>
-            <a class="vidal" href="https://www.vidal.fr/recherche.html?query=${encodeURIComponent(l.med.split(/[ (]/)[0])}" target="_blank" rel="noopener">Voir sur Vidal</a></span>
-        </button>`).join('')}</div>
-      <h2 style="margin-top:22px">À recopier sur l’ordonnance</h2>
+      <h2 style="margin-top:22px">Ordonnance proposée</h2>
+      <p class="sous">${toutes.length?'Touche une ligne pour la retirer ou la remettre.':'Aucun médicament recommandé pour cette situation.'}</p>
+      <div class="lignes">${toutes.map(carteLigne).join('')}</div>
+      <div class="ajout-med-zone">
+        <p class="groupe" style="margin:0 0 6px">Ajouter un médicament</p>
+        <div class="recherche" style="margin:0">${ICO.loupe}<input id="ajoutRech" type="search" placeholder="Ex. néfopam, Acupan…" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div id="sugg" class="sugg" role="listbox"></div>
+        <div id="ajoutForm"></div>
+      </div>
+      ${toutes.length?`<h2 style="margin-top:22px">À recopier sur l’ordonnance</h2>
       <p class="sous">Dans l’ordre : traitement de la cause, puis douleur, puis soins locaux.</p>
       <div class="ordo-texte" id="ordoTexte"></div>`:''}
-      <p class="demo">Sources : HAS 2026 (antibiotiques en pratique bucco-dentaire), HAS 2024 (endocardite), SFCO 2015 (antithrombotiques), ANSM, RCP. Outil d'aide à la décision : il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
+      <p class="demo">Sources : HAS 2026 (antibiotiques en pratique bucco-dentaire), HAS 2024 (endocardite), SFCO 2015 (antithrombotiques), ANSM, RCP. Médicaments ajoutés : base publique des médicaments (ANSM), thésaurus ANSM des interactions et RCP. Outil d'aide à la décision : il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
     </section>
   </div>
-  ${O.lignes.length?`<div class="barre-action"><div class="in"><button class="btn" id="copierOrdo">Copier l’ordonnance</button></div></div>`:''}`;
-  const majTexte=()=>{ const z=$('#ordoTexte'); if(z) z.innerHTML=htmlOrdo(O.lignes.filter(l=>!P.lignesOff.has(l.id))); };
+  ${toutes.length?`<div class="barre-action"><div class="in"><button class="btn" id="copierOrdo">Copier l’ordonnance</button></div></div>`:''}`;
+  const majTexte=()=>{ const z=$('#ordoTexte'); if(z) z.innerHTML=htmlOrdo(actives()); };
   majTexte();
-  app.querySelectorAll('.ligne').forEach(b=>b.onclick=ev=>{
-    if(ev.target.closest('.vidal')) return;
-    const id=b.dataset.id; P.lignesOff.has(id)?P.lignesOff.delete(id):P.lignesOff.add(id);
-    b.setAttribute('aria-pressed', !P.lignesOff.has(id)); majTexte();
-  });
+  const bascule=id=>{ P.lignesOff.has(id)?P.lignesOff.delete(id):P.lignesOff.add(id); app.querySelector(`.ligne[data-id="${id}"]`)?.setAttribute('aria-pressed', !P.lignesOff.has(id)); majTexte(); };
+  app.querySelectorAll('button.ligne').forEach(b=>b.onclick=ev=>{ if(ev.target.closest('.vidal')) return; bascule(b.dataset.id); });
+  app.querySelectorAll('[data-bascule]').forEach(b=>b.onclick=()=>bascule(b.dataset.bascule));
+  app.querySelectorAll('[data-retirer]').forEach(b=>b.onclick=()=>{ P.ajouts=P.ajouts.filter(a=>a.id!==b.dataset.retirer); vOrdo(); });
   $('#prec').onclick=()=>{ P.sens=-1; P.i=etapes().length-1; vPrescri(); };
   $('#raz').onclick=()=>{ P=nouveauP(); vPrescri(); };
   if($('#copierOrdo')) $('#copierOrdo').onclick=()=>{
-    const t=texteOrdo(O.lignes.filter(l=>!P.lignesOff.has(l.id)));
+    const t=texteOrdo(actives());
     if(!t){ toast('Aucune ligne sélectionnée'); return; }
     copierTexte(t).then(ok=>toast(ok?'Ordonnance copiée':'Sélectionne le texte et copie-le'));
+  };
+  brancherAjout(actives);
+}
+
+/* Ajout d'un médicament hors recommandations : autocomplétion (base publique ANSM), classe, vérifications */
+const FICHES = {};
+async function ficheRCP(cis){
+  if(!cis) return null; if(FICHES[cis]) return FICHES[cis];
+  try{ const r=await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'fiche', cis:[cis]})}); const j=await r.json(); const f=j.fiches?.[0]; if(f && !f.erreur){ FICHES[cis]=f; return f; } }catch(e){}
+  return null;
+}
+function brancherAjout(actives){
+  const inp=$('#ajoutRech'), sug=$('#sugg'), form=$('#ajoutForm'); if(!inp) return;
+  MEDS.chargerBDPM().catch(()=>{});
+  let res=[];
+  const afficher=async()=>{
+    await MEDS.chargerBDPM().catch(()=>{});
+    res = MEDS.rechercher(inp.value, 8);
+    sug.innerHTML = res.map((x,i)=>`<button class="sug" data-k="${i}" role="option"><b>${esc(x.nom)}</b><small>${esc([x.classe, x.type==='spe'?x.subs.join(' + '):''].filter(Boolean).join(' · ')||'Classe : voir le RCP')}</small></button>`).join('')
+      || (inp.value.trim().length>=2?'<p class="sous" style="padding:8px 4px">Aucun médicament trouvé dans la base officielle.</p>':'');
+    sug.querySelectorAll('.sug').forEach(b=>b.onclick=()=>choisir(res[+b.dataset.k]));
+  };
+  inp.oninput=afficher;
+  const NIV = {CI:['forte','Contre-indiqué'], ASDEC:['forte','Déconseillé'], PE:['moy','Précaution'], APEC:['info','À prendre en compte']};
+  const choisir=x=>{
+    sug.innerHTML=''; inp.value='';
+    const dci = x.type==='dci' ? x.nom : (x.subs.length ? x.subs.map(z=>z.charAt(0).toUpperCase()+z.slice(1)).join(' + ') : x.nom);
+    const v = MEDS.verifierAjout(x.nom+' '+x.subs.join(' '), P.rep, actives());
+    const alertes = v.alertes.map(a=>`<div class="alerte ${NIV[a.niv][0]}">${ICO.alerte}<span><b>${NIV[a.niv][1]}</b>${esc(a.txt)}${a.src?` <span class="src">${esc(a.src)}</span>`:''}</span></div>`).join('');
+    form.innerHTML = `<div class="ajout-carte">
+      <b class="ajout-nom">${esc(x.nom)}</b>
+      <small class="sous" id="ajClasse">${esc(x.classe||'Lecture de la classe dans le RCP…')}</small>
+      <div class="alerte moy" style="margin-top:10px">${ICO.info}<span><b>Hors des recommandations</b>Ce médicament n’est pas proposé par la HAS pour cette situation : la prescription relève de ton choix.</span></div>
+      ${alertes || `<div class="alerte info">${ICO.info}<span><b>Aucune interaction repérée</b>Avec les traitements cochés, l’ordonnance et le profil du patient. Vérifie quand même les contre-indications du RCP.</span></div>`}
+      <details class="pr" id="ajCI" style="margin-top:10px" open hidden><summary><span>Contre-indications (RCP)</span></summary><ul><li class="rcp" id="ajCItxt"></li></ul></details>
+      <div class="champ"><label for="ajTitre">Médicament, dosage et forme</label>
+        ${x.pres.length?`<div class="pres">${x.pres.map((p,i)=>`<button class="chip-pres" data-p="${i}">${esc(p)}</button>`).join('')}</div>`:''}
+        <input id="ajTitre" value="${esc(dci)} " placeholder="Ex. Néfopam 30 mg, comprimé pelliculé"></div>
+      <div class="champ"><label for="ajPos">Posologie et durée</label><input id="ajPos" placeholder="Ex. 1 comprimé 3 fois par jour pendant 3 jours"></div>
+      <div class="deux-btn" style="margin-top:12px"><button class="btn sec" id="ajAnnuler">Annuler</button><button class="btn" id="ajOk" disabled>Ajouter à l’ordonnance</button></div>
+      ${x.cis?`<a class="vidal" href="https://base-donnees-publique.medicaments.gouv.fr/medicament/${x.cis}/extrait" target="_blank" rel="noopener">RCP complet (base publique ANSM) ↗</a>`:''}
+    </div>`;
+    const t=$('#ajTitre'), po=$('#ajPos'), ok=$('#ajOk');
+    const valide=()=>{ ok.disabled = !(t.value.trim().length>2 && po.value.trim().length>2); };
+    t.oninput=po.oninput=valide;
+    form.querySelectorAll('.chip-pres').forEach(c=>c.onclick=()=>{ t.value=`${dci} ${x.pres[+c.dataset.p]}`; form.querySelectorAll('.chip-pres').forEach(z=>z.setAttribute('aria-pressed',z===c)); valide(); po.focus(); });
+    let classe=x.classe;
+    ficheRCP(x.cis).then(f=>{
+      if(!f) { if(!classe) $('#ajClasse') && ($('#ajClasse').textContent='Classe : voir le RCP'); return; }
+      if(f.classe && !classe){ classe=f.classe.toLowerCase().replace(/^./,c=>c.toUpperCase()); }
+      const c=$('#ajClasse'); if(c) c.textContent=(classe||'Classe : voir le RCP')+(f.atc?' · ATC '+f.atc:'');
+      if(f.contreIndications){ const d=$('#ajCI'); if(d){ d.hidden=false; $('#ajCItxt').textContent=f.contreIndications; } }
+    });
+    $('#ajAnnuler').onclick=()=>{ form.innerHTML=''; };
+    ok.onclick=()=>{
+      P.ajouts.push({id:'aj'+Date.now(), titre:t.value.trim(), pos:po.value.trim(), classe, ordre:v.ordre, alertes:v.alertes});
+      vOrdo(); toast('Ajouté à l’ordonnance');
+      setTimeout(()=>$('#ordoTexte')?.scrollIntoView({behavior:'smooth',block:'center'}),80);
+    };
+    form.scrollIntoView({behavior:'smooth', block:'start'});
   };
 }
 
@@ -558,7 +683,8 @@ function vOrdo(){
    Ordre usuel : traitement étiologique (anti-infectieux), symptomatique (antalgiques), local (bain de bouche).
    Présentations : dosages et formes vérifiés dans la base de données publique des médicaments (ANSM). */
 const ORDRE_ORDO = c => /^Antibioprophylaxie/.test(c)?0 : c==='Antibiotique'?1 : c==='Antifongique'?2 : c==='Antiviral'?3 : c==='Antalgique'?4 : c==='Anti-inflammatoire'?5 : c==='Antiseptique'?6 : 7;
-const trierLignes = L => L.map((l,i)=>({l,i})).sort((a,b)=>ORDRE_ORDO(a.l.cat)-ORDRE_ORDO(b.l.cat)||a.i-b.i).map(x=>x.l);
+const rangOrdo = l => l.ordre ?? ORDRE_ORDO(l.cat);
+const trierLignes = L => L.map((l,i)=>({l,i})).sort((a,b)=>rangOrdo(a.l)-rangOrdo(b.l)||a.i-b.i).map(x=>x.l);
 // [dosage en mg, intitulé, unité de prise] du plus fort au plus faible ; buv = suspension (mg par mL)
 const PRESENTATIONS = {
   'Amoxicilline': {cp:[[1000,'Amoxicilline 1 g, comprimé dispersible','comprimé'],[500,'Amoxicilline 500 mg, gélule','gélule']], buv:['Amoxicilline 500 mg/5 mL, poudre pour suspension buvable',100]},
@@ -589,6 +715,7 @@ function dureeOrdo(qsp){
   return 'pendant '+q.toLowerCase();
 }
 function formaterLigne(l){
+  if(l.ajout){ const pos=l.pos.charAt(0).toUpperCase()+l.pos.slice(1); return {titre:l.med, pos:/[.!]$/.test(pos)?pos:pos+'.', horsAMM:false}; }
   // HAS juillet 2026, tableaux 11 et 12 : l'antibioprophylaxie en pratique bucco-dentaire est hors AMM (adulte et enfant)
   const horsAMM=/hors AMM/i.test(l.med) || /^Antibioprophylaxie/.test(l.cat), buvable=/forme buvable/i.test(l.med);
   const base=l.med.replace(/\s*\(.*?\)\s*/g,' ').trim();

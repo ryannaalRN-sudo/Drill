@@ -359,8 +359,8 @@ const cleTok = s => N(s).replace(/[^a-z0-9]+/g,' ').trim();
 S.chargerBDPM = async function(){
   if(BD) return BD;
   const j = await (await fetch('bdpm.json')).json();
-  const noms = new Map(); for(const [k,sub,cis] of j.noms) noms.set(cleTok(k), {nom:k, subs:sub?sub.split('|'):[], cis});
-  const dci = new Map(); for(const [d,cis] of j.dci) dci.set(cleTok(d), {nom:d, subs:[d], cis});
+  const noms = new Map(); for(const [k,sub,cis,com,pr] of j.noms) noms.set(cleTok(k), {nom:k, subs:sub?sub.split('|'):[], cis, pres:pr?pr.split('|'):[]});
+  const dci = new Map(); for(const [d,cis,pr] of j.dci) dci.set(cleTok(d), {nom:d, subs:[d], cis, pres:pr?pr.split('|'):[]});
   BD = {noms, dci, date:j.date}; return BD;
 };
 S.dateBDPM = () => BD ? BD.date : '';
@@ -383,6 +383,95 @@ S.identifier = function(ligne){
   const meds = S.reconnaitre(ligne + (spe ? ' '+spe.nom+' '+spe.subs.join(' ') : ''));
   return {spe, meds};
 };
+/* Recherche pour l'ajout d'un médicament (autocomplétion) */
+S.rechercher = function(q, n=8){
+  if(!BD) return [];
+  const k = cleTok(q); if(k.length<2) return [];
+  const res = [];
+  const essai = (map, type) => { for(const [cle, e] of map){ let sc=-1;
+    if(cle.startsWith(k)) sc = type==='dci'?0:1;
+    else if((' '+cle).includes(' '+k)) sc = type==='dci'?2:3;
+    if(sc>=0) res.push({...e, type, sc, lg:cle.length}); } };
+  essai(BD.dci,'dci'); essai(BD.noms,'spe');
+  res.sort((a,b)=>a.sc-b.sc || a.lg-b.lg);
+  const vus=new Set(), out=[];
+  for(const r of res){ const cle=r.type+'|'+cleTok(r.nom); if(vus.has(cle) || /hom[eé]opath|pour pr[eé]parations/i.test(r.nom+' '+r.subs.join(' '))) continue; vus.add(cle);
+    const loc = S.reconnaitre(r.nom+' '+r.subs.join(' '));
+    let classe=[...new Set(loc.map(m=>m.classe))].join(' · ');
+    if(!classe){ const id=[...S.idsDentaires(r.nom+' '+r.subs.join(' '),[])][0]; classe=CLASSE_DENT[id]||''; }
+    out.push({nom: r.type==='dci' ? r.nom.charAt(0).toUpperCase()+r.nom.slice(1) : S.titre(r.nom), subs:r.subs, cis:r.cis, type:r.type, classe, pres:r.pres||[]});
+    if(out.length>=n) break; }
+  return out;
+};
+
+/* Vérification d'un médicament ajouté hors recommandations :
+   interactions (thésaurus ANSM) avec les traitements du patient et l'ordonnance, puis profil du patient. */
+const DENT_RX = [[/clavulan|augmentin/,'augm'],[/amoxicil|clamoxyl/,'amox'],[/metronidazol|flagyl/,'metro'],[/clarithromycin|zeclar/,'clari'],[/azithromycin|zithromax/,'azi'],[/pristinamycin|pyostacin/,'prist'],[/clindamycin|dalacin/,'clinda'],[/cefpodoxim|orelox/,'cefpo'],[/sulfamethoxazol|bactrim/,'cotri'],[/miconazol|daktarin|loramyc/,'micon'],[/amphotericin|fungizone/,'ampho'],[/aciclovir|zovirax|zelitrex/,'acic'],[/chlorhexidin|paroex|eludril/,'chx'],[/tramadol|topalgic|contramal|ixprim|zaldiar/,'tramadol'],[/codein/,'codeine']];
+S.idsDentaires = function(texte, meds){
+  const t=N(texte), ids=new Set();
+  for(const [rx,id] of DENT_RX) if(rx.test(t)){ if(id==='amox' && ids.has('augm')) continue; ids.add(id); }
+  (meds||[]).forEach(m=>{ if(m.tags.has('paracetamol')) ids.add('para'); if(m.tags.has('ains')) ids.add('ibu'); });
+  return ids;
+};
+const CLASSE_DENT = {amox:'Antibiotique (pénicilline A)', augm:'Antibiotique (pénicilline A + inhibiteur de bêta-lactamase)', metro:'Antibiotique (nitro-imidazolé)', clari:'Antibiotique (macrolide)', azi:'Antibiotique (macrolide)', prist:'Antibiotique (synergistine)', clinda:'Antibiotique (lincosamide)', cefpo:'Antibiotique (céphalosporine)', cotri:'Antibiotique (sulfamide)', micon:'Antifongique (azolé)', ampho:'Antifongique (polyène)', acic:'Antiviral', chx:'Antiseptique'};
+S.CLASSE_DENT = CLASSE_DENT;
+const TAGS_TTT = {aap:['aap'], aap2:['aap','aap_double'], avk:['avk','anticoag'], aod:['aod','anticoag'], heparine:['heparine'], sulfamide:['sulfamide','antidiab'], mtx:['mtx','immunosup']};
+S.verifierAjout = function(texte, rep, lignes){
+  const {spe, meds} = S.identifier(texte);
+  const plein = texte+' '+(spe?spe.nom+' '+spe.subs.join(' '):'');
+  const ids = S.idsDentaires(plein, meds);
+  const tags = new Set(); meds.forEach(m=>m.tags.forEach(t=>tags.add(t)));
+  const A = []; const ajoute = (niv, txt, src) => { if(!A.some(a=>a.txt===txt)) A.push({niv, txt, src}); };
+  // Ce que le patient prend (questionnaire)
+  const tagsPatient = new Map();
+  (rep.ttt||[]).forEach(v=>(TAGS_TTT[v]||[]).forEach(t=>tagsPatient.set(t,'son traitement ('+({aap:'antiplaquettaire',aap2:'bithérapie antiplaquettaire',avk:'AVK',aod:'AOD',heparine:'héparine',sulfamide:'sulfamide hypoglycémiant',mtx:'méthotrexate'}[v])+')')));
+  if((rep.atcd||[]).includes('qt')) tagsPatient.set('qt','un médicament allongeant le QT');
+  // Ce qui est déjà sur l'ordonnance
+  const lignesInfo = (lignes||[]).map(l=>{ const r=S.identifier(l.med); const t=new Set(); r.meds.forEach(m=>m.tags.forEach(x=>t.add(x))); return {nom:l.med.replace(/\s*\(.*?\)/g,''), ids:S.idsDentaires(l.med, r.meds), tags:t}; });
+  lignesInfo.forEach(li=>li.tags.forEach(t=>{ if(!tagsPatient.has(t)) tagsPatient.set(t, li.nom+' (déjà sur l’ordonnance)'); }));
+  for(const [dents, tg, niv, txt, src] of I){
+    const D = dents.split(' '), T = tg.split(' ');
+    // le médicament ajouté face au patient et à l'ordonnance
+    if(D.some(d=>ids.has(d))) T.forEach(t=>{ if(tagsPatient.has(t)) ajoute(niv, 'Avec '+tagsPatient.get(t)+' : '+txt, src); });
+    // l'ordonnance face au médicament ajouté
+    lignesInfo.forEach(li=>{ if(D.some(d=>li.ids.has(d)) && T.some(t=>tags.has(t))) ajoute(niv, 'Avec '+li.nom+' (déjà sur l’ordonnance) : '+txt, src); });
+  }
+  lignesInfo.forEach(li=>{ if([...ids].some(d=>li.ids.has(d)) && !A.some(a=>a.txt.includes(li.nom+' (déjà'))) ajoute('ASDEC','Même molécule ou même classe que '+li.nom+', déjà sur l’ordonnance : ne pas cumuler.',''); });
+  // Profil du patient
+  const al = new Set(rep.allergies||[]), at = new Set(rep.atcd||[]), p = rep.profil, age = Number(rep.age);
+  const ains = tags.has('ains') || ids.has('ibu');
+  if(al.has('peni') && (ids.has('amox')||ids.has('augm'))) ajoute('CI','Allergie aux pénicillines.','');
+  if(al.has('peni') && ids.has('cefpo')) ajoute('PE','Allergie aux pénicillines : allergie croisée possible avec les céphalosporines.','RCP');
+  if(al.has('cephalo') && ids.has('cefpo')) ajoute('CI','Allergie aux céphalosporines.','');
+  if(al.has('ains') && ains) ajoute('CI','Allergie aux AINS ou à l’aspirine.','RCP');
+  if(al.has('macrolides') && (ids.has('clari')||ids.has('azi'))) ajoute('CI','Allergie aux macrolides.','');
+  if(al.has('metro') && ids.has('metro')) ajoute('CI','Allergie au métronidazole.','');
+  if(al.has('pristina') && ids.has('prist')) ajoute('CI','Allergie à la pristinamycine.','');
+  if(al.has('paracetamol') && ids.has('para')) ajoute('CI','Allergie au paracétamol.','');
+  if(al.has('chx') && ids.has('chx')) ajoute('CI','Allergie à la chlorhexidine.','');
+  if(p==='enceinte'){
+    if(ains) ajoute(rep.terme==='apres'?'CI':'ASDEC', rep.terme==='apres' ? 'Grossesse : AINS contre-indiqués à partir du début du 6e mois (24 SA), même en prise ponctuelle.' : 'Grossesse : AINS à éviter avant le 6e mois, sauf nécessité, à la dose minimale et le moins longtemps possible.','ANSM');
+    ajoute('APEC','Grossesse : vérifie ce médicament sur lecrat.fr (Centre de référence sur les agents tératogènes).','CRAT');
+  }
+  if(p==='allaite') ajoute('APEC','Allaitement : vérifie ce médicament sur lecrat.fr.','CRAT');
+  if(p==='enfant'){
+    if(/nefopam|acupan/.test(N(plein)) && !(age>=15)) ajoute('CI','Néfopam contre-indiqué chez l’enfant de moins de 15 ans.','RCP');
+    ajoute('APEC','Enfant : vérifie l’âge minimal, la forme adaptée et la dose au poids dans le RCP.','RCP');
+  }
+  if(ains){
+    if(at.has('ulcere')) ajoute('CI','Ulcère ou antécédent d’hémorragie digestive : AINS contre-indiqués.','RCP');
+    if(at.has('ir_severe')) ajoute('CI','Insuffisance rénale sévère : AINS contre-indiqués.','RCP');
+    if(at.has('ih_severe')) ajoute('CI','Insuffisance hépatique sévère : AINS contre-indiqués.','RCP');
+    if(at.has('insuf_card')) ajoute('CI','Insuffisance cardiaque sévère : AINS contre-indiqués.','RCP');
+    if(at.has('asthme')) ajoute('PE','Asthme : AINS contre-indiqués si l’asthme est déclenché par l’aspirine ou un AINS.','RCP');
+  }
+  if(ids.has('para') && (at.has('ih')||at.has('ih_severe'))) ajoute('PE','Insuffisance hépatique ou alcoolisme : paracétamol à dose réduite (2 g/j, 8 h entre les prises).','RCP');
+  if(at.has('qt') && (ids.has('clari')||ids.has('azi')||ids.has('cotri')||tags.has('qt'))) ajoute('PE','Allongement du QT : risque de torsades de pointes.',TH);
+  const R={CI:4,ASDEC:3,PE:2,APEC:1};
+  A.sort((a,b)=>R[b.niv]-R[a.niv]);
+  return {alertes:A, spe, meds, ids:[...ids], ordre: [...ids].some(d=>['amox','augm','metro','clari','azi','prist','clinda','cefpo','cotri'].includes(d))?1 : [...ids].some(d=>['micon','ampho'].includes(d))?2 : ids.has('acic')?3 : (ids.has('para')||ids.has('tramadol')||ids.has('codeine')||tags.has('morphinique')||/antalg/i.test(meds.map(m=>m.classe).join(' ')))?4 : ids.has('ibu')?5 : ids.has('chx')?6 : 7};
+};
+
 S.titre = s => s.toLowerCase().replace(/(^|[\s\-'’(])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
 
 /* ---------- 3. Ce que le dentiste peut prescrire ---------- */
