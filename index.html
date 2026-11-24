@@ -330,6 +330,8 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .pres{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
 .chip-pres{padding:6px 10px;border-radius:999px;border:1.5px solid var(--trait);background:var(--email);font-size:.84rem;font-weight:700;color:var(--encre-2)}
 .chip-pres[aria-pressed="true"]{background:var(--lagon-pale);border-color:var(--lagon);color:#065E54}
+.poso-sugg{display:grid;gap:6px}
+.sug.choisie{border-color:var(--lagon);background:var(--lagon-pale)}
 </style>
 </head>
 <body>
@@ -644,6 +646,7 @@ function brancherAjout(actives){
     sug.innerHTML=''; inp.value='';
     const dci = x.type==='dci' ? x.nom : (x.subs.length ? x.subs.map(z=>z.charAt(0).toUpperCase()+z.slice(1)).join(' + ') : x.nom);
     const v = MEDS.verifierAjout(x.nom+' '+x.subs.join(' '), P.rep, actives());
+    const poso = MEDS.posologies(x.nom+' '+x.subs.join(' '), P.rep);
     const alertes = v.alertes.map(a=>`<div class="alerte ${NIV[a.niv][0]}">${ICO.alerte}<span><b>${NIV[a.niv][1]}</b>${esc(a.txt)}${a.src?` <span class="src">${esc(a.src)}</span>`:''}</span></div>`).join('');
     form.innerHTML = `<div class="ajout-carte">
       <b class="ajout-nom">${esc(x.nom)}</b>
@@ -651,6 +654,9 @@ function brancherAjout(actives){
       <div class="alerte moy" style="margin-top:10px">${ICO.info}<span><b>Hors des recommandations</b>Ce médicament n’est pas proposé par la HAS pour cette situation : la prescription relève de ton choix.</span></div>
       ${alertes || `<div class="alerte info">${ICO.info}<span><b>Aucune interaction repérée</b>Avec les traitements cochés, l’ordonnance et le profil du patient. Vérifie quand même les contre-indications du RCP.</span></div>`}
       <details class="pr" id="ajCI" style="margin-top:10px" open hidden><summary><span>Contre-indications (RCP)</span></summary><ul><li class="rcp" id="ajCItxt"></li></ul></details>
+      ${poso.length?`<p class="groupe" style="margin:12px 0 4px">Posologies proposées</p><div class="poso-sugg">${poso.map((p,i)=>`<button class="sug" data-poso="${i}"><b>${esc(p.titre)}</b><small>${esc(p.pos)} <span class="src">${esc(p.src)}</span></small></button>`).join('')}</div><p class="sous" style="font-size:.82rem;margin-top:4px">Durées indicatives : adapte-les à ton patient.</p>`
+        : `<p class="sous" style="font-size:.85rem;margin-top:10px">${P.rep.profil==='enfant'?'Enfant : dose au poids, voir la posologie du RCP ci-dessous.':'Pas de posologie préparée pour ce médicament : voir la posologie du RCP ci-dessous.'}</p>`}
+      <details class="pr" id="ajPoso" style="margin-top:8px" hidden><summary><span>Posologie (RCP)</span></summary><ul><li class="rcp" id="ajPosotxt"></li></ul></details>
       <div class="champ"><label for="ajTitre">Médicament, dosage et forme</label>
         ${x.pres.length?`<div class="pres">${x.pres.map((p,i)=>`<button class="chip-pres" data-p="${i}">${esc(p)}</button>`).join('')}</div>`:''}
         <input id="ajTitre" value="${esc(dci)} " placeholder="Ex. Néfopam 30 mg, comprimé pelliculé"></div>
@@ -661,6 +667,7 @@ function brancherAjout(actives){
     const t=$('#ajTitre'), po=$('#ajPos'), ok=$('#ajOk');
     const valide=()=>{ ok.disabled = !(t.value.trim().length>2 && po.value.trim().length>2); };
     t.oninput=po.oninput=valide;
+    form.querySelectorAll('[data-poso]').forEach(c=>c.onclick=()=>{ const p=poso[+c.dataset.poso]; t.value=p.titre; po.value=p.pos; form.querySelectorAll('[data-poso]').forEach(z=>z.classList.toggle('choisie',z===c)); valide(); });
     form.querySelectorAll('.chip-pres').forEach(c=>c.onclick=()=>{ t.value=`${dci} ${x.pres[+c.dataset.p]}`; form.querySelectorAll('.chip-pres').forEach(z=>z.setAttribute('aria-pressed',z===c)); valide(); po.focus(); });
     let classe=x.classe;
     ficheRCP(x.cis).then(f=>{
@@ -668,6 +675,7 @@ function brancherAjout(actives){
       if(f.classe && !classe){ classe=f.classe.toLowerCase().replace(/^./,c=>c.toUpperCase()); }
       const c=$('#ajClasse'); if(c) c.textContent=(classe||'Classe : voir le RCP')+(f.atc?' · ATC '+f.atc:'');
       if(f.contreIndications){ const d=$('#ajCI'); if(d){ d.hidden=false; $('#ajCItxt').textContent=f.contreIndications; } }
+      if(f.posologie){ const d=$('#ajPoso'); if(d){ d.hidden=false; $('#ajPosotxt').textContent=f.posologie; } }
     });
     $('#ajAnnuler').onclick=()=>{ form.innerHTML=''; };
     ok.onclick=()=>{
@@ -750,13 +758,13 @@ function blocsOrdo(lignes){
 }
 function texteOrdo(lignes){
   if(!lignes.length) return '';
-  const blocs=blocsOrdo(lignes).map(b=>`${b.titre}\n${b.pos}${b.horsAMM?'\nPrescription hors autorisation de mise sur le marché.':''}`);
+  const blocs=blocsOrdo(lignes).map((b,i)=>`${i+1}/ ${b.titre}\n${b.pos}${b.horsAMM?'\nPrescription hors autorisation de mise sur le marché.':''}`);
   if(lignes.some(l=>/^Antibioprophylaxie/.test(l.cat))) blocs.push('Antibiotique à délivrer à l’unité.');
   return blocs.join('\n\n');
 }
 function htmlOrdo(lignes){
   if(!lignes.length) return '<p class="sous">Aucune ligne sélectionnée.</p>';
-  let h=blocsOrdo(lignes).map(b=>`<div class="ol"><b>${esc(b.titre)}</b><span>${esc(b.pos)}</span>${b.horsAMM?'<span>Prescription hors autorisation de mise sur le marché.</span>':''}</div>`).join('');
+  let h=blocsOrdo(lignes).map((b,i)=>`<div class="ol"><b>${i+1}/ ${esc(b.titre)}</b><span>${esc(b.pos)}</span>${b.horsAMM?'<span>Prescription hors autorisation de mise sur le marché.</span>':''}</div>`).join('');
   if(lignes.some(l=>/^Antibioprophylaxie/.test(l.cat))) h+='<div class="ol"><span>Antibiotique à délivrer à l’unité.</span></div>';
   return h;
 }

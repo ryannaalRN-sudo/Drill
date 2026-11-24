@@ -467,10 +467,43 @@ S.verifierAjout = function(texte, rep, lignes){
   }
   if(ids.has('para') && (at.has('ih')||at.has('ih_severe'))) ajoute('PE','Insuffisance hépatique ou alcoolisme : paracétamol à dose réduite (2 g/j, 8 h entre les prises).','RCP');
   if(at.has('qt') && (ids.has('clari')||ids.has('azi')||ids.has('cotri')||tags.has('qt'))) ajoute('PE','Allongement du QT : risque de torsades de pointes.',TH);
+  if(S.securisee(plein)) ajoute('PE','Tramadol ou codéine : ordonnance sécurisée obligatoire, avec le dosage, la posologie et la durée écrits en toutes lettres ; 12 semaines au maximum.','ANSM 2025');
   const R={CI:4,ASDEC:3,PE:2,APEC:1};
   A.sort((a,b)=>R[b.niv]-R[a.niv]);
   return {alertes:A, spe, meds, ids:[...ids], ordre: [...ids].some(d=>['amox','augm','metro','clari','azi','prist','clinda','cefpo','cotri'].includes(d))?1 : [...ids].some(d=>['micon','ampho'].includes(d))?2 : ids.has('acic')?3 : (ids.has('para')||ids.has('tramadol')||ids.has('codeine')||tags.has('morphinique')||/antalg/i.test(meds.map(m=>m.classe).join(' ')))?4 : ids.has('ibu')?5 : ids.has('chx')?6 : 7};
 };
+
+/* Posologies proposées pour un médicament ajouté (adulte) — d'après les RCP, ou les schémas HAS 2026 déjà utilisés par Drill.
+   Tramadol et codéine : ordonnance sécurisée, dosage, posologie et durée en toutes lettres (ANSM, 1er mars 2025). */
+const POSO = [
+  [/nefopam|acupan/, [{titre:'Néfopam 30 mg, comprimé pelliculé', pos:'1 à 2 comprimés lors de la première prise, puis 1 comprimé si douleur, sans dépasser 6 comprimés par jour (en 3 prises), pendant 3 jours', src:'RCP'}]],
+  [/codein/, [{titre:'Paracétamol cinq cents milligrammes / codéine trente milligrammes, comprimé', pos:'Un à deux comprimés par prise si douleur, au moins six heures entre deux prises, sans dépasser six comprimés par jour, pendant trois jours', src:'RCP'}]],
+  [/tramadol(?!.*paracetamol)|topalgic|contramal/, [{titre:'Tramadol cinquante milligrammes, gélule', pos:'Deux gélules lors de la première prise, puis une à deux gélules toutes les quatre à six heures si douleur, sans dépasser huit gélules par jour, pendant trois jours', src:'RCP'}]],
+  [/paracetamol|doliprane|dafalgan|efferalgan/, [{titre:'Paracétamol 1 g, comprimé', pos:'1 comprimé par prise si douleur, au moins 4 h entre deux prises, sans dépasser 3 comprimés par jour, pendant 5 jours', src:'RCP'},{titre:'Paracétamol 500 mg, gélule', pos:'2 gélules par prise si douleur, au moins 4 h entre deux prises, sans dépasser 6 gélules par jour, pendant 5 jours', src:'RCP'}]],
+  [/ibuprofen|advil|nurofen/, [{titre:'Ibuprofène 400 mg, comprimé pelliculé', pos:'1 comprimé 3 fois par jour au cours des repas, pendant 3 jours', src:'RCP'},{titre:'Ibuprofène 200 mg, comprimé pelliculé', pos:'1 à 2 comprimés 3 fois par jour au cours des repas, sans dépasser 6 comprimés par jour, pendant 3 jours', src:'RCP'}]],
+  [/clavulan|augmentin/, [{titre:'Amoxicilline/acide clavulanique 1 g/125 mg, poudre pour suspension buvable en sachet-dose', pos:'1 sachet 3 fois par jour, pendant 5 jours', src:'HAS 2026'}]],
+  [/amoxicil|clamoxyl/, [{titre:'Amoxicilline 1 g, comprimé dispersible', pos:'1 comprimé 3 fois par jour, pendant 3 jours', src:'HAS 2026'},{titre:'Amoxicilline 500 mg, gélule', pos:'2 gélules 3 fois par jour, pendant 3 jours', src:'HAS 2026'}]],
+  [/metronidazol|flagyl/, [{titre:'Métronidazole 500 mg, comprimé pelliculé', pos:'1 comprimé 3 fois par jour, pendant 3 jours', src:'HAS 2026'}]],
+  [/clarithromycin|zeclar/, [{titre:'Clarithromycine 500 mg, comprimé pelliculé', pos:'1 comprimé 2 fois par jour, pendant 3 jours', src:'HAS 2026'}]],
+  [/azithromycin|zithromax/, [{titre:'Azithromycine 250 mg, comprimé pelliculé', pos:'2 comprimés 1 fois par jour, pendant 3 jours', src:'HAS 2026'}]],
+  [/pristinamycin|pyostacin/, [{titre:'Pristinamycine 500 mg, comprimé pelliculé', pos:'2 comprimés 2 fois par jour, pendant 5 jours', src:'HAS 2026'}]],
+  [/clindamycin|dalacin/, [{titre:'Clindamycine 300 mg, gélule', pos:'2 gélules 3 fois par jour, pendant 5 jours', src:'HAS 2026'}]],
+  [/chlorhexidin|paroex/, [{titre:'Chlorhexidine digluconate 0,12 %, solution pour bain de bouche', pos:'15 mL en bain de bouche d’1 min, 2 fois par jour après les repas, sans rincer après, pendant 7 jours', src:'RCP'}]],
+  [/miconazol|loramyc|daktarin/, [{titre:'Miconazole 50 mg, comprimé gingival muco-adhésif', pos:'1 comprimé par jour appliqué sur la gencive, pendant 7 à 14 jours', src:'RCP'},{titre:'Miconazole 2 %, gel buccal', pos:'2,5 mL 4 fois par jour, à distance des repas, à garder en bouche avant d’avaler, pendant 7 à 15 jours', src:'RCP'}]],
+  [/amphotericin|fungizone/, [{titre:'Amphotéricine B 10 %, suspension buvable', pos:'15 à 20 mL par jour en 2 à 3 prises, en bain de bouche puis avalé, pendant 2 à 3 semaines', src:'RCP'}]],
+];
+S.posologies = function(texte, rep){
+  const t = N(texte);
+  if(rep.profil==='enfant') return [];
+  const hit = POSO.find(([rx])=>rx.test(t)); if(!hit) return [];
+  const at = new Set(rep.atcd||[]);
+  return hit[1].map(p=>{
+    let pos = p.pos;
+    if(/^Paracétamol 1 g/.test(p.titre) && (at.has('ih')||at.has('ih_severe'))) pos='1 comprimé par prise si douleur, au moins 8 h entre deux prises, sans dépasser 2 comprimés par jour, pendant 5 jours';
+    return {...p, pos};
+  });
+};
+S.securisee = texte => /tramadol|codein|topalgic|contramal|ixprim|zaldiar|klipal|codoliprane/.test(N(texte));
 
 S.titre = s => s.toLowerCase().replace(/(^|[\s\-'’(])([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase());
 

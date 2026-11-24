@@ -110,7 +110,7 @@ function section(t, debut, fin) {
 }
 const couper = (s, n) => s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s;
 async function fiche(cis) {
-  const cle = new Request('https://drill-cache.local/fiche/' + cis);
+  const cle = new Request('https://drill-cache.local/fiche2/' + cis);
   let cache = null; try { cache = caches.default; const deja = await cache.match(cle); if (deja) return await deja.json(); } catch { cache = null; }
   let f = { cis, url: BDPM(cis) };
   try {
@@ -123,6 +123,7 @@ async function fiche(cis) {
     f.atc = cl && cl[2] ? cl[2] : (t.match(/code ATC\s*:?\s*([A-Z]\d{2}[A-Z0-9]{0,4})/i) || [])[1] || '';
     f.indications = couper(section(t, '4\\.1\\.?\\s*Indications th[ée]rapeutiques', '4\\.2\\.?\\s*Posologie'), 900);
     f.contreIndications = couper(section(t, '4\\.3\\.?\\s*Contre-?\\s?indications', '4\\.4\\.?\\s*Mises en garde'), 900);
+    f.posologie = couper(section(t, '4\\.2\\.?\\s*Posologie et mode d.administration', '4\\.3\\.?\\s*Contre-?\\s?indications'), 1200);
     if (cache) { try { await cache.put(cle, new Response(JSON.stringify(f), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=604800' } })); } catch {} }
   } catch (e) { f.erreur = 'lecture'; }
   return f;
