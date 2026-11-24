@@ -316,7 +316,8 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .choix .grp{display:grid;gap:10px}
 .choix .grp[hidden],.opt[hidden]{display:none}
 .ajout-med-zone{margin-top:16px;padding:14px;border-radius:var(--r-m);border:1.5px dashed var(--trait);background:var(--carte)}
-.sugg{display:grid;gap:6px;margin-top:8px}
+.sugg-liste{display:grid;gap:6px;margin-top:8px}
+.sugg-liste:empty{display:none}
 .sug{display:grid;text-align:left;padding:10px 12px;border-radius:var(--r-s);background:var(--email);border:1px solid var(--trait)}
 .sug small{color:var(--encre-2);font-size:.82rem}
 .ajout-carte{margin-top:12px;display:grid;gap:4px}
@@ -332,6 +333,39 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .chip-pres[aria-pressed="true"]{background:var(--lagon-pale);border-color:var(--lagon);color:#065E54}
 .poso-sugg{display:grid;gap:6px}
 .sug.choisie{border-color:var(--lagon);background:var(--lagon-pale)}
+.favs{margin:6px 0 16px;padding:12px;border-radius:var(--r-m);background:var(--ambre-pale)}
+.favs-tete{display:flex;justify-content:space-between;align-items:center;color:#7A4A05}
+.favs-tete b{display:flex;align-items:center;gap:6px;font-family:var(--display)}
+.lien{color:#7A4A05;font-weight:700;font-size:.88rem;text-decoration:underline}
+.favs-chips{display:flex;gap:8px;overflow-x:auto;padding-top:10px;scrollbar-width:none}
+.favs-chips::-webkit-scrollbar{display:none}
+.fav-chip{flex:none;padding:9px 14px;border-radius:999px;background:#fff;border:1.5px solid #F0D29E;font-weight:700;font-size:.88rem;color:var(--encre)}
+.fav-chip.plus{background:transparent;border-style:dashed;color:#7A4A05}
+.fav-carte{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:left;padding:14px 16px;border-radius:var(--r-m);background:var(--carte);border:1.5px solid var(--trait)}
+.fav-carte small{grid-column:1;color:var(--encre-2);font-size:.85rem}
+.fav-carte .fl{grid-row:1/3;grid-column:2;align-self:center;color:var(--encre-2)}
+.vide{padding:18px;border-radius:var(--r-m);border:1.5px dashed var(--trait);text-align:center}
+.vide svg{vertical-align:-3px;color:var(--ambre)}
+.fav-actions{display:grid;gap:8px;margin-top:14px}
+.fav-actions .btn.sec{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;flex:none}
+.bascule{display:flex;align-items:center;gap:12px;margin-top:14px;font-size:.93rem;cursor:pointer}
+.bascule input{position:absolute;opacity:0;pointer-events:none}
+.glissiere{flex:none;width:46px;height:28px;border-radius:999px;background:var(--trait);position:relative;transition:background .2s}
+.glissiere::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.bascule input:checked+.glissiere{background:var(--lagon)}
+.bascule input:checked+.glissiere::after{transform:translateX(18px)}
+.bascule input:focus-visible+.glissiere{outline:3px solid var(--lagon);outline-offset:2px}
+.fe-lignes{display:grid;gap:10px}
+.fe-ligne{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:12px;border-radius:var(--r-m);background:var(--carte);border:1.5px solid var(--trait)}
+.fe-num{width:26px;height:26px;border-radius:50%;background:var(--lagon-pale);color:#065E54;font-weight:800;display:grid;place-items:center;font-size:.85rem;margin-top:6px}
+.fe-champs{display:grid;gap:6px;min-width:0}
+.fe-titre{font-weight:700;border:0;border-bottom:1.5px solid var(--trait);padding:6px 0;background:none;font-size:16px;width:100%}
+.fe-pos{border:0;background:var(--email);border-radius:8px;padding:8px;font:inherit;font-size:16px;resize:none;width:100%;color:var(--encre-2)}
+.fe-titre:focus,.fe-pos:focus{outline:none;border-color:var(--lagon)}
+.fe-actions{display:grid;gap:4px}
+.fe-actions button{width:32px;height:30px;border-radius:8px;background:var(--email);font-weight:800;color:var(--encre-2)}
+.fe-actions button:disabled{opacity:.3}
+.ordo-texte .intitule{font-family:var(--display);font-size:1.05rem;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -406,6 +440,10 @@ function vAccueil(){
         <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg></span>
         <span><h3>Prescri'Dent</h3><p>Profil du patient, conduite à tenir et ordonnance à recopier</p></span><span class="fl">${ICO.fleche}</span>
       </button>
+      <button class="outil" id="goFav">
+        <span class="ico a">${ICO_ETOILE.replace('width="18" height="18"','')}</span>
+        <span><h3>Ordonnances types</h3><p>Tes ordonnances habituelles, prêtes à copier</p></span><span class="fl">${ICO.fleche}</span>
+      </button>
       <button class="outil" data-go="scan">
         <span class="ico l">${ICO_SCAN}</span>
         <span><h3>Scanner une ordonnance</h3><p>Le traitement du patient : interactions, précautions, effets en bouche</p></span><span class="fl">${ICO.fleche}</span>
@@ -427,6 +465,7 @@ function vAccueil(){
     <p class="demo">Outil d'aide à la décision fondé sur la HAS, la SFCO, l'ANSM et la CCAM officielle. Il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
   </div>`;
   app.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>aller(b.dataset.go));
+  $('#goFav').onclick=()=>{ aller('prescri'); vFavoris(); };
 }
 
 /* ---------------------------------------------------------
@@ -492,6 +531,7 @@ function vPrescri(){
     <div class="arcade" role="progressbar" aria-valuemin="0" aria-valuemax="${L.length}" aria-valuenow="${P.i}">${arcade}</div>
     <p class="etape-n">Question ${P.i+1} sur ${L.length}</p>
     <section class="question ${P.sens>0?'entre-d':'entre-g'}">
+      ${P.i===0?bandeauFavoris():''}
       <h2>${e.titre}</h2><p class="sous">${e.aide}</p>
       ${e.id==='ttt'?`<button class="lien-scan" id="versScan">${ICO_SCAN}Scanner l’ordonnance du patient</button>`:''}
       ${avecRecherche?`<div class="recherche q-rech">${ICO.loupe}<input id="filtreQ" type="search" placeholder="${e.id==='motif'?'Rechercher un acte ou une affection':e.id==='allergies'?'Rechercher une allergie':e.id==='atcd'?'Rechercher un antécédent':'Rechercher un traitement'}" value="${esc(P.filtre[e.id]||'')}" autocomplete="off"></div>`:''}
@@ -502,6 +542,7 @@ function vPrescri(){
   <div class="barre-action"><div class="in"><button class="btn" id="suiv" ${etapeValide(e)?'':'disabled'}>${P.i===L.length-1?'Voir la conduite à tenir':'Continuer'}</button></div></div>`;
 
   const vs=$('#versScan'); if(vs) vs.onclick=()=>{ SC=nouveauSC(); SC.depuisPrescri=true; aller('scan'); };
+  if(P.i===0) brancherBandeau();
   const fq=$('#filtreQ'); if(fq){ const f=()=>{ P.filtre[e.id]=fq.value; filtrerOptions(fq.value); }; fq.oninput=f; filtrerOptions(fq.value); }
   app.querySelectorAll('.opt[data-v]').forEach(b=>b.onclick=()=>{
     const v=b.dataset.v;
@@ -558,7 +599,7 @@ function suivant(){
 function vOrdo(){
   const r=P.rep, O=RECO.decider(r), M=RECO.MOTIF[r.motif]||{};
   if(!P.ajouts) P.ajouts=[];
-  const ajoutsL = P.ajouts.map(a=>({id:a.id, cat:'Ajout', med:a.titre, pos:a.pos, qsp:'', ajout:true, ordre:a.ordre, classe:a.classe, alertes:a.alertes}));
+  const ajoutsL = P.ajouts.map(a=>({id:a.id, cat:'Ajout', med:a.titre, pos:a.pos, qsp:'', ajout:true, ordre:a.ordre, classe:a.classe, alertes:a.alertes, source:a.source}));
   const toutes = trierLignes([...O.lignes, ...ajoutsL]);
   const actives = () => toutes.filter(l=>!P.lignesOff.has(l.id));
   const total=14;
@@ -567,7 +608,7 @@ function vOrdo(){
   const carteLigne = l => l.ajout ? `
         <div class="ligne ajoutee" data-id="${l.id}" aria-pressed="${!P.lignesOff.has(l.id)}">
           <span class="coche" data-bascule="${l.id}"></span>
-          <span style="text-align:left;min-width:0"><small class="sous" style="font-size:.78rem">${esc(l.classe||'Classe : voir le RCP')} <span class="niv pe" style="margin-left:4px">Hors recommandations</span></small>
+          <span style="text-align:left;min-width:0"><small class="sous" style="font-size:.78rem">${esc(l.classe||'Classe : voir le RCP')} <span class="niv ${l.source==='type'?'apec':'pe'}" style="margin-left:4px">${l.source==='type'?'Ordonnance type':'Hors recommandations'}</span></small>
             <span class="med" style="display:block">${esc(l.med)}</span>
             <span class="pos" style="display:block">${esc(l.pos)}</span>
             ${(l.alertes||[]).map(x=>`<span class="mini-alerte ${NIV[x.niv][0]}"><b>${NIV[x.niv][1]}</b> ${esc(x.txt)}${x.src?` <span class="src">${esc(x.src)}</span>`:''}</span>`).join('')}
@@ -596,12 +637,16 @@ function vOrdo(){
       <div class="ajout-med-zone">
         <p class="groupe" style="margin:0 0 6px">Ajouter un médicament</p>
         <div class="recherche" style="margin:0">${ICO.loupe}<input id="ajoutRech" type="search" placeholder="Ex. néfopam, Acupan…" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div id="sugg" class="sugg" role="listbox"></div>
+        <div id="sugg" class="sugg-liste" role="listbox"></div>
         <div id="ajoutForm"></div>
       </div>
       ${toutes.length?`<h2 style="margin-top:22px">À recopier sur l’ordonnance</h2>
       <p class="sous">Dans l’ordre : traitement de la cause, puis douleur, puis soins locaux.</p>
       <div class="ordo-texte" id="ordoTexte"></div>`:''}
+      <div class="fav-actions">
+        ${toutes.length?`<button class="btn sec" id="favSave">${ICO_ETOILE} Enregistrer comme ordonnance type</button>`:''}
+        ${lireFavoris().length?`<button class="btn sec" id="favIns">Insérer une ordonnance type</button><div id="favInsListe" class="sugg-liste"></div>`:''}
+      </div>
       <p class="demo">Sources : HAS 2026 (antibiotiques en pratique bucco-dentaire), HAS 2024 (endocardite), SFCO 2015 (antithrombotiques), ANSM, RCP. Médicaments ajoutés : base publique des médicaments (ANSM), thésaurus ANSM des interactions et RCP. Outil d'aide à la décision : il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
     </section>
   </div>
@@ -620,6 +665,184 @@ function vOrdo(){
     copierTexte(t).then(ok=>toast(ok?'Ordonnance copiée':'Sélectionne le texte et copie-le'));
   };
   brancherAjout(actives);
+  const fs=$('#favSave'); if(fs) fs.onclick=()=>{
+    const L=actives();
+    vFavEdit(null, {id:null, nom:M.t||'', intitule:false, unite:L.some(l=>/^Antibioprophylaxie/.test(l.cat)), lignes:blocsOrdo(L).map(b=>({titre:b.titre, pos:b.pos, horsAMM:!!b.horsAMM}))});
+  };
+  const fi=$('#favIns'); if(fi) fi.onclick=()=>{
+    const z=$('#favInsListe'); if(z.innerHTML){ z.innerHTML=''; return; }
+    z.innerHTML=lireFavoris().map(f=>`<button class="sug" data-ins="${f.id}"><b>${esc(f.nom)}</b><small>${esc(f.lignes.map(l=>l.titre).join(' · '))}</small></button>`).join('');
+    z.querySelectorAll('[data-ins]').forEach(b=>b.onclick=()=>{
+      const f=lireFavoris().find(x=>x.id===b.dataset.ins); if(!f) return;
+      const cle = t => { const r=MEDS.identifier(t); return new Set([...MEDS.idsDentaires(t, r.meds), ...r.meds.map(m=>m.dci), ...(r.spe?r.spe.subs:[])]); };
+      let dejà=0;
+      f.lignes.forEach((l,k)=>{
+        const c=cle(l.titre);
+        if(c.size && actives().some(a=>{ const d=cle(a.med); return [...c].some(x=>d.has(x)); })){ dejà++; return; }   // même molécule déjà sur l'ordonnance
+        const v=MEDS.verifierAjout(l.titre, P.rep, actives());
+        const cl=[...new Set(v.meds.map(m=>m.classe))].join(' · ') || (MEDS.CLASSE_DENT[v.ids[0]]||'');
+        P.ajouts.push({id:'aj'+Date.now()+'_'+k, titre:l.titre, pos:l.pos, classe:cl, ordre:v.ordre, alertes:v.alertes, source:'type'});
+      });
+      vOrdo(); toast(dejà ? `Insérée et vérifiée (${dejà} déjà présent${dejà>1?'s':''})` : 'Ordonnance type insérée et vérifiée');
+      setTimeout(()=>$('#ordoTexte')?.scrollIntoView({behavior:'smooth',block:'center'}),80);
+    });
+  };
+}
+
+/* ---------------------------------------------------------
+   Ordonnances types (favoris) — enregistrées sur ce téléphone uniquement (localStorage).
+   Aucune donnée patient : seulement un nom, une option d'intitulé et des lignes de médicaments.
+--------------------------------------------------------- */
+const FAV_CLE = 'drill.ordostypes.v1';
+function lireFavoris(){ try{ return JSON.parse(localStorage.getItem(FAV_CLE)) || []; }catch(e){ return []; } }
+function ecrireFavoris(L){ try{ localStorage.setItem(FAV_CLE, JSON.stringify(L)); return true; }catch(e){ toast('Enregistrement impossible sur cet appareil'); return false; } }
+const ICO_ETOILE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>';
+function texteFavori(f){
+  const t=[]; if(f.intitule && f.nom) t.push(f.nom);
+  f.lignes.forEach((l,i)=>t.push(`${i+1}/ ${l.titre}\n${l.pos}${l.pos && !/[.!]$/.test(l.pos)?'.':''}${l.horsAMM?'\nPrescription hors autorisation de mise sur le marché.':''}`));
+  if(f.unite) t.push('Antibiotique à délivrer à l’unité.');
+  return t.join('\n\n');
+}
+function htmlFavori(f){
+  let h = (f.intitule && f.nom) ? `<div class="ol"><b class="intitule">${esc(f.nom)}</b></div>` : '';
+  h += f.lignes.map((l,i)=>`<div class="ol"><b>${i+1}/ ${esc(l.titre)}</b><span>${esc(l.pos)}</span>${l.horsAMM?'<span>Prescription hors autorisation de mise sur le marché.</span>':''}</div>`).join('');
+  if(f.unite) h += '<div class="ol"><span>Antibiotique à délivrer à l’unité.</span></div>';
+  return h || '<p class="sous">Aucun médicament pour l’instant.</p>';
+}
+function bandeauFavoris(){
+  const favs=lireFavoris();
+  return `<div class="favs">
+    <div class="favs-tete"><b>${ICO_ETOILE} Mes ordonnances types</b>${favs.length?'<button class="lien" id="favTout">Tout voir</button>':''}</div>
+    <div class="favs-chips">${favs.map(f=>`<button class="fav-chip" data-fav="${f.id}">${esc(f.nom)}</button>`).join('')}<button class="fav-chip plus" id="favNouv">＋ ${favs.length?'Nouvelle':'Créer une ordonnance type'}</button></div>
+  </div>`;
+}
+function brancherBandeau(){
+  app.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>vFavDetail(b.dataset.fav));
+  const t=$('#favTout'); if(t) t.onclick=vFavoris;
+  const n=$('#favNouv'); if(n) n.onclick=()=>vFavEdit(null);
+}
+
+/* Liste */
+function vFavoris(){
+  const favs=lireFavoris();
+  app.innerHTML=`<div class="vue">
+    <header class="top"><button class="retour" id="ret">${ICO.retour}Prescri’Dent</button></header>
+    <h2 style="margin-top:6px">Mes ordonnances types</h2>
+    <p class="sous" style="margin-top:4px">Tes ordonnances habituelles, prêtes à copier. Elles restent sur ce téléphone.</p>
+    <div class="lignes" style="margin-top:14px">${favs.map(f=>`
+      <button class="fav-carte" data-fav="${f.id}"><b>${esc(f.nom)}</b><small>${f.lignes.length} médicament${f.lignes.length>1?'s':''} · ${esc(f.lignes.map(l=>l.titre.split(/[ ,]/)[0]).join(', '))}</small><span class="fl">${ICO.fleche}</span></button>`).join('')
+      || `<div class="vide"><p><b>Aucune ordonnance type.</b></p><p class="sous">Crée-la ici, ou enregistre directement une ordonnance proposée par Prescri’Dent avec le bouton ${ICO_ETOILE}.</p></div>`}</div>
+    <div style="height:90px"></div>
+  </div>
+  <div class="barre-action"><div class="in"><button class="btn" id="nouv">＋ Nouvelle ordonnance type</button></div></div>`;
+  $('#ret').onclick=()=>vPrescri();
+  $('#nouv').onclick=()=>vFavEdit(null);
+  app.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>vFavDetail(b.dataset.fav));
+  window.scrollTo(0,0);
+}
+
+/* Détail : copier en un geste */
+function vFavDetail(id){
+  const f=lireFavoris().find(x=>x.id===id); if(!f) return vFavoris();
+  app.innerHTML=`<div class="vue">
+    <header class="top"><button class="retour" id="ret">${ICO.retour}Mes ordonnances types</button><button class="retour" id="mod" style="padding-left:12px">Modifier</button></header>
+    <h2 style="margin-top:6px">${esc(f.nom)}</h2>
+    <p class="sous" style="margin-top:4px">${f.intitule?'Le nom apparaît en intitulé de l’ordonnance.':'Sans intitulé.'}</p>
+    <div class="ordo-texte" style="margin-top:12px">${htmlFavori(f)}</div>
+    <div class="alerte moy">${ICO.info}<span><b>Ordonnance type</b>Aucune vérification automatique ici : pense aux allergies, aux traitements et au terrain du patient. Pour qu’ils soient vérifiés, insère-la depuis la fin du questionnaire Prescri’Dent.</span></div>
+    <button class="vidal retirer" id="suppr" style="margin-top:16px">Supprimer cette ordonnance type</button>
+    <div style="height:90px"></div>
+  </div>
+  <div class="barre-action"><div class="in"><button class="btn" id="copier">Copier l’ordonnance</button></div></div>`;
+  $('#ret').onclick=vFavoris;
+  $('#mod').onclick=()=>vFavEdit(f.id);
+  $('#copier').onclick=()=>copierTexte(texteFavori(f)).then(ok=>toast(ok?'Ordonnance copiée':'Sélectionne le texte et copie-le'));
+  const s=$('#suppr'); s.onclick=()=>{
+    if(s.dataset.ok){ ecrireFavoris(lireFavoris().filter(x=>x.id!==f.id)); toast('Ordonnance type supprimée'); vFavoris(); }
+    else { s.dataset.ok='1'; s.textContent='Toucher encore pour confirmer la suppression'; setTimeout(()=>{ if(s.isConnected){ delete s.dataset.ok; s.textContent='Supprimer cette ordonnance type'; } },4000); }
+  };
+  window.scrollTo(0,0);
+}
+
+/* Éditeur */
+let FE=null;
+function vFavEdit(id, prerempli){
+  const vide={id:null, nom:'', intitule:false, unite:false, lignes:[]};
+  if(prerempli) FE=prerempli;
+  else if(id){ const f=lireFavoris().find(x=>x.id===id); FE=f?JSON.parse(JSON.stringify(f)):vide; }
+  else FE=vide;
+  rendreFavEdit();
+  window.scrollTo(0,0);
+}
+function rendreFavEdit(){
+  const n=FE.lignes.length;
+  app.innerHTML=`<div class="vue">
+    <header class="top"><button class="retour" id="ret">${ICO.retour}Annuler</button></header>
+    <h2 style="margin-top:6px">${FE.id?'Modifier l’ordonnance type':'Nouvelle ordonnance type'}</h2>
+    <div class="champ"><label for="feNom">Nom</label><input id="feNom" value="${esc(FE.nom)}" placeholder="Ex. Après avulsion simple" autocomplete="off"></div>
+    <label class="bascule"><input type="checkbox" id="feInt" ${FE.intitule?'checked':''}><span class="glissiere"></span><span>Mettre ce nom en intitulé de l’ordonnance</span></label>
+    <p class="groupe" style="margin-top:18px">Médicaments</p>
+    <div class="fe-lignes">${FE.lignes.map((l,i)=>`
+      <div class="fe-ligne">
+        <span class="fe-num">${i+1}</span>
+        <div class="fe-champs">
+          <input class="fe-titre" data-i="${i}" value="${esc(l.titre)}" placeholder="Médicament, dosage et forme" aria-label="Médicament ${i+1}">
+          <textarea class="fe-pos" data-i="${i}" rows="2" placeholder="Posologie et durée" aria-label="Posologie ${i+1}">${esc(l.pos)}</textarea>
+        </div>
+        <div class="fe-actions">
+          <button data-haut="${i}" ${i===0?'disabled':''} aria-label="Monter">↑</button>
+          <button data-bas="${i}" ${i===n-1?'disabled':''} aria-label="Descendre">↓</button>
+          <button data-sup="${i}" aria-label="Retirer">✕</button>
+        </div>
+      </div>`).join('') || '<p class="sous" style="font-size:.9rem">Ajoute un premier médicament ci-dessous.</p>'}</div>
+    <div class="ajout-med-zone">
+      <div class="recherche" style="margin:0">${ICO.loupe}<input id="feRech" type="search" placeholder="Ajouter un médicament (ex. paracétamol)" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+      <div id="feSugg" class="sugg-liste"></div>
+      <div id="feChoix"></div>
+      <button class="vidal" id="feLibre" style="margin-top:8px;background:none;border:0;padding:0">＋ Ligne libre</button>
+    </div>
+    <p class="groupe" style="margin-top:18px">Aperçu</p>
+    <div class="ordo-texte" id="feApercu">${htmlFavori(FE)}</div>
+    <div style="height:100px"></div>
+  </div>
+  <div class="barre-action"><div class="in"><button class="btn" id="feOk">Enregistrer</button></div></div>`;
+  const apercu=()=>{ $('#feApercu').innerHTML=htmlFavori(FE); $('#feOk').disabled=!(FE.nom.trim() && FE.lignes.some(l=>l.titre.trim())); };
+  apercu();
+  $('#ret').onclick=()=>{ FE=null; vFavoris(); };
+  $('#feNom').oninput=e=>{ FE.nom=e.target.value; apercu(); };
+  $('#feInt').onchange=e=>{ FE.intitule=e.target.checked; apercu(); };
+  app.querySelectorAll('.fe-titre').forEach(x=>x.oninput=()=>{ FE.lignes[+x.dataset.i].titre=x.value; apercu(); });
+  app.querySelectorAll('.fe-pos').forEach(x=>{ const taille=()=>{ x.style.height='auto'; x.style.height=x.scrollHeight+'px'; }; taille(); x.oninput=()=>{ FE.lignes[+x.dataset.i].pos=x.value; taille(); apercu(); }; });
+  app.querySelectorAll('[data-haut]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.haut; [FE.lignes[i-1],FE.lignes[i]]=[FE.lignes[i],FE.lignes[i-1]]; rendreFavEdit(); });
+  app.querySelectorAll('[data-bas]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.bas; [FE.lignes[i+1],FE.lignes[i]]=[FE.lignes[i],FE.lignes[i+1]]; rendreFavEdit(); });
+  app.querySelectorAll('[data-sup]').forEach(b=>b.onclick=()=>{ FE.lignes.splice(+b.dataset.sup,1); rendreFavEdit(); });
+  $('#feLibre').onclick=()=>{ FE.lignes.push({titre:'',pos:''}); rendreFavEdit(); setTimeout(()=>{ const t=app.querySelectorAll('.fe-titre'); t[t.length-1]?.focus(); },30); };
+  // Ajout rapide : recherche → posologies proposées (1 toucher = ligne ajoutée) ou forme seule
+  const inp=$('#feRech'), sug=$('#feSugg'), choix=$('#feChoix');
+  MEDS.chargerBDPM().catch(()=>{});
+  inp.oninput=async()=>{
+    await MEDS.chargerBDPM().catch(()=>{});
+    const res=MEDS.rechercher(inp.value,6); choix.innerHTML='';
+    sug.innerHTML=res.map((x,i)=>`<button class="sug" data-k="${i}"><b>${esc(x.nom)}</b><small>${esc([x.classe, x.type==='spe'?x.subs.join(' + '):''].filter(Boolean).join(' · ')||'Classe : voir le RCP')}</small></button>`).join('');
+    sug.querySelectorAll('.sug').forEach(b=>b.onclick=()=>{
+      const x=res[+b.dataset.k]; sug.innerHTML=''; inp.value='';
+      const dci = x.type==='dci' ? x.nom : (x.subs.length ? x.subs.map(z=>z.charAt(0).toUpperCase()+z.slice(1)).join(' + ') : x.nom);
+      const poso=MEDS.posologies(x.nom+' '+x.subs.join(' '), {profil:'adulte'});
+      choix.innerHTML=`<p class="sous" style="font-size:.85rem;margin:10px 0 6px"><b>${esc(x.nom)}</b> — touche une proposition pour l’ajouter :</p>
+        <div class="poso-sugg">${poso.map((p,i)=>`<button class="sug" data-p="${i}"><b>${esc(p.titre)}</b><small>${esc(p.pos)} <span class="src">${esc(p.src)}</span></small></button>`).join('')}
+        ${x.pres.map((p,i)=>`<button class="chip-pres" data-f="${i}">${esc(p)}</button>`).join('')}</div>`;
+      choix.querySelectorAll('[data-p]').forEach(c=>c.onclick=()=>{ const p=poso[+c.dataset.p]; FE.lignes.push({titre:p.titre, pos:p.pos}); rendreFavEdit(); toast('Ajouté'); });
+      choix.querySelectorAll('[data-f]').forEach(c=>c.onclick=()=>{ FE.lignes.push({titre:`${dci} ${x.pres[+c.dataset.f]}`, pos:''}); rendreFavEdit(); setTimeout(()=>{ const t=app.querySelectorAll('.fe-pos'); t[t.length-1]?.focus(); },30); });
+    });
+  };
+  $('#feOk').onclick=()=>{
+    const propre={...FE, nom:FE.nom.trim(), lignes:FE.lignes.filter(l=>l.titre.trim()).map(l=>({...l, titre:l.titre.trim(), pos:(l.pos||'').trim()}))};
+    if(!propre.nom || !propre.lignes.length) return;
+    const L=lireFavoris();
+    if(propre.id){ const i=L.findIndex(x=>x.id===propre.id); if(i>=0) L[i]=propre; else L.push(propre); }
+    else { propre.id='f'+Date.now(); L.push(propre); }
+    if(ecrireFavoris(L)){ toast('Ordonnance type enregistrée'); FE=null; vFavDetail(propre.id); }
+  };
 }
 
 /* Ajout d'un médicament hors recommandations : autocomplétion (base publique ANSM), classe, vérifications */

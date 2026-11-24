@@ -153,6 +153,12 @@ R.ATCD = [
     {v:'ei_haut', t:'Haut risque d’endocardite infectieuse', d:'Antécédent d’endocardite, prothèse valvulaire ou matériel de réparation valvulaire (dont TAVI, clip), cardiopathie congénitale cyanogène complexe, cardiopathie congénitale réparée avec matériel (6 mois, ou à vie si shunt résiduel), assistance ventriculaire'},
     {v:'ei_inter', t:'Risque intermédiaire d’endocardite', d:'Valvulopathie native, cardiomyopathie hypertrophique obstructive, autre cardiopathie congénitale, stimulateur ou défibrillateur avec sonde'},
   ]},
+  {groupe:'Troubles de l’hémostase', items:[
+    {v:'hemophilie', t:'Hémophilie A ou B', d:'Déficit en facteur VIII ou IX, quelle que soit la sévérité'},
+    {v:'willebrand', t:'Maladie de Willebrand', d:''},
+    {v:'deficit_facteur', t:'Autre déficit en facteur de la coagulation', d:'Facteurs II, V, VII, X, XI, fibrinogène…'},
+    {v:'thrombopenie', t:'Thrombopénie ou thrombopathie', d:'Plaquettes basses (PTI, hémopathie, chimiothérapie, cirrhose…) ou anomalie de fonction plaquettaire'},
+  ]},
   {groupe:'Risque infectieux augmenté (HAS 2026)', items:[
     {v:'chimio', t:'Chimiothérapie aplasiante en cours', d:''},
     {v:'neutropenie', t:'Neutropénie < 500/mm³', d:''},
@@ -181,6 +187,17 @@ R.ATCD = [
     {v:'remission', t:'Pathologie maligne en rémission', d:''},
     {v:'prothese_art', t:'Prothèse articulaire', d:''},
     {v:'diabete_eq', t:'Diabète avec HbA1c < 9 %', d:''},
+  ]},
+  {groupe:'Cœur et anesthésie locale', items:[
+    {v:'hta', t:'Hypertension artérielle sévère ou mal équilibrée', d:''},
+    {v:'coronarien', t:'Angor, infarctus ou insuffisance coronarienne', d:''},
+    {v:'rythme', t:'Trouble du rythme ou de la conduction cardiaque', d:'Fibrillation atriale, bloc auriculo-ventriculaire…'},
+    {v:'porphyrie', t:'Porphyrie aiguë intermittente', d:'Contre-indique l’articaïne'},
+  ]},
+  {groupe:'Neurologie, yeux, voies urinaires', items:[
+    {v:'epilepsie', t:'Épilepsie', d:''},
+    {v:'glaucome', t:'Glaucome à angle fermé', d:''},
+    {v:'prostate', t:'Troubles urétro-prostatiques', d:'Risque de rétention urinaire'},
   ]},
   {groupe:'Autres', items:[
     {v:'malin', t:'Pathologie maligne en cours de traitement', d:'Contre-indique certains actes'},
@@ -505,6 +522,7 @@ R.decider = function(rep){
   if(al.has('ains')) ainsNon.push('allergie aux AINS ou à l’aspirine');
   if(tt.has('avk')) ainsNon.push('antivitamine K (contre-indiqués)');
   if(tt.has('aod') || tt.has('aap') || tt.has('aap2') || tt.has('heparine')) ainsNon.push('antithrombotique (risque hémorragique majoré)');
+  if(['hemophilie','willebrand','deficit_facteur','thrombopenie'].some(x=>at.has(x))) ainsNon.push('trouble de l’hémostase (effet antiplaquettaire des AINS)');
   if(at.has('ulcere')) ainsNon.push('ulcère ou hémorragie digestive');
   if(at.has('ir_severe') || at.has('ir_moderee')) ainsNon.push('insuffisance rénale');
   if(at.has('ih_severe')) ainsNon.push('insuffisance hépatique sévère');
@@ -538,6 +556,21 @@ R.decider = function(rep){
   if(al.has('al')) alerte('forte','Allergie aux anesthésiques locaux','Vraie allergie rare : bilan allergologique avant les soins pour identifier une molécule utilisable.','');
   if(al.has('iode')) alerte('info','Allergie à la povidone iodée','Antisepsie à la chlorhexidine.','');
   if(al.has('peni') && al.has('cephalo')) alerte('info','Allergie aux bêta-lactamines','Céphalosporines également écartées.','');
+
+  /* ---- 4 bis. Troubles de l'hémostase et précautions d'anesthésie ---- */
+  const chirH = !!M.chir;
+  const mhc = ['hemophilie','willebrand','deficit_facteur'].filter(x=>at.has(x));
+  if(mhc.length){
+    if(chirH) alerte('forte','Maladie hémorragique constitutionnelle','Geste à organiser avec le centre qui suit le patient (centre de traitement de l’hémophilie ou centre de ressources et de compétence des maladies hémorragiques constitutionnelles) : il décide du traitement préventif (facteur de substitution, desmopressine) et du lieu de prise en charge, souvent hospitalier. Avulsions multiples en plusieurs séances, par hémi-arcade ; geste le moins délabrant possible, lambeaux muco-périostés, hémostase locale soigneuse. Anesthésie locale avec vasoconstricteur à privilégier. Pas d’aspirine ni d’AINS.','Med Buccale Chir Buccale 2005 ; PNDS Willebrand HAS 2021');
+    else alerte('moy','Maladie hémorragique constitutionnelle','Soins non chirurgicaux possibles ; anesthésie locale avec vasoconstricteur à privilégier. Avant tout geste sanglant, contacter le centre qui suit le patient. Pas d’aspirine ni d’AINS.','Med Buccale Chir Buccale 2005 ; PNDS Willebrand HAS 2021');
+  }
+  if(at.has('thrombopenie')) alerte(chirH?'forte':'moy','Thrombopénie ou thrombopathie', (chirH?'Demander une numération plaquettaire récente et l’avis de l’hématologue. Seuil habituellement retenu pour un geste invasif : au moins 50 G/L ; en dessous, à organiser avec l’hématologue. ':'')+'Hémostase locale systématique. Pas d’aspirine ni d’AINS.','Littérature (World Workshop on Oral Medicine 2019)');
+  if(at.has('hta')) alerte('moy','Hypertension artérielle sévère','Prendre la tension avant le soin. Adrénaline avec précaution : doses minimales, injection lente après aspiration.','RCP articaïne adrénalinée');
+  if(at.has('coronarien')) alerte('moy','Insuffisance coronarienne','Adrénaline avec précaution : doses minimales, injection lente après aspiration. Séances courtes, trinitrine du patient à portée de main.','RCP articaïne adrénalinée');
+  if(at.has('rythme')) alerte('moy','Trouble du rythme ou de la conduction','Adrénaline avec précaution. Trouble de la conduction auriculo-ventriculaire sévère non appareillé : articaïne contre-indiquée.','RCP articaïne adrénalinée');
+  if(at.has('porphyrie')) alerte('forte','Porphyrie aiguë intermittente','Articaïne contre-indiquée : vérifier le RCP de l’anesthésique utilisé.','RCP articaïne adrénalinée');
+  if(at.has('epilepsie')) alerte('moy','Épilepsie','Épilepsie non contrôlée par un traitement : articaïne et tramadol contre-indiqués. Néfopam contre-indiqué (antécédent de convulsions).','RCP');
+  if(at.has('glaucome') || at.has('prostate')) alerte('info', at.has('glaucome')?'Glaucome à angle fermé':'Troubles urétro-prostatiques','Néfopam contre-indiqué (effets atropiniques).','RCP');
 
   /* ---- 5. Antithrombotiques [SFCO 2015] ---- */
   const chir = !!M.chir;
@@ -649,6 +682,17 @@ R.analyserQuestion = function(texte){
   if(/asthm/.test(t)) rep.atcd.push('asthme');
   if(/drepanocyt/.test(t)) rep.atcd.push('drepano');
   if(/qt long/.test(t)) rep.atcd.push('qt');
+  if(/hemophil/.test(t)) rep.atcd.push('hemophilie');
+  if(/willebrand/.test(t)) rep.atcd.push('willebrand');
+  if(/deficit en facteur|deficit facteur/.test(t)) rep.atcd.push('deficit_facteur');
+  if(/thrombopeni|thrombopathi|plaquettes? bass|\bpti\b/.test(t)) rep.atcd.push('thrombopenie');
+  if(/epilep|convuls/.test(t)) rep.atcd.push('epilepsie');
+  if(/glaucome/.test(t)) rep.atcd.push('glaucome');
+  if(/prostat|retention urinaire/.test(t)) rep.atcd.push('prostate');
+  if(/porphyri/.test(t)) rep.atcd.push('porphyrie');
+  if(/angor|infarctus|coronar/.test(t)) rep.atcd.push('coronarien');
+  if(/\bhta\b|hypertension/.test(t)) rep.atcd.push('hta');
+  if(/arythmie|fibrillation|trouble du rythme|bloc auriculo/.test(t)) rep.atcd.push('rythme');
   if(/insuffisan\w* cardiaque/.test(t)) rep.atcd.push('insuf_card');
   if(/remission/.test(t)) rep.atcd.push('remission'); else if(/cancer|tumeur|lymphome|leucemie/.test(t)) rep.atcd.push('malin');
   if(/prothese (de hanche|de genou|articulaire)/.test(t)) rep.atcd.push('prothese_art');

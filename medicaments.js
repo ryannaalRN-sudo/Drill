@@ -465,6 +465,13 @@ S.verifierAjout = function(texte, rep, lignes){
     if(at.has('insuf_card')) ajoute('CI','Insuffisance cardiaque sévère : AINS contre-indiqués.','RCP');
     if(at.has('asthme')) ajoute('PE','Asthme : AINS contre-indiqués si l’asthme est déclenché par l’aspirine ou un AINS.','RCP');
   }
+  if(ains && ['hemophilie','willebrand','deficit_facteur','thrombopenie'].some(x=>at.has(x))) ajoute('CI','Trouble de l’hémostase : AINS à éviter (effet antiplaquettaire).','RCP');
+  if(/nefopam|acupan/.test(N(plein))){
+    if(at.has('epilepsie')) ajoute('CI','Néfopam contre-indiqué en cas de convulsions ou d’antécédent de troubles convulsifs.','RCP');
+    if(at.has('glaucome')) ajoute('CI','Néfopam contre-indiqué : risque de glaucome par fermeture de l’angle.','RCP');
+    if(at.has('prostate')) ajoute('CI','Néfopam contre-indiqué : risque de rétention urinaire.','RCP');
+  }
+  if((ids.has('tramadol')) && at.has('epilepsie')) ajoute('CI','Tramadol contre-indiqué en cas d’épilepsie non contrôlée par un traitement.','RCP');
   if(ids.has('para') && (at.has('ih')||at.has('ih_severe'))) ajoute('PE','Insuffisance hépatique ou alcoolisme : paracétamol à dose réduite (2 g/j, 8 h entre les prises).','RCP');
   if(at.has('qt') && (ids.has('clari')||ids.has('azi')||ids.has('cotri')||tags.has('qt'))) ajoute('PE','Allongement du QT : risque de torsades de pointes.',TH);
   if(S.securisee(plein)) ajoute('PE','Tramadol ou codéine : ordonnance sécurisée obligatoire, avec le dosage, la posologie et la durée écrits en toutes lettres ; 12 semaines au maximum.','ANSM 2025');
