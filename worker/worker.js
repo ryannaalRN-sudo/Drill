@@ -90,8 +90,10 @@ async function appel(env, modele, corps, delai, signalCommun) {
 /* Course entre modèles : le premier modèle part tout de suite ; s'il n'a pas répondu après
    `relance` ms, le suivant part en parallèle ; la première réponse valable gagne et coupe les autres.
    Un modèle indisponible (404, surcharge, délai dépassé) passe aussitôt la main au suivant. */
-async function gemini(env, corps, { delai = 14000, relance = 3500 } = {}) {
-  const liste = env.GEMINI_MODEL ? [env.GEMINI_MODEL, ...MODELES.filter(m => m !== env.GEMINI_MODEL)] : MODELES;
+async function gemini(env, corps, { delai = 14000, relance = 3500, rapide = false } = {}) {
+  let liste = env.GEMINI_MODEL ? [env.GEMINI_MODEL, ...MODELES.filter(m => m !== env.GEMINI_MODEL)] : MODELES;
+  // Questions de l'assistant : le modèle « lite » d'abord (réponse en moins d'une seconde), « flash » en relais.
+  if (rapide) liste = [...liste.filter(m => /lite/.test(m)), ...liste.filter(m => !/lite/.test(m))];
   const commun = new AbortController();
   let derniere = { erreur: 0, detail: '' };
   return await new Promise(resolve => {
@@ -218,7 +220,7 @@ async function traiter(request, env) {
       systemInstruction: { parts: [{ text: ordo ? CONSIGNES_ORDO : CONSIGNES }] },
       contents,
       generationConfig: { temperature: 0.2, maxOutputTokens: ordo ? 1400 : 900 },
-    }, ordo ? { delai: 25000, relance: 6000 } : { delai: 13000, relance: 3500 });
+    }, ordo ? { delai: 25000, relance: 3500 } : { delai: 13000, relance: 3000, rapide: true });
     if (g.erreur) return json({ erreur: 'IA indisponible', statut: g.erreur, detail: g.detail }, 502, cors);
     return json({ reponse: g.texte, modele: g.modele, ms: g.ms }, 200, cors);
   }
