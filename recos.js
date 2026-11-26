@@ -531,6 +531,8 @@ R.decider = function(rep){
   const ainsUtile = !actCI && ['pulpite','abces','abces_paro','alveolite_seche','alveolite_suppuree','pericoronarite','avulsion','avulsion_incluse','autotransplantation','chir_preortho','chir_preprothetique','implant','greffe_osseuse','chir_paro','chir_periapicale','chir_periimplantaire','trauma_luxation','trauma_expulsion','endo','endo_vitale','herpes_primo','biopsie_os'].includes(m);
   if(ainsUtile){
     if(!ainsNon.length) ligne('ibu','Anti-inflammatoire','Ibuprofène', enfant ? (kg?`${arr(kg*10)} mg 3 fois par jour au cours des repas (10 mg/kg, max 30 mg/kg/j, dès 3 mois)`:'10 mg/kg 3 fois par jour (renseigner le poids)') : '400 mg 3 fois par jour au cours des repas (max 1 200 mg/j)','3 jours');
+    // avulsion simple : l'ibuprofène reste proposé mais n'est pas coché d'office
+    if(!ainsNon.length && m==='avulsion') O.lignes[O.lignes.length-1].decoche = true;
     else alerte('info','Ibuprofène écarté', ainsNon.join(' ; ')+'.', enceinte?'ANSM':'RCP');
     if(O.atb && !ainsNon.length) why('L’anti-inflammatoire ne justifie pas à lui seul un antibiotique.','HAS 2026');
   }
