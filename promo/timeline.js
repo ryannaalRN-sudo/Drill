@@ -1,10 +1,10 @@
-/* Drill — pub 35 s. Timeline Motion pilotée image par image (seek), 14 mesures à 90 BPM. */
+/* Drill — pub 35 s. Timeline Motion pilotée image par image (seek), 17 mesures à 90 BPM. */
 const { animate } = Motion;
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const B = 60 / 90, BAR = 4 * B;
 const T = (bar, beat = 1) => (bar - 1) * BAR + (beat - 1) * B;
-const DUREE = T(15);
+const DUREE = T(18);
 const EXPO = [0.16, 1, 0.3, 1], DOUX = [0.65, 0, 0.35, 1], ENTREE = [0.7, 0, 0.84, 0], REBOND = [0.34, 1.56, 0.64, 1], SORTIE = [0.22, 1, 0.36, 1];
 const RES = (b = 0.25, v = 0.5) => ({ type: 'spring', bounce: b, visualDuration: v });
 const DENT = 'M7 2.5c-2.6 0-4.3 2-4.3 4.8 0 2.4 1 3.8 1.6 6 .6 2.3.8 7.8 2.6 7.8 1.6 0 1.6-5.2 3.1-5.2s1.5 5.2 3.1 5.2c1.8 0 2-5.5 2.6-7.8.6-2.2 1.6-3.6 1.6-6 0-2.8-1.7-4.8-4.3-4.8-1.4 0-2 .8-3 .8s-1.6-.8-3-.8z';
@@ -204,7 +204,7 @@ function construire() {
   cue(tR, 'range', 0.7);
   efface('#s2', T(4) + 0.3, 0.2);
 
-  /* ============ 3. PRESCRI'DENT (mesures 4-7) ============ */
+  /* ============ 3. PRESCRI'DENT : les questions (mesures 4-6) ============ */
   const t4 = T(4);
   fondVers('#f2', '#f3', t4 - 0.3);
   lum(t4 - 0.3, '#0E9384', '#0A5E7A', 0.36, 0.3);
@@ -214,121 +214,128 @@ function construire() {
   const dents = $$('#arcade .lum-d'), dentsSvg = $$('#arcade svg');
   const groupes = [[0, 5], [5, 10], [10, 14]];
   const cartes = ['#c1', '#c2', '#c3'];
-  const tCarte = [T(4, 2), T(4, 4), T(5, 2)];
   cartes.forEach((c, k) => {
-    const te = tCarte[k] - 0.35, ta = tCarte[k] + 0.25;
-    A(c, { opacity: [0, 1] }, { duration: 0.25, at: te });
-    A(c, k === 0 ? { y: [500, 0], rotateX: [35, 0] } : { x: [700, 0], rotateY: [35, 0] }, { duration: 0.6, at: te, ease: EXPO });
+    const te = k === 0 ? T(4) + 0.45 : T(4 + k) - 0.1;
+    const ta = T(4 + k, 2) + 0.15;
+    A(c, { opacity: [0, 1] }, { duration: 0.3, at: te });
+    A(c, k === 0 ? { y: [500, 0], rotateX: [35, 0] } : { x: [700, 0], rotateY: [35, 0] }, { duration: 0.7, at: te, ease: EXPO });
     cue(te, 'carte', 0.8);
-    A(`${c} .q-opt`, { scale: [1, 0.96, 1] }, { duration: 0.28, at: ta - 0.05, ease: 'easeInOut' });
-    A(`${c} .sel`, { opacity: [0, 1] }, { duration: 0.2, at: ta });
-    A(`${c} .ok`, { opacity: [0, 1], scale: [0.4, 1] }, { duration: 0.32, at: ta, ease: REBOND });
-    A(`${c} .boite path`, { strokeDashoffset: [1, 0] }, { duration: 0.3, at: ta + 0.05, ease: EXPO });
+    A(`${c} .q-opt`, { scale: [1, 0.96, 1] }, { duration: 0.3, at: ta - 0.05, ease: 'easeInOut' });
+    A(`${c} .sel`, { opacity: [0, 1] }, { duration: 0.22, at: ta });
+    A(`${c} .ok`, { opacity: [0, 1], scale: [0.4, 1] }, { duration: 0.35, at: ta, ease: REBOND });
+    A(`${c} .boite path`, { strokeDashoffset: [1, 0] }, { duration: 0.35, at: ta + 0.05, ease: EXPO });
     cue(ta, 'coche', 1);
     const [a, b] = groupes[k];
     for (let i = a; i < b; i++) {
-      const td = ta + 0.15 + (i - a) * 0.06;
+      const td = ta + 0.2 + (i - a) * 0.07;
       A(dents[i], { opacity: [0, 1] }, { duration: 0.12, at: td });
       A(dentsSvg[i], { y: [0, -12, 0] }, { duration: 0.35, at: td, ease: 'easeOut' });
       cue(td, 'dent', i / 13);
     }
     // la carte sort avant que la suivante n'entre : jamais deux textes l'un sur l'autre
-    const ts = k < 2 ? tCarte[k + 1] - 0.62 : T(5, 4) - 0.35;
-    A(c, k < 2 ? { x: [0, -900], rotateY: [0, -30] } : { y: [0, -200] }, { duration: 0.35, at: ts, ease: ENTREE });
+    const ts = T(5 + k) - 0.55;
+    A(c, k < 2 ? { x: [0, -900], rotateY: [0, -30] } : { y: [0, -200] }, { duration: 0.38, at: ts, ease: ENTREE });
     A(c, { opacity: [1, 0] }, { duration: 0.25, at: ts + 0.1 });
   });
-  efface('#arcade', T(5, 4) - 0.35, 0.3);
-  // l'ordonnance proposée
-  const t5o = T(6) - 0.1;
-  montre('#couche-feuille', t5o - 0.25, 0.2);
-  A('#feuille', { rotateX: [70, 4], y: [500, 0] }, { ...RES(0.14, 0.75), at: t5o - 0.25 });
-  cue(t5o - 0.25, 'feuille', 1);
-  [['#ol1', T(6) + 0.25], ['#ol2', T(6, 2) + 0.15], ['#ol3', T(6, 3) + 0.05]].forEach(([s, t]) => {
-    A(s, { clipPath: ['inset(0 100% 0 0)', 'inset(0 0% 0 0)'] }, { duration: 0.6, at: t, ease: EXPO });
+
+  /* ============ 3 bis. L'ORDONNANCE (mesures 7-9) ============ */
+  const t7 = T(7);
+  sortieEntete('#s3', t7 - 0.5);
+  efface('#arcade', t7 - 0.5, 0.35);
+  montre('#couche-feuille', t7 - 0.3, 0.2);
+  A('#feuille', { rotateX: [70, 4], y: [600, 0] }, { ...RES(0.14, 0.8), at: t7 - 0.3 });
+  cue(t7 - 0.3, 'feuille', 1);
+  [['#ol1', T(7, 2)], ['#ol2', T(7, 4)], ['#ol3', T(8, 2)]].forEach(([s, t]) => {
+    A(s, { clipPath: ['inset(0 100% 0 0)', 'inset(0 0% 0 0)'] }, { duration: 0.7, at: t, ease: EXPO });
     cue(t, 'ligne', 0.9);
   });
-  A('#tampon', { scale: [2.4, 1], rotate: [-18, -7], opacity: [0, 1] }, { duration: 0.2, at: T(6, 4) + 0.15, ease: ENTREE });
-  A('#feuille', { x: [0, -10, 7, -4, 0] }, { duration: 0.3, at: T(6, 4) + 0.35, ease: 'linear' });
-  cue(T(6, 4) + 0.35, 'tampon', 1);
-  A('#rappel', { y: [120, 0], opacity: [0, 1] }, { duration: 0.7, at: T(7) + 0.1, ease: EXPO });
-  cue(T(7) + 0.1, 'carte', 0.8);
+  A('#tampon', { scale: [2.4, 1], rotate: [-18, -7], opacity: [0, 1] }, { duration: 0.22, at: T(8, 3) + 0.2, ease: ENTREE });
+  A('#feuille', { x: [0, -10, 7, -4, 0] }, { duration: 0.3, at: T(8, 3) + 0.42, ease: 'linear' });
+  cue(T(8, 3) + 0.42, 'tampon', 1);
+  A('#rappel', { y: [100, 0], opacity: [0, 1] }, { duration: 0.7, at: T(8, 4) + 0.25, ease: EXPO });
+  cue(T(8, 4) + 0.25, 'carte', 0.8);
+  A('#sources-p', { y: [60, 0], opacity: [0, 1] }, { duration: 0.7, at: T(9) + 0.15, ease: EXPO });
+  A('#sources-p .sl', { opacity: [0, 1], x: [-30, 0] }, { duration: 0.5, at: T(9) + 0.45, stagger: 0.3, ease: EXPO });
+  cue(T(9) + 0.15, 'sources', 1);
   // retournement : l'ordonnance devient celle du patient
-  const t8f = T(8);
-  sortieEntete('#s3', t8f - 0.5);
-  efface('#rappel', t8f - 0.5, 0.3);
-  A('#feuille', { rotateY: [0, 180], z: [0, 260, 0] }, { duration: 0.7, at: t8f - 0.45, ease: DOUX });
-  cue(t8f - 0.45, 'flip', 1);
-  efface('#s3', t8f + 0.1, 0.1);
-  A('#feuille', { rotateX: [4, 22], y: [0, 120] }, { ...RES(0.12, 0.6), at: t8f + 0.25 });
+  const t10 = T(10);
+  efface(['#rappel', '#sources-p'], t10 - 0.55, 0.3);
+  A('#feuille', { rotateY: [0, 180], z: [0, 260, 0], y: [0, 260] }, { duration: 0.75, at: t10 - 0.45, ease: DOUX });
+  cue(t10 - 0.45, 'flip', 1);
+  efface('#s3', t10 + 0.1, 0.1);
+  A('#feuille', { rotateX: [4, 22] }, { ...RES(0.12, 0.6), at: t10 + 0.3 });
 
-  /* ============ 4. SCANNER (mesures 8-9) ============ */
-  fondVers('#f3', '#f4', t8f - 0.4);
-  lum(t8f - 0.4, '#1B8FD0', '#0C4F8A', 0.4, 0.32);
-  montre('#s4', t8f - 0.05);
-  entete('#s4', t8f + 0.1);
-  A('#coins', { scale: [1.3, 1], opacity: [0, 1] }, { duration: 0.45, at: t8f + 0.6, ease: REBOND });
-  cue(t8f + 0.6, 'verrou', 1);
+  /* ============ 4. SCANNER (mesures 10-12) ============ */
+  fondVers('#f3', '#f4', t10 - 0.4);
+  lum(t10 - 0.4, '#1B8FD0', '#0C4F8A', 0.4, 0.32);
+  montre('#s4', t10 - 0.05);
+  entete('#s4', t10 + 0.1);
+  A('#coins', { scale: [1.3, 1], opacity: [0, 1] }, { duration: 0.45, at: t10 + 0.65, ease: REBOND });
+  cue(t10 + 0.65, 'verrou', 1);
   A('#laser', { opacity: [0, 0] }, { duration: 0.001, at: 0 });
-  A('#laser', { y: [0, 760] }, { duration: 1.5, at: T(8, 2) + 0.2, ease: 'easeInOut' });
-  A('#laser', { opacity: [0, 1, 1, 0] }, { duration: 1.5, at: T(8, 2) + 0.2, times: [0, 0.08, 0.9, 1] });
-  cue(T(8, 2) + 0.2, 'laser', 1);
-  const tB1 = T(8, 3) + 0.05, tB2 = T(8, 3) + 0.45;
+  A('#laser', { y: [0, 740] }, { duration: 1.7, at: T(10, 2) + 0.25, ease: 'easeInOut' });
+  A('#laser', { opacity: [0, 1, 1, 0] }, { duration: 1.7, at: T(10, 2) + 0.25, times: [0, 0.08, 0.9, 1] });
+  cue(T(10, 2) + 0.25, 'laser', 1);
+  const tB1 = T(10, 3) + 0.1, tB2 = T(10, 3) + 0.55;
   A('#hw1 .boite-hw', { opacity: [0, 1], scaleX: [0.2, 1] }, { duration: 0.3, at: tB1, ease: EXPO });
   A('#hw2 .boite-hw', { opacity: [0, 1], scaleX: [0.2, 1] }, { duration: 0.3, at: tB2, ease: EXPO });
   cue(tB1, 'detect', 0.9); cue(tB2, 'detect', 1.1);
-  // la feuille s'en va, les résultats arrivent dans un espace libre
-  const t8 = T(9);
-  A('#feuille', { y: [120, 1600], rotateX: [22, 60] }, { duration: 0.6, at: t8 - 0.3, ease: ENTREE });
-  efface('#couche-feuille', t8 + 0.1, 0.2);
-  cue(t8 - 0.3, 'whoosh', 0.7);
-  [['#med1', t8 + 0.15], ['#med2', t8 + 0.45]].forEach(([s, t]) => {
-    A(s, { clipPath: ['inset(0 100% 0 0 round 32px)', 'inset(0 0% 0 0 round 32px)'], opacity: [0, 1] }, { duration: 0.7, at: t, ease: EXPO });
+  const t11 = T(11);
+  A('#feuille', { y: [260, 1700], rotateX: [22, 60] }, { duration: 0.65, at: t11 - 0.35, ease: ENTREE });
+  efface('#couche-feuille', t11 + 0.1, 0.2);
+  cue(t11 - 0.35, 'whoosh', 0.7);
+  [['#med1', t11 + 0.15], ['#med2', t11 + 0.6]].forEach(([s, t]) => {
+    A(s, { clipPath: ['inset(0 100% 0 0 round 32px)', 'inset(0 0% 0 0 round 32px)'], opacity: [0, 1] }, { duration: 0.8, at: t, ease: EXPO });
     cue(t, 'carte', 0.8);
   });
-  A('#eb1', { opacity: [0, 1], x: [-40, 0] }, { duration: 0.5, at: T(9, 2) + 0.1, ease: EXPO });
+  A('#eb1', { opacity: [0, 1], x: [-40, 0] }, { duration: 0.5, at: T(11, 3) - 0.1, ease: EXPO });
   ['#rx1', '#rx2', '#rx3'].forEach((r, k) => {
-    const t = T(9, 2) + 0.3 + k * 0.28;
-    A(r, { x: [300, 0], opacity: [0, 1] }, { duration: 0.6, at: t, ease: EXPO });
-    A(`${r} .etat`, { scale: [0.5, 1], opacity: [0, 1] }, { duration: 0.4, at: t + 0.3, ease: REBOND });
+    const t = T(11, 3) + 0.15 + k * 0.55;
+    A(r, { x: [300, 0], opacity: [0, 1] }, { duration: 0.65, at: t, ease: EXPO });
+    A(`${r} .etat`, { scale: [0.5, 1], opacity: [0, 1] }, { duration: 0.45, at: t + 0.3, ease: REBOND });
     cue(t + 0.3, k === 0 ? 'alerte' : 'ok', 1);
   });
+  A('#sources-s', { y: [60, 0], opacity: [0, 1] }, { duration: 0.7, at: T(12, 2) - 0.1, ease: EXPO });
+  A('#sources-s .sl', { opacity: [0, 1], x: [-30, 0] }, { duration: 0.5, at: T(12, 2) + 0.2, stagger: 0.3, ease: EXPO });
+  cue(T(12, 2) - 0.1, 'sources', 1);
   // tout se replie en une ligne qui devient le champ de saisie
-  const t9 = T(10);
-  sortieEntete('#s4', t9 - 0.6);
-  const pliables = ['#med1', '#med2', '#eb1', '#rx1', '#rx2', '#rx3'];
+  const t13 = T(13);
+  sortieEntete('#s4', t13 - 0.6);
+  const pliables = ['#med1', '#med2', '#eb1', '#rx1', '#rx2', '#rx3', '#sources-s'];
   pliables.forEach((s, k) => {
     const el = $(s), cy = el.offsetTop + el.offsetHeight / 2;
-    const t = t9 - 0.55 + (pliables.length - 1 - k) * 0.03;
+    const t = t13 - 0.58 + (pliables.length - 1 - k) * 0.03;
     A(s, { y: [0, 540 - cy], scaleY: [1, 0.03] }, { duration: 0.4, at: t, ease: ENTREE });
     efface(s, t + 0.3, 0.08, 'linear');
   });
-  cue(t9 - 0.55, 'replie', 1);
-  efface('#s4', t9 + 0.1, 0.1);
+  cue(t13 - 0.58, 'replie', 1);
+  efface('#s4', t13 + 0.1, 0.1);
 
-  /* ============ 5. CODAGE CCAM (mesures 10-12) ============ */
-  fondVers('#f4', '#f5', t9 - 0.4);
-  lum(t9 - 0.4, '#6A5BFF', '#3A2FA8', 0.42, 0.34);
-  montre('#s5', t9 - 0.2);
+  /* ============ 5. CODAGE CCAM (mesures 13-15) ============ */
+  fondVers('#f4', '#f5', t13 - 0.4);
+  lum(t13 - 0.4, '#6A5BFF', '#3A2FA8', 0.42, 0.34);
+  montre('#s5', t13 - 0.2);
   cache(['#saisie', '#envoyer', '#rep', '#orbs', '#tap']);
-  A('#morphe', { opacity: [0, 1], scaleX: [0.1, 1] }, { duration: 0.2, at: t9 - 0.18, ease: EXPO });
-  A('#morphe', { height: ['8px', '126px'], y: [0, -56], backgroundColor: ['#F1EEFF', '#FFFFFF'] }, { duration: 0.45, at: t9 + 0.05, ease: EXPO });
-  cue(t9 + 0.05, 'ouvre', 1);
-  montre(['#saisie', '#envoyer'], t9 + 0.42, 0.1);
-  efface('#morphe', t9 + 0.5, 0.05, 'linear');
-  entete('#s5', t9 + 0.1);
+  A('#morphe', { opacity: [0, 1], scaleX: [0.1, 1] }, { duration: 0.2, at: t13 - 0.18, ease: EXPO });
+  A('#morphe', { height: ['8px', '126px'], y: [0, -56], backgroundColor: ['#F1EEFF', '#FFFFFF'] }, { duration: 0.45, at: t13 + 0.05, ease: EXPO });
+  cue(t13 + 0.05, 'ouvre', 1);
+  montre(['#saisie', '#envoyer'], t13 + 0.42, 0.1);
+  efface('#morphe', t13 + 0.5, 0.05, 'linear');
+  entete('#s5', t13 + 0.1);
   const demande = 'Dent de sagesse du bas, incluse';
-  frappe('#tape', demande, t9 + 0.7, 1.4);
-  curseur('#caret', t9 + 0.5, t9 + 2.2);
-  for (let k = 0; k < demande.length; k += 2) cue(t9 + 0.7 + k * 1.4 / demande.length, 'touche', 0.45);
-  const tEnv = T(10, 4);
+  frappe('#tape', demande, t13 + 0.7, 1.4);
+  curseur('#caret', t13 + 0.5, t13 + 2.2);
+  for (let k = 0; k < demande.length; k += 2) cue(t13 + 0.7 + k * 1.4 / demande.length, 'touche', 0.45);
+  const tEnv = T(13, 4);
   A('#envoyer', { scale: [1, 0.82, 1] }, { duration: 0.26, at: tEnv - 0.05, ease: 'easeInOut' });
   A('#tap', { scale: [0.4, 1.6], opacity: [0.9, 0] }, { duration: 0.5, at: tEnv - 0.05, ease: EXPO });
   cue(tEnv - 0.05, 'envoi', 1);
   montre('#orbs', tEnv + 0.1, 0.2);
   cue(tEnv + 0.1, 'reflexion', 1);
   const orbes = $$('#orbs .orb');
+  const t14 = T(14);
   parImage.push(t => {
-    const a = tEnv + 0.1, b = T(11) + 0.1;
+    const a = tEnv + 0.1, b = t14 + 0.1;
     const k = lisse(a, a + 0.3, t) * (1 - lisse(b - 0.3, b, t));
     orbes.forEach((o, i) => {
       const ang = t * (2.6 + (i % 3) * 0.5) + i * 0.8, r = 110 + 30 * Math.sin(t * 4 + i);
@@ -336,40 +343,38 @@ function construire() {
       o.style.opacity = k * (0.55 + 0.45 * Math.sin(t * 7 + i));
     });
   });
-  const t10 = T(11);
-  efface('#orbs', t10 + 0.1, 0.1);
-  A('#rep', { opacity: [0, 1] }, { duration: 0.25, at: t10 });
-  A('#rep', { y: [120, 0], scale: [0.92, 1] }, { ...RES(0.18, 0.6), at: t10 });
-  cue(t10, 'reponse', 1);
-  choc(t10, 1.015, 0.5);
-  A('#rep .intro', { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, at: t10 + 0.1, ease: EXPO });
-  rouleau('#code', 'HBGD004', t10 + 0.2, t10 + 0.55, 0.1);
-  A('#code', { opacity: [0, 1] }, { duration: 0.15, at: t10 + 0.2 });
-  A('#code .c', { y: [0, -18, 0] }, { duration: 0.25, at: t10 + 0.55, stagger: 0.1, ease: 'easeOut' });
-  cue(t10 + 0.2, 'roulette', 1);
-  for (let k = 0; k < 7; k++) cue(t10 + 0.55 + k * 0.1, 'cran', 0.6 + k * 0.08);
-  A('#trait-code', { scaleX: [0, 1], opacity: [0, 1] }, { duration: 0.6, at: t10 + 1.25, ease: EXPO });
+  efface('#orbs', t14 + 0.1, 0.1);
+  A('#rep', { opacity: [0, 1] }, { duration: 0.25, at: t14 });
+  A('#rep', { y: [120, 0], scale: [0.92, 1] }, { ...RES(0.18, 0.6), at: t14 });
+  cue(t14, 'reponse', 1);
+  choc(t14, 1.015, 0.5);
+  A('#rep .intro', { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, at: t14 + 0.1, ease: EXPO });
+  rouleau('#code', 'HBGD004', t14 + 0.2, t14 + 0.55, 0.1);
+  A('#code', { opacity: [0, 1] }, { duration: 0.15, at: t14 + 0.2 });
+  A('#code .c', { y: [0, -18, 0] }, { duration: 0.25, at: t14 + 0.55, stagger: 0.1, ease: 'easeOut' });
+  cue(t14 + 0.2, 'roulette', 1);
+  for (let k = 0; k < 7; k++) cue(t14 + 0.55 + k * 0.1, 'cran', 0.6 + k * 0.08);
+  A('#trait-code', { scaleX: [0, 1], opacity: [0, 1] }, { duration: 0.6, at: t14 + 1.25, ease: EXPO });
   const chiffres = [9, 6, 1, 4];
-  A('#odo', { opacity: [0, 1] }, { duration: 0.3, at: T(11, 3) - 0.1 });
-  $$('#odo .bande').forEach((bd, k) => A(bd, { y: ['0%', `-${(10 + chiffres[k]) * 5}%`] }, { duration: 1.3, at: T(11, 3) - 0.1 + k * 0.1, ease: SORTIE }));
-  cue(T(11, 3) - 0.1, 'odometre', 1);
-  A('#rep .lib', { opacity: [0, 1], y: [20, 0] }, { duration: 0.6, at: T(11, 4) - 0.1, ease: EXPO });
-  A('#rep .base', { opacity: [0, 1], scale: [0.8, 1] }, { duration: 0.45, at: T(11, 4) + 0.25, ease: REBOND });
-  cue(T(11, 4) + 0.25, 'ding', 0.8);
-  A('#code', { scale: [1, 1.05, 1] }, { duration: 0.5, at: T(12) + 0.05, ease: 'easeInOut' });
-  A('#trait-code', { scaleX: [1, 1], opacity: [1, 1] }, { duration: 0.001, at: T(12) });
-  cue(T(12) + 0.05, 'valide', 1);
+  A('#odo', { opacity: [0, 1] }, { duration: 0.3, at: T(14, 3) - 0.1 });
+  $$('#odo .bande').forEach((bd, k) => A(bd, { y: ['0%', `-${(10 + chiffres[k]) * 5}%`] }, { duration: 1.3, at: T(14, 3) - 0.1 + k * 0.1, ease: SORTIE }));
+  cue(T(14, 3) - 0.1, 'odometre', 1);
+  A('#rep .lib', { opacity: [0, 1], y: [20, 0] }, { duration: 0.6, at: T(14, 4) - 0.1, ease: EXPO });
+  A('#rep .base', { opacity: [0, 1], scale: [0.8, 1] }, { duration: 0.45, at: T(14, 4) + 0.25, ease: REBOND });
+  cue(T(14, 4) + 0.25, 'ding', 0.8);
+  A('#code', { scale: [1, 1.05, 1] }, { duration: 0.5, at: T(15) + 0.05, ease: 'easeInOut' });
+  cue(T(15) + 0.05, 'valide', 1);
 
-  /* ============ 6. FIN (mesures 13-14) ============ */
-  const t11 = T(13);
-  A('#s5', { scale: [1, 0.05], filter: ['blur(0px)', 'blur(14px)'] }, { duration: 0.5, at: t11 - 0.5, ease: ENTREE });
-  efface('#s5', t11 - 0.08, 0.06, 'linear');
-  efface('#marque', t11 - 0.5, 0.3);
-  cue(t11 - 0.55, 'implosion', 1);
-  montre('#orbes', t11 - 0.6, 0.15);
+  /* ============ 6. FIN (mesures 16-17) ============ */
+  const t16 = T(16);
+  A('#s5', { scale: [1, 0.05], filter: ['blur(0px)', 'blur(14px)'] }, { duration: 0.5, at: t16 - 0.5, ease: ENTREE });
+  efface('#s5', t16 - 0.08, 0.06, 'linear');
+  efface('#marque', t16 - 0.5, 0.3);
+  cue(t16 - 0.55, 'implosion', 1);
+  montre('#orbes', t16 - 0.6, 0.15);
   const orbF = $$('#orbes .orbe');
   parImage.push(t => {
-    const a = t11 - 0.6, b = t11;
+    const a = t16 - 0.6, b = t16;
     if (t < a || t > b + 0.05) return;
     const k = borne(a, b, t), e = k * k;
     orbF.forEach((o, i) => {
@@ -377,29 +382,29 @@ function construire() {
       o.style.transform = `translate(${540 + Math.cos(ang) * r}px,${570 + Math.sin(ang) * r * 0.8}px) scale(${1.2 - 0.6 * e})`;
     });
   });
-  efface('#orbes', t11, 0.05, 'linear');
-  cue(t11, 'final', 1);
-  montre('#s6', t11 - 0.01);
-  A('#f6', { opacity: [1, 1] }, { duration: 0.001, at: t11 - 0.003 });
-  A('#f6', { clipPath: ['circle(0% at 50% 30%)', 'circle(150% at 50% 30%)'] }, { duration: 1.0, at: t11, ease: EXPO });
-  A('#flash', { opacity: [0.55, 0] }, { duration: 0.3, at: t11, ease: [0.1, 0.7, 0.3, 1] });
-  A('#flare', { opacity: [0, 0.9, 0], scaleX: [0.2, 1.2, 1.6], y: [0, -90] }, { duration: 1.0, at: t11, ease: 'easeOut' });
-  lum(t11, '#7FF5DD', '#0E9384', 0.3, 0.3);
-  choc(t11, 1.03, 0.8);
-  A('#an3', { scale: [0.4, 3.2], opacity: [0.8, 0] }, { duration: 1.3, at: t11, ease: EXPO });
-  A('#fin-ic', { opacity: [0, 1] }, { duration: 0.2, at: t11 + 0.05 });
-  A('#fin-ic', { scale: [0.2, 1], rotate: [20, 0] }, { ...RES(0.35, 0.7), at: t11 + 0.05 });
-  A('#fin-mot .c', { y: ['110%', '0%'], rotateX: [75, 0], transformPerspective: [900, 900] }, { duration: 0.9, at: T(13, 2) - 0.1, stagger: 0.07, ease: EXPO });
-  cue(T(13, 2) - 0.1, 'lettres', 0.9);
-  A('#fin-slogan .ln>.in', { y: ['110%', '0%'] }, { duration: 0.9, at: T(13, 3) - 0.1, stagger: 0.14, ease: EXPO });
-  A('#fin-cta', { opacity: [0, 1] }, { duration: 0.25, at: T(13, 4) + 0.05 });
-  A('#fin-cta', { y: [60, 0], scale: [0.85, 1] }, { ...RES(0.3, 0.55), at: T(13, 4) + 0.05 });
-  cue(T(13, 4) + 0.05, 'pop', 1);
-  A('#fin-plus', { opacity: [0, 1], y: [24, 0] }, { duration: 0.6, at: T(14) + 0.1, ease: EXPO });
-  A('#fin-src', { opacity: [0, 1] }, { duration: 0.8, at: T(14, 2), ease: 'easeOut' });
-  A('#brille2', { x: [-760, 760] }, { duration: 1.0, at: T(14, 3), ease: 'easeInOut' });
-  cue(T(14, 3), 'brillance', 0.6);
-  A('#s6', { scale: [1, 1.035] }, { duration: DUREE - t11, at: t11, ease: 'linear' });
+  efface('#orbes', t16, 0.05, 'linear');
+  cue(t16, 'final', 1);
+  montre('#s6', t16 - 0.01);
+  A('#f6', { opacity: [1, 1] }, { duration: 0.001, at: t16 - 0.003 });
+  A('#f6', { clipPath: ['circle(0% at 50% 30%)', 'circle(150% at 50% 30%)'] }, { duration: 1.0, at: t16, ease: EXPO });
+  A('#flash', { opacity: [0.55, 0] }, { duration: 0.3, at: t16, ease: [0.1, 0.7, 0.3, 1] });
+  A('#flare', { opacity: [0, 0.9, 0], scaleX: [0.2, 1.2, 1.6], y: [0, -90] }, { duration: 1.0, at: t16, ease: 'easeOut' });
+  lum(t16, '#7FF5DD', '#0E9384', 0.3, 0.3);
+  choc(t16, 1.03, 0.8);
+  A('#an3', { scale: [0.4, 3.2], opacity: [0.8, 0] }, { duration: 1.3, at: t16, ease: EXPO });
+  A('#fin-ic', { opacity: [0, 1] }, { duration: 0.2, at: t16 + 0.05 });
+  A('#fin-ic', { scale: [0.2, 1], rotate: [20, 0] }, { ...RES(0.35, 0.7), at: t16 + 0.05 });
+  A('#fin-mot .c', { y: ['110%', '0%'], rotateX: [75, 0], transformPerspective: [900, 900] }, { duration: 0.9, at: T(16, 2) - 0.1, stagger: 0.07, ease: EXPO });
+  cue(T(16, 2) - 0.1, 'lettres', 0.9);
+  A('#fin-slogan .ln>.in', { y: ['110%', '0%'] }, { duration: 0.9, at: T(16, 3) - 0.1, stagger: 0.14, ease: EXPO });
+  A('#fin-cta', { opacity: [0, 1] }, { duration: 0.25, at: T(16, 4) + 0.05 });
+  A('#fin-cta', { y: [60, 0], scale: [0.85, 1] }, { ...RES(0.3, 0.55), at: T(16, 4) + 0.05 });
+  cue(T(16, 4) + 0.05, 'pop', 1);
+  A('#fin-plus', { opacity: [0, 1], y: [24, 0] }, { duration: 0.6, at: T(17) + 0.1, ease: EXPO });
+  A('#fin-src', { opacity: [0, 1] }, { duration: 0.8, at: T(17, 2), ease: 'easeOut' });
+  A('#brille2', { x: [-760, 760] }, { duration: 1.0, at: T(17, 3), ease: 'easeInOut' });
+  cue(T(17, 3), 'brillance', 0.6);
+  A('#s6', { scale: [1, 1.035] }, { duration: DUREE - t16, at: t16, ease: 'linear' });
   A('#cam', { opacity: [1, 1] }, { duration: 0.001, at: DUREE });
 }
 

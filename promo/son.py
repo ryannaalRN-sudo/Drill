@@ -1,5 +1,5 @@
-"""Bande-son de la pub Drill (37,3 s, 90 BPM, fa majeur) : piano feutré, marimba, groove doux.
-Usage : python3 son3.py cues.json sortie.wav [gain]
+"""Bande-son de la pub Drill (45,3 s, 90 BPM, fa majeur) : piano feutré, marimba, groove doux.
+Usage : python3 son.py cues.json sortie.wav [gain]
 Tout est synthétisé ; les bruitages, discrets, sont calés sur les indices de la timeline Motion."""
 import json, sys
 import numpy as np
@@ -10,7 +10,9 @@ from scipy.io import wavfile
 SR = 48000
 B = 60 / 90
 BAR = 4 * B
-DUREE = 14 * BAR
+NB = 17
+FIN = 16
+DUREE = NB * BAR
 N = int(round(SR * DUREE))
 rng = np.random.default_rng(5)
 
@@ -351,6 +353,11 @@ def bfx(k, t, v):
             tc += pas
     elif k == 'ding':
         clochette(89, t, g=0.04)
+    elif k == 'sources':
+        souffle(t - 0.05, 0.5, 2600, 800, g=0.05, p0=0.3, p1=-0.2)
+        clochette(84, t + 0.3, g=0.025)
+        clochette(89, t + 0.6, g=0.025)
+        clochette(93, t + 0.9, g=0.025)
     elif k == 'valide':
         clochette(84, t, g=0.035)
         clochette(89, t + 0.1, g=0.04)
@@ -367,7 +374,7 @@ CH = {
     'Gm7': (43, [43, 50, 53, 58, 62]),
 }
 plan = {1: ['Dm9'], 2: ['Bbmaj7', 'C'], 3: ['F'], 4: ['F'], 5: ['C/E'], 6: ['Dm7'], 7: ['Bbmaj7'], 8: ['F'],
-        9: ['C/E'], 10: ['Dm7'], 11: ['Bbmaj7'], 12: ['Gm7', 'C'], 13: ['F'], 14: ['F']}
+        9: ['C/E'], 10: ['Dm7'], 11: ['Bbmaj7'], 12: ['F'], 13: ['C/E'], 14: ['Dm7'], 15: ['Gm7', 'C'], 16: ['F'], 17: ['F']}
 
 # accroche : accords arpégés, très doux
 for bar in (1, 2):
@@ -389,7 +396,7 @@ batterie.add(kick(0.55), T(3))
 accord([41, 53, 57, 60, 65, 69], T(3), vel=0.65, tenue=3.2, g=0.2, roule=0.02)
 nappe([53, 57, 60, 64], T(3), BAR, g=0.05, fc=1600)
 basse(29 + 12, T(3), BAR * 0.95, g=0.22)
-t_lettres = temps.get('lettres', [T(3, 2), T(13, 2)])
+t_lettres = temps.get('lettres', [T(3, 2), T(FIN, 2)])
 for t_l, notes in zip(t_lettres, ([77, 81, 84, 89, 93], [77, 81, 84, 89, 96])):
     for j, m in enumerate(notes):
         marimba(m, t_l + 0.04 + j * 0.07, vel=0.6 + 0.08 * j, g=0.14, pan=-0.5 + j * 0.25)
@@ -402,11 +409,14 @@ melodie = {
     9: [(0, 88), (1, 84), (2, 79), (3, 81), (4, 79), (6, 76)],
     10: [(0, 81), (1, 77), (2, 74), (3, 76), (4, 77), (6, 84)],
     11: [(0, 86), (1, 82), (2, 77), (3, 79), (4, 81), (5, 82), (6, 84)],
-    12: [(0, 86), (1, 82), (2, 79), (3, 77), (4, 76), (5, 79), (6, 84), (7, 88)],
+    12: [(0, 84), (2, 81), (4, 77), (6, 79)],
+    13: [(0, 88), (1, 84), (2, 79), (3, 81), (4, 79), (6, 76)],
+    14: [(0, 81), (1, 77), (2, 74), (3, 76), (4, 77), (6, 84)],
+    15: [(0, 86), (1, 82), (2, 79), (3, 77), (4, 76), (5, 79), (6, 84), (7, 88)],
 }
 kicks = [T(3)]
-for bar in range(4, 13):
-    energie = (bar - 4) / 8
+for bar in range(4, FIN):
+    energie = (bar - 4) / (FIN - 5)
     for h, nom in enumerate(plan[bar]):
         racine, voix = CH[nom]
         moitie = len(plan[bar]) == 2
@@ -425,35 +435,35 @@ for bar in range(4, 13):
     for beat in (1, 3):
         batterie.add(kick(0.36 + 0.08 * energie), T(bar, beat))
         kicks.append(T(bar, beat))
-    if bar >= 8:
+    if bar >= 10:
         batterie.add(kick(0.24), T(bar, 3.5))
         kicks.append(T(bar, 3.5))
     for beat in (2, 4):
         s = snap()
         batterie.add(s, T(bar, beat), g=0.4)
         rev_env.add(np.vstack([s, s]), T(bar, beat), g=0.12)
-    if bar >= 6:
+    if bar >= 7:
         for i in range(16):
             swing = 0.045 * B if i % 2 else 0
             batterie.add(shaker(), T(bar) + i * B / 4 + swing, g=(0.08 if i % 4 == 2 else 0.05) * (0.7 + 0.6 * energie), pan=0.35)
     if bar in melodie:
         for (pos, m) in melodie[bar]:
             marimba(m, T(bar) + pos * B / 2, vel=0.65 + 0.15 * (pos % 2 == 0), g=0.16, pan=-0.25 + 0.07 * pos)
-montee_inverse(T(13), 1.3, g=0.1)
+montee_inverse(T(FIN), 1.3, g=0.1)
 
 # final : fa majeur, puis tout respire
-batterie.add(kick(0.6), T(13))
-kicks.append(T(13))
-accord([41, 53, 57, 60, 65, 69, 72], T(13), vel=0.7, tenue=4.0, g=0.19, roule=0.02)
-nappe([53, 57, 60, 64, 69], T(13), 2 * BAR - 1.0, g=0.055, fc=1800)
-basse(41, T(13), BAR * 0.9, g=0.24)
+batterie.add(kick(0.6), T(FIN))
+kicks.append(T(FIN))
+accord([41, 53, 57, 60, 65, 69, 72], T(FIN), vel=0.7, tenue=4.0, g=0.19, roule=0.02)
+nappe([53, 57, 60, 64, 69], T(FIN), 2 * BAR - 1.0, g=0.055, fc=1800)
+basse(41, T(FIN), BAR * 0.9, g=0.24)
 for beat in (2, 4):
     s = snap()
-    batterie.add(s, T(13, beat), g=0.22)
-    rev_env.add(np.vstack([s, s]), T(13, beat), g=0.1)
+    batterie.add(s, T(FIN, beat), g=0.22)
+    rev_env.add(np.vstack([s, s]), T(FIN, beat), g=0.1)
 for i, m in enumerate([65, 69, 72, 77, 81, 84]):
-    piano(m, T(14) + i * B / 2, 0.38, 2.4, g=0.13)
-basse(41, T(14), BAR * 0.9, g=0.16)
+    piano(m, T(FIN + 1) + i * B / 2, 0.38, 2.4, g=0.13)
+basse(41, T(FIN + 1), BAR * 0.9, g=0.16)
 for t_b in temps.get('brillance', [])[-1:]:
     marimba(89, t_b + 0.3, vel=0.7, g=0.1)
 

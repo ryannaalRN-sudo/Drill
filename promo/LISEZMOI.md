@@ -1,9 +1,9 @@
-# Pub Drill — 37 s
+# Pub Drill — 45 s
 
 Vidéo verticale 1080×1920 à 60 images/s, animée avec Motion et accompagnée d'une bande-son synthétisée (piano feutré, marimba, groove doux).
 
-- `index.html` : la scène en 3D (accroche, logo, Prescri'Dent, Scanner, Codage CCAM, final), sans téléphone : les éléments de l'appli flottent dans l'espace, et aucun texte n'en recouvre un autre.
-- `timeline.js` : la timeline Motion, calée sur 14 mesures à 90 BPM. Elle exporte aussi les instants des bruitages (`window.CUES`).
+- `index.html` : la scène en 3D (accroche, logo, Prescri'Dent, Scanner, Codage CCAM, final), sans téléphone : les éléments de l'appli flottent dans l'espace, et aucun texte n'en recouvre un autre. Les sources officielles (HAS 2026, SFCO 2015, ANSM, CCAM V84 de l'Assurance Maladie) sont affichées à l'écran.
+- `timeline.js` : la timeline Motion, calée sur 17 mesures à 90 BPM. Elle exporte aussi les instants des bruitages (`window.CUES`).
 - `render.js` : pilote la timeline image par image (`seek`) dans Chromium et encode avec ffmpeg.
 - `son.py` : compose la musique (fa majeur, 90 BPM) et des bruitages discrets à partir des indices, puis mixe et masterise (−14 LUFS).
 

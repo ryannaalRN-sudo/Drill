@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Drill — pub 37 s</title>
+<title>Drill — pub 45 s</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Caveat:wght@600&display=block">
 <style>
 :root{
@@ -90,7 +90,7 @@ em,i{font-style:normal}
 .q-opt small{display:block;font-size:31px;color:var(--encre-2);line-height:1.3;margin-top:6px}
 
 #couche-feuille{position:absolute;inset:0;transform-style:preserve-3d}
-#feuille{position:absolute;left:100px;top:470px;width:880px;height:820px;transform-style:preserve-3d}
+#feuille{position:absolute;left:100px;top:200px;width:880px;height:800px;transform-style:preserve-3d}
 .face{position:absolute;inset:0;border-radius:30px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .recto{background:#fff;color:var(--encre);padding:56px 60px;box-shadow:0 70px 140px rgba(0,0,0,.55)}
 .verso{background:#FBF9F2;color:#24343A;transform:rotateY(180deg);padding:64px 70px;box-shadow:0 70px 140px rgba(0,0,0,.55);transform-style:preserve-3d}
@@ -104,11 +104,19 @@ em,i{font-style:normal}
 .ol.barre b,.ol.barre>span:first-of-type{color:#A9B6BA}
 .rature{position:absolute;left:-8px;top:44px;height:7px;width:370px;border-radius:4px;background:var(--gencive);transform-origin:0 50%;box-shadow:0 0 10px rgba(232,84,107,.6)}
 .ecarte{position:absolute;right:0;top:26px;padding:10px 18px;border-radius:999px;background:var(--gencive-pale);color:#8E1F31;font-weight:700;font-size:27px}
-#tampon{position:absolute;right:56px;bottom:52px;padding:16px 28px;border:7px solid var(--gencive);border-radius:18px;color:var(--gencive);font-family:var(--display);font-weight:800;font-size:46px;letter-spacing:.02em;background:#fff}
-#rappel{position:absolute;left:100px;top:1350px;width:880px;display:flex;gap:24px;align-items:center;padding:30px 36px;border-radius:30px;background:var(--ambre-pale);color:#6E4204;box-shadow:0 40px 90px rgba(0,0,0,.45)}
+#tampon{position:absolute;right:56px;bottom:46px;padding:12px 24px;border:6px solid var(--gencive);border-radius:16px;color:var(--gencive);font-family:var(--display);font-weight:800;font-size:38px;letter-spacing:.02em;background:#fff}
+#rappel{position:absolute;left:100px;top:1040px;width:880px;display:flex;gap:24px;align-items:center;padding:30px 36px;border-radius:30px;background:var(--ambre-pale);color:#6E4204;box-shadow:0 40px 90px rgba(0,0,0,.45)}
 #rappel svg{flex:none;width:56px;height:56px}
 #rappel b{display:block;font-size:42px;line-height:1.15}
 #rappel span{display:block;font-size:30px;margin-top:6px}
+
+/* encarts « sources officielles » */
+.sources{position:absolute;left:100px;width:880px;padding:28px 34px 30px;border-radius:30px;background:rgba(255,255,255,.09);border:2px solid rgba(255,255,255,.2)}
+.sources .st{display:flex;align-items:center;gap:16px;font-family:var(--display);font-weight:700;font-size:36px}
+.sources .st svg{flex:none;width:44px;height:44px}
+.sources .sl{display:flex;align-items:center;gap:18px;margin-top:16px;font-size:31px;color:rgba(235,250,248,.92)}
+.sources .sl b{flex:none;padding:6px 16px;border-radius:999px;background:var(--lagon-vif);color:#04201F;font-size:26px}
+#sources-s .sl b{background:var(--cyan);color:#03203A}
 
 /* verso : ordonnance manuscrite */
 .v-dr{font-family:var(--texte);font-weight:700;font-size:30px;color:#5B6B70;border-bottom:3px solid #D9DCD5;padding-bottom:16px}
@@ -135,7 +143,7 @@ em,i{font-style:normal}
 .med b{display:block;font-size:48px;line-height:1.1}
 .med small{display:block;font-size:30px;color:var(--encre-2)}
 .etiq-bloc{position:absolute;left:74px;font-family:var(--display);font-weight:700;font-size:40px;color:rgba(255,255,255,.7)}
-.rx-l{position:absolute;left:70px;right:70px;height:118px;display:flex;justify-content:space-between;align-items:center;padding:0 30px 0 38px;border-radius:28px;background:rgba(255,255,255,.09);border:2px solid rgba(255,255,255,.15);font-weight:700;font-size:44px}
+.rx-l{position:absolute;left:70px;right:70px;height:110px;display:flex;justify-content:space-between;align-items:center;padding:0 30px 0 38px;border-radius:28px;background:rgba(255,255,255,.09);border:2px solid rgba(255,255,255,.15);font-weight:700;font-size:44px}
 .etat{padding:12px 24px;border-radius:999px;font-size:32px;font-weight:700}
 .etat.ok{background:rgba(43,208,176,.18);color:#8FF3DE;border:2px solid rgba(43,208,176,.5)}
 .etat.pe{background:rgba(242,169,59,.2);color:#FFD08A;border:2px solid rgba(242,169,59,.6)}
@@ -170,7 +178,7 @@ em,i{font-style:normal}
 #fin-cta{position:absolute;left:0;right:0;top:1290px;text-align:center}
 #fin-cta span{display:inline-block;padding:26px 46px;border-radius:999px;background:#fff;color:var(--lagon);font-family:var(--display);font-weight:800;font-size:44px;box-shadow:0 30px 70px rgba(0,0,0,.3)}
 #fin-plus{position:absolute;left:0;right:0;top:1440px;text-align:center;font-size:34px;font-weight:700;color:rgba(255,255,255,.9)}
-#fin-src{position:absolute;left:60px;right:60px;top:1700px;text-align:center;font-size:27px;line-height:1.5;color:rgba(255,255,255,.7)}
+#fin-src{position:absolute;left:50px;right:50px;top:1560px;text-align:center;font-size:29px;line-height:1.5;color:rgba(255,255,255,.7)}
 
 /* surcouches */
 #flare{position:absolute;left:-300px;top:660px;width:1680px;height:10px;border-radius:50%;background:radial-gradient(closest-side,#fff,rgba(160,255,240,.6) 40%,transparent);filter:blur(1px);mix-blend-mode:screen}
@@ -220,6 +228,10 @@ em,i{font-style:normal}
         <div class="q-opt"><span class="sel"></span><span class="boite"><span class="ok"></span><svg viewBox="0 0 62 62"><path pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M17 32l10 10 19-21"/></svg></span><span class="txt"><b>Pénicillines (amoxicilline)</b><small>Allergie avérée ou anaphylaxie probable</small></span></div></div>
       <div class="carte" id="c3"><p class="q-n">Question 5 sur 5</p><p class="q-t">Traitements en cours ?</p>
         <div class="q-opt"><span class="sel"></span><span class="boite"><span class="ok"></span><svg viewBox="0 0 62 62"><path pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M17 32l10 10 19-21"/></svg></span><span class="txt"><b>Un antiplaquettaire</b><small>Kardégic, aspirine, Plavix…</small></span></div></div>
+      <div class="sources" id="sources-p" style="top:1222px"><div class="st" style="color:var(--lueur)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Recommandations officielles</div>
+        <div class="sl"><b>HAS 2026</b>Antibiotiques en pratique bucco-dentaire</div>
+        <div class="sl"><b>SFCO 2015</b>Chirurgie orale sous antithrombotiques</div>
+        <div class="sl"><b>ANSM</b>Résumés des caractéristiques du produit</div></div>
       <div id="rappel"><svg viewBox="0 0 24 24" fill="none" stroke="#C77A0A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4m0 3h.01"/></svg><span><b>Kardégic : ne pas l’arrêter</b><span>Hémostase locale systématique · SFCO 2015</span></span></div>
     </section>
 
@@ -252,12 +264,16 @@ em,i{font-style:normal}
     <section class="scene" id="s4">
       <div class="titre-f"><span class="ln"><span class="in sc">Scanner</span></span></div>
       <div class="sous-f"><span class="sm">Son traitement, décodé.</span></div>
-      <div class="med" id="med1" style="top:500px"><span class="pas" style="background:var(--ambre-pale);color:var(--ambre)">AAP</span><span><b>Kardégic</b><small>Antiagrégant plaquettaire</small></span></div>
-      <div class="med" id="med2" style="top:672px"><span class="pas" style="background:var(--lagon-pale);color:var(--lagon)">ADO</span><span><b>Metformine</b><small>Antidiabétique (biguanide)</small></span></div>
-      <p class="etiq-bloc" id="eb1" style="top:880px">Si tu prescris</p>
-      <div class="rx-l" id="rx1" style="top:950px">Ibuprofène (AINS)<span class="etat pe">Précaution</span></div>
-      <div class="rx-l" id="rx2" style="top:1092px">Paracétamol<span class="etat ok">Compatible</span></div>
-      <div class="rx-l" id="rx3" style="top:1234px">Amoxicilline<span class="etat ok">Compatible</span></div>
+      <div class="med" id="med1" style="top:460px"><span class="pas" style="background:var(--ambre-pale);color:var(--ambre)">AAP</span><span><b>Kardégic</b><small>Antiagrégant plaquettaire</small></span></div>
+      <div class="med" id="med2" style="top:628px"><span class="pas" style="background:var(--lagon-pale);color:var(--lagon)">ADO</span><span><b>Metformine</b><small>Antidiabétique (biguanide)</small></span></div>
+      <p class="etiq-bloc" id="eb1" style="top:812px">Si tu prescris</p>
+      <div class="rx-l" id="rx1" style="top:880px">Ibuprofène (AINS)<span class="etat pe">Précaution</span></div>
+      <div class="rx-l" id="rx2" style="top:1006px">Paracétamol<span class="etat ok">Compatible</span></div>
+      <div class="rx-l" id="rx3" style="top:1132px">Amoxicilline<span class="etat ok">Compatible</span></div>
+      <div class="sources" id="sources-s" style="top:1290px;left:70px;width:940px"><div class="st" style="color:var(--cyan)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Données officielles</div>
+        <div class="sl"><b>ANSM</b>Base de données publique des médicaments</div>
+        <div class="sl"><b>ANSM</b>Thésaurus des interactions médicamenteuses</div>
+        <div class="sl"><b>RCP</b>Résumés des caractéristiques du produit</div></div>
     </section>
 
     <!-- 5. CODER -->
@@ -275,7 +291,7 @@ em,i{font-style:normal}
         <div class="trait-code" id="trait-code"></div>
         <div id="odo"></div>
         <p class="lib cr">Avulsion d’1 troisième molaire mandibulaire retenue ou à l’état de germe</p>
-        <span class="base cr">Base de remboursement CCAM V84</span>
+        <span class="base cr">Base CCAM V84 · Assurance Maladie</span>
       </div>
     </section>
 
@@ -287,7 +303,7 @@ em,i{font-style:normal}
       <div id="fin-slogan"><span class="ln"><span class="in">Prescrire et coder,</span></span><span class="ln"><span class="in"><em>sans chercher.</em></span></span></div>
       <div id="fin-cta"><span>ryannaalrn-sudo.github.io/Drill</span></div>
       <div id="fin-plus">Sans compte · aucune donnée patient enregistrée</div>
-      <div id="fin-src">Recommandations HAS 2026 · SFCO 2015 · CCAM V84 · base ANSM<br>Outil d’aide à la décision</div>
+      <div id="fin-src">Sources : HAS 2026 · SFCO 2015 · ANSM · CCAM V84 (Assurance Maladie)<br>Outil d’aide à la décision</div>
     </section>
   </div>
 
