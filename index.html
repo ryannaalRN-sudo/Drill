@@ -218,6 +218,10 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 /* ---------- assistant ---------- */
 .fil{display:grid;gap:12px;margin-top:16px}
 .bulle{padding:14px 16px;border-radius:var(--r-m);max-width:92%;font-size:.95rem}
+.affine{display:flex;align-items:center;gap:4px;margin-top:10px;font-size:.82rem;color:var(--ia)}
+.affine i{width:5px;height:5px;border-radius:50%;background:var(--ia);animation:affine 1s ease-in-out infinite}
+.affine i:nth-child(2){animation-delay:.15s}.affine i:nth-child(3){animation-delay:.3s;margin-right:6px}
+@keyframes affine{0%,100%{opacity:.3;transform:none}50%{opacity:1;transform:translateY(-3px)}}
 .bulle.moi{justify-self:end;background:var(--encre);color:#fff;border-bottom-right-radius:4px}
 .bulle.lui{background:var(--carte);border:1px solid var(--trait);border-bottom-left-radius:4px}
 .bulle.lui.ia{border-color:#D6D2F7}
@@ -404,14 +408,14 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .essayer{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:12px 18px;border-radius:999px;background:var(--lagon-pale);color:#065E54;font-weight:700}
 .diapo.ia .essayer{background:var(--ia-pale);color:var(--ia)}
 .diapo.ambre .essayer{background:var(--ambre-pale);color:#7A4A05}
-.guide-bas{display:flex;align-items:center;gap:12px;max-width:560px;width:100%;margin:0 auto;padding:10px 18px calc(14px + env(safe-area-inset-bottom))}
-.guide-prec{flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--carte);border:1.5px solid var(--trait)}
+.guide-bas{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:10px;max-width:560px;width:100%;margin:0 auto;padding:10px 20px calc(16px + env(safe-area-inset-bottom))}
+.guide-prec{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--carte);border:1.5px solid var(--trait)}
 .guide-prec[disabled]{visibility:hidden}
-.guide-points{flex:1;display:flex;justify-content:center;gap:4px}
-.guide-points button{width:22px;height:44px;display:grid;place-items:center}
+.guide-points{display:flex;justify-content:center;min-width:0}
+.guide-points button{flex:0 1 20px;min-width:12px;height:44px;display:grid;place-items:center}
 .guide-points button i{width:8px;height:8px;border-radius:999px;background:var(--trait);transition:width .25s ease,background .25s ease}
-.guide-points button[aria-current="true"] i{width:22px;background:var(--lagon)}
-.guide-suiv{flex:none;min-width:132px;height:52px;padding:0 22px;border-radius:999px;background:var(--lagon);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.guide-points button[aria-current="true"] i{width:18px;background:var(--lagon)}
+.guide-suiv{height:50px;padding:0 20px;white-space:nowrap;border-radius:999px;background:var(--lagon);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 
 /* mini-démos animées */
 .m-carte{width:78%;max-width:300px;padding:16px;border-radius:20px;background:#fff;color:var(--encre);box-shadow:0 18px 40px rgba(0,0,0,.25)}
@@ -429,10 +433,10 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .m-arcade .b{fill:rgba(255,255,255,.25)}
 .m-arcade .l{fill:#fff;opacity:0}
 .m-doigt{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(255,255,255,.6);border:2px solid rgba(15,42,51,.3);box-shadow:0 4px 12px rgba(0,0,0,.2);opacity:0;pointer-events:none}
-.m-orbite{position:absolute;width:190px;height:190px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.35)}
+.m-orbite{position:absolute;width:min(180px,calc(min(31vh,250px) - 70px));height:min(180px,calc(min(31vh,250px) - 70px));border-radius:50%;border:1.5px dashed rgba(255,255,255,.35)}
 .m-orbite span{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:14px;display:grid;place-items:center;background:#fff;color:var(--lagon);box-shadow:0 8px 18px rgba(0,0,0,.2)}
 .m-orbite span svg{width:22px;height:22px}
-.m-logo{position:relative;width:96px;height:96px;border-radius:24px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.m-logo{position:relative;width:min(96px,11vh);height:min(96px,11vh);border-radius:24px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
 .m-main{position:absolute;right:16px;bottom:14px;display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:rgba(255,255,255,.9)}
 .m-main svg{width:26px;height:26px}
 .m-fav{position:relative;display:flex;align-items:center;gap:10px;width:78%;max-width:300px;margin:6px 0;padding:12px 14px;border-radius:14px;background:#fff;color:var(--encre);font-weight:700;font-size:.85rem;box-shadow:0 10px 24px rgba(0,0,0,.18)}
@@ -1650,39 +1654,31 @@ function repondrePrescription(texte){
   return {html:h, brut:RECO.resumer(rep,O), contexte:RECO.resumer(rep,O)+(hyp.length?'\nHypothèses : '+hyp.join(', '):''), ia:true};
 }
 
-async function demanderIA(texte){
+/* Réponse immédiate du moteur local ; le texte de l'IA vient ensuite l'enrichir s'il arrive à temps. */
+function repondreLocal(texte){
   if(intentionPrescription(texte)){
     const R0 = repondrePrescription(texte);
-    if(IA_URL && R0.contexte){
-      try{
-        const hist=IA.fil.slice(-6).map(m=>({role:m.moi?'user':'model', texte:m.brut||''}));
-        const r = await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:texte, pistes:[], contexte:R0.contexte, historique:hist})});
-        const j = await r.json();
-        if(j.reponse){
-          const suite = R0.html.includes('<ul class="rx">') ? R0.html.slice(R0.html.indexOf('<p><b>À prescrire')) : R0.html.slice(R0.html.indexOf('<button'));
-          R0.html = `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>` + suite;
-        }
-      }catch(e){ console.warn('Relais IA indisponible', e); }
-    }
-    return R0;
+    const suite = R0.html.includes('<ul class="rx">') ? R0.html.slice(R0.html.indexOf('<p><b>À prescrire')) : R0.html.slice(R0.html.indexOf('<button'));
+    return {...R0, suite, requete: R0.contexte ? {question:texte, pistes:[], contexte:R0.contexte} : null};
   }
   const A = analyser(texte), R = raisonner(A); contexte(A,R);
   const vus=new Set(); R.codes=R.codes.filter(x=>!vus.has(x.c)&&vus.add(x.c)); R.alternatives=R.alternatives.filter(x=>!vus.has(x.c)&&vus.add(x.c));
-  let html = R.texte.map(p=>`<p>${p}</p>`).join('');
-  if(IA_URL){
-    try{
-      const pistes=[...R.codes,...R.alternatives].map(x=>({code:x.c, libelle:LIB[x.c].l, tarif:PRIX[x.c], note:x.pourquoi}));
-      const hist=IA.fil.slice(-6).map(m=>({role:m.moi?'user':'model', texte:m.brut||''}));
-      const r = await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:texte, pistes, historique:hist})});
-      const j = await r.json();
-      if(!j.reponse) console.warn('Relais IA : pas de réponse', j);
-      if(j.reponse) html = `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>`;
-    }catch(e){ console.warn('Relais IA indisponible', e); }
-  }
-  html += R.codes.map(carteIA).join('');
-  if(R.alternatives.length) html += `<p class="sous" style="margin-top:12px;font-size:.88rem">Selon le cas :</p>`+R.alternatives.map(carteIA).join('');
-  if(R.questions.length) html += `<p style="margin-top:12px">${R.questions.join('<br>')}</p>`;
-  return {html, brut: R.texte.join(' ').replace(/<[^>]+>/g,''), ia:true};
+  let suite = R.codes.map(carteIA).join('');
+  if(R.alternatives.length) suite += `<p class="sous" style="margin-top:12px;font-size:.88rem">Selon le cas :</p>`+R.alternatives.map(carteIA).join('');
+  if(R.questions.length) suite += `<p style="margin-top:12px">${R.questions.join('<br>')}</p>`;
+  const pistes=[...R.codes,...R.alternatives].map(x=>({code:x.c, libelle:LIB[x.c].l, tarif:PRIX[x.c], note:x.pourquoi}));
+  return {html: R.texte.map(p=>`<p>${p}</p>`).join('') + suite, suite, brut: R.texte.join(' ').replace(/<[^>]+>/g,''), ia:true, requete:{question:texte, pistes}};
+}
+async function affinerIA(m, hist){
+  const ctrl = new AbortController(), minuteur = setTimeout(()=>ctrl.abort(), 15000);
+  try{
+    const r = await fetch(IA_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...m.requete, historique:hist}),signal:ctrl.signal});
+    const j = await r.json();
+    if(j.reponse) return `<p>${esc(j.reponse).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n+/g,'</p><p>')}</p>` + m.suite;
+    console.warn('Relais IA : pas de réponse', j);
+  }catch(e){ console.warn('Relais IA indisponible', e); }
+  finally{ clearTimeout(minuteur); }
+  return null;
 }
 
 function vIA(){
@@ -1690,21 +1686,40 @@ function vIA(){
     <header class="top"><div class="logo">${logo}Assistant</div>${IA.fil.length?'<button class="retour" id="effacer" style="padding-left:12px">Effacer</button>':''}</header>
     <p class="sous">Décris l'acte comme tu le dirais à un collègue. N'écris pas le nom du patient.</p>
     ${IA.fil.length?'':`<div class="suggestions">${['J’ai extrait 18 dents','Cellulite séreuse depuis 2 jours, que prescrire ?','Patient sous Eliquis, je peux avulser ?','Composite MOD sur la 36','Alvéolite, antibiotique ?','Enfant 6 ans 20 kg, abcès avec fièvre'].map(s=>`<button class="sugg">${s}</button>`).join('')}</div>`}
-    <div class="fil">${IA.fil.map(m=>`<div class="bulle ${m.moi?'moi':'lui'} ${m.ia?'ia':''}">${m.html}</div>`).join('')}${IA.attente?'<div class="bulle lui ia">…</div>':''}</div>
+    <div class="fil">${IA.fil.map((m,k)=>`<div class="bulle ${m.moi?'moi':'lui'} ${m.ia?'ia':''}" data-i="${k}">${m.html}${m.affine?AFFINE:''}</div>`).join('')}</div>
     <div style="height:110px"></div>
   </div>
   <div class="saisie"><form id="f"><input id="msg" placeholder="Ex. j'ai extrait 18 dents" value="${esc(IA.brouillon)}" autocomplete="off"><button aria-label="Envoyer">${ICO.envoi}</button></form></div>`;
   IA.brouillon='';
   app.querySelectorAll('.sugg').forEach(b=>b.onclick=()=>envoyer(b.textContent));
-  app.querySelectorAll('[data-ajout-ia]').forEach(b=>b.onclick=()=>{ const c=b.dataset.ajoutIa; if(!C.panier.some(p=>p.c===c)) C.panier.push({c}); C.ouvert=true; aller('code'); toast(c+' ajouté'); });
+  brancherBulles(app);
   if($('#effacer')) $('#effacer').onclick=()=>{IA.fil=[];vIA();};
-  app.querySelectorAll('[data-ouvrir-prescri]').forEach(b=>b.onclick=()=>{ if(!IA.derniere) return; P=nouveauP(); P.rep=JSON.parse(JSON.stringify(IA.derniere)); P.i=etapes().length; aller('prescri'); });
   $('#f').onsubmit=e=>{e.preventDefault(); const v=$('#msg').value.trim(); if(v) envoyer(v);};
 }
+const AFFINE = '<p class="affine"><i></i><i></i><i></i>L’IA rédige une réponse plus détaillée</p>';
+function brancherBulles(racine){
+  racine.querySelectorAll('[data-ajout-ia]').forEach(b=>b.onclick=()=>{ const c=b.dataset.ajoutIa; if(!C.panier.some(p=>p.c===c)) C.panier.push({c}); C.ouvert=true; aller('code'); toast(c+' ajouté'); });
+  racine.querySelectorAll('[data-ouvrir-prescri]').forEach(b=>b.onclick=()=>{ if(!IA.derniere) return; P=nouveauP(); P.rep=JSON.parse(JSON.stringify(IA.derniere)); P.i=etapes().length; aller('prescri'); });
+}
 async function envoyer(t){
-  IA.fil.push({moi:true, html:esc(t), brut:t}); IA.attente=true; vIA(); window.scrollTo(0,document.body.scrollHeight);
-  const r = await demanderIA(t); IA.attente=false; IA.fil.push(r); vIA();
+  IA.fil.push({moi:true, html:esc(t), brut:t});
+  const hist = IA.fil.slice(-6).map(m=>({role:m.moi?'user':'model', texte:m.brut||''}));
+  const m = repondreLocal(t);
+  m.affine = !!(IA_URL && m.requete);
+  IA.fil.push(m);
+  const k = IA.fil.length - 1;
+  vIA();
   const bulles=app.querySelectorAll('.bulle'); bulles[bulles.length-1]?.scrollIntoView({block:'start', behavior:'smooth'});
+  if(!m.affine) return;
+  const html = await affinerIA(m, hist);
+  m.affine = false;
+  if(html) m.html = html;
+  if(IA.fil[k] !== m || vue !== 'ia') return;
+  const b = app.querySelector(`.bulle[data-i="${k}"]`);
+  if(!b) return;
+  b.innerHTML = m.html;
+  brancherBulles(b);
+  if(html) anime(b, {opacity:[.4,1]}, {duration:.5, ease:'easeOut'});
 }
 
 /* ---------------------------------------------------------
@@ -1948,10 +1963,10 @@ const DIAPOS = [
     chapo:'Ton copilote au fauteuil : prescrire, vérifier un traitement, coder un acte. Voici comment marche chaque outil.',
     scene:()=>{
       const icos=[G_ICO.prescri, ICO_ETOILE.replace('width="18" height="18"',''), ICO_SCAN, G_ICO.code, G_ICO.ia];
-      return `<div class="m-orbite">${icos.map((s,k)=>{ const a=k*2*Math.PI/5-Math.PI/2; return `<span style="left:${95+95*Math.cos(a)}px;top:${95+95*Math.sin(a)}px">${s}</span>`; }).join('')}</div>
+      return `<div class="m-orbite">${icos.map((s,k)=>{ const a=k*2*Math.PI/5-Math.PI/2; return `<span style="left:${50+50*Math.cos(a)}%;top:${50+50*Math.sin(a)}%">${s}</span>`; }).join('')}</div>
         <img class="m-logo" src="icons/icon-192.png" alt=""><div class="m-main">${G_ICO.main}Glisse</div>`;
     },
-    etapes:['Fais glisser l’écran vers la gauche, ou touche « Suivant ».','Chaque écran présente un outil, avec un bouton pour l’essayer tout de suite.','Tu peux quitter à tout moment avec « Passer ».'] },
+  },
   { court:'Prescri’Dent', decor:'d-lagon', titre:'Prescri’Dent',
     chapo:'L’ordonnance adaptée à ton patient, en 5 questions.',
     scene:()=>`<div style="display:grid;justify-items:center;width:100%"><div class="m-arcade">${Array.from({length:7},()=>`<svg viewBox="0 0 18 22"><path class="b" d="${DENT_D}"/><path class="l" d="${DENT_D}"/></svg>`).join('')}</div>
@@ -1967,7 +1982,7 @@ const DIAPOS = [
       <div class="m-fav">${ICO_ETOILE}<span>Détartrage<small>1 médicament</small></span></div></div>`,
     etapes:['Sur une ordonnance proposée, touche l’étoile pour l’enregistrer. Ou crée la tienne.','Retrouve-les depuis l’accueil et dès la première question de Prescri’Dent.','Copie-la en un geste, ou insère-la dans l’ordonnance du patient.'],
     note:'Elles restent sur ton téléphone : rien n’est envoyé.',
-    cta:'Voir mes ordonnances types', go:()=>{ aller('prescri'); vFavoris(); } },
+    cta:'Créer mes ordonnances types', go:()=>{ aller('prescri'); vFavEdit(null); } },
   { court:'Scanner', decor:'d-nuit', titre:'Scanner',
     chapo:'Le traitement du patient, décrypté avant ton geste.',
     scene:()=>`<div class="m-papier"><p>Kardégic 75 mg</p><div class="g" style="width:70%"></div><p>Metformine 1000 mg</p><div class="g" style="width:50%"></div><span class="m-laser"></span></div>
@@ -1981,7 +1996,7 @@ const DIAPOS = [
       <div class="m-acte"><span><b>HBGD036 · 39,00 €</b>Avulsion d’1 dent permanente</span><span class="m-plus">+<i>✓</i></span></div>
       <div class="m-acte"><span><b>HBGD004 · 96,14 €</b>3<sup>e</sup> molaire mandibulaire</span><span class="m-plus">+<i>✓</i></span></div>
       <div class="m-panier"><span>Sélection · 2 actes</span><b>135,14 €</b></div></div>`,
-    etapes:['Choisis une catégorie, ou cherche un acte par mot ou par code.','Touche + pour l’ajouter à ta sélection.','Saisis la date de naissance : les modificateurs d’âge s’appliquent seuls. Copie codes et total.'],
+    etapes:['Choisis une catégorie, ou cherche un acte par mot ou par code.','Touche + pour l’ajouter à ta sélection.','Saisis la date de naissance : les modificateurs d’âge s’appliquent seuls.'],
     note:'Tarifs : base CCAM V84 de l’Assurance Maladie.',
     cta:'Ouvrir le codage', go:()=>aller('code') },
   { court:'Assistant', decor:'d-ia', classe:'ia', titre:'Assistant',
@@ -1999,6 +2014,7 @@ const DIAPOS = [
 ];
 const DENT_D = (ICO.dent.match(/d="([^"]+)"/)||[])[1] || '';
 
+const TEXTE_DIAPO = '.in > h2, .in > .chapo, .etapes li, .guide-note, .essayer';
 let guide = null;
 function ouvrirGuide(){
   if(guide) return;
@@ -2059,7 +2075,8 @@ function activer(i){
   const go = (cible, kf, o) => { if(!cible || (Array.isArray(cible) && !cible.length)) return; g.ctrls.push(MOTION.animate(cible, kf, fixe ? {duration:0} : o)); };
   const boucle = (cible, kf, o) => go(cible, kf, {repeat:Infinity, ease:'easeInOut', ...o});
   // le texte arrive en cascade
-  go(q('.in > h2, .in > .chapo, .etapes li, .guide-note, .essayer'), {opacity:[0,1], y:[16,0]}, {duration:.45, delay:MOTION.stagger(.06, {startDelay:.08}), ease:[.16,1,.3,1]});
+  if(!fixe) el.querySelectorAll('.diapo').forEach((x,k)=>{ if(k!==i) x.querySelectorAll(TEXTE_DIAPO).forEach(t=>{ t.style.opacity=0; }); });
+  go(q(TEXTE_DIAPO), {opacity:[0,1], y:[26,0]}, {duration:.95, delay:MOTION.stagger(.13, {startDelay:.12}), ease:[.22,1,.36,1]});
   // puis la mini-démo de l'écran
   const fin = (kf) => fixe ? kf.map(()=>kf[kf.length-2]) : kf;
   switch(i){
