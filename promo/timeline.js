@@ -97,7 +97,8 @@ function construire() {
   $$('.sc').forEach(e => decoupe(e, 'c'));
   $$('.sm').forEach(e => decoupe(e, 'm'));
 
-  $('#arcade').innerHTML = Array.from({ length: 14 }, () => `<svg viewBox="0 0 18 22"><path class="base" d="${DENT}"/><path class="lum-d" d="${DENT}" opacity="0"/></svg>`).join('');
+  // progression de Prescri'Dent : 5 étapes numérotées reliées par une barre, comme dans l'appli
+  $('#prog ol').innerHTML = Array.from({ length: 5 }, (_, k) => `<li><span class="num">${k + 1}</span><span class="cours"></span><span class="fait"><svg viewBox="0 0 24 24"><path pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="m5 12.5 4.5 4.5L19 7"/></svg></span></li>`).join('');
   $('#parts').innerHTML = Array.from({ length: 14 }, () => '<div class="part"><b></b></div>').join('');
   $('#orbs').innerHTML = Array.from({ length: 8 }, () => '<div class="orb"></div>').join('');
   $('#orbes').innerHTML = ['#2BD0B0', '#4FD8F0', '#8F86FF'].map(c => `<div class="orbe" style="background:radial-gradient(circle,#fff 0%,${c} 45%,transparent 72%);box-shadow:0 0 60px 20px ${c}"></div>`).join('');
@@ -210,9 +211,24 @@ function construire() {
   lum(t4 - 0.3, '#0E9384', '#0A5E7A', 0.36, 0.3);
   montre('#s3', t4 + 0.05);
   entete('#s3', t4 + 0.12);
-  A('#arcade svg', { scale: [0.3, 1], opacity: [0, 1] }, { duration: 0.5, at: t4 + 0.5, stagger: 0.025, ease: REBOND });
-  const dents = $$('#arcade .lum-d'), dentsSvg = $$('#arcade svg');
-  const groupes = [[0, 5], [5, 10], [10, 14]];
+  cache('#prog .cours'); cache('#prog .fait'); A('#prog .rail i', { scaleX: [0, 0] }, { duration: 0.001, at: 0 });
+  A('#prog .rail', { scaleX: [0, 1] }, { duration: 0.7, at: t4 + 0.45, ease: EXPO });
+  A('#prog li', { scale: [0.3, 1], opacity: [0, 1] }, { duration: 0.5, at: t4 + 0.5, stagger: 0.07, ease: REBOND });
+  const lis = $$('#prog li'), cours = $$('#prog .cours'), pleins = $$('#prog .fait'), coches = $$('#prog .fait path');
+  A(cours[0], { opacity: [0, 1], scale: [0.7, 1] }, { duration: 0.3, at: t4 + 0.5, ease: REBOND });
+  // une étape cochée : la pastille se remplit, la coche se trace, la barre avance, l'étape suivante s'allume
+  const valider = (i, td) => {
+    A(cours[i], { opacity: [1, 0] }, { duration: 0.12, at: td });
+    A(pleins[i], { opacity: [0, 1] }, { duration: 0.12, at: td });
+    A(pleins[i], { scale: [0.5, 1.18, 1] }, { duration: 0.42, at: td, ease: 'easeOut' });
+    A(coches[i], { strokeDashoffset: [1, 0] }, { duration: 0.3, at: td + 0.08, ease: EXPO });
+    A(lis[i], { y: [0, -14, 0] }, { duration: 0.38, at: td, ease: 'easeOut' });
+    if (i < 4) {
+      A('#prog .rail i', { scaleX: [i / 4, (i + 1) / 4] }, { duration: 0.35, at: td + 0.05, ease: EXPO });
+      A(cours[i + 1], { opacity: [0, 1], scale: [0.7, 1] }, { duration: 0.3, at: td + 0.3, ease: REBOND });
+    }
+    cue(td, 'dent', i / 4);
+  };
   const cartes = ['#c1', '#c2', '#c3'];
   cartes.forEach((c, k) => {
     const te = k === 0 ? T(4) + 0.45 : T(4 + k) - 0.1;
@@ -225,13 +241,9 @@ function construire() {
     A(`${c} .ok`, { opacity: [0, 1], scale: [0.4, 1] }, { duration: 0.35, at: ta, ease: REBOND });
     A(`${c} .boite path`, { strokeDashoffset: [1, 0] }, { duration: 0.35, at: ta + 0.05, ease: EXPO });
     cue(ta, 'coche', 1);
-    const [a, b] = groupes[k];
-    for (let i = a; i < b; i++) {
-      const td = ta + 0.2 + (i - a) * 0.07;
-      A(dents[i], { opacity: [0, 1] }, { duration: 0.12, at: td });
-      A(dentsSvg[i], { y: [0, -12, 0] }, { duration: 0.35, at: td, ease: 'easeOut' });
-      cue(td, 'dent', i / 13);
-    }
+    // la carte « Question 3 » arrive : la question 2 est déjà passée ; idem pour la 4 avant la 5
+    if (k > 0) valider(2 * k - 1, te + 0.25);
+    valider(2 * k, ta + 0.2);
     // la carte sort avant que la suivante n'entre : jamais deux textes l'un sur l'autre
     const ts = T(5 + k) - 0.55;
     A(c, k < 2 ? { x: [0, -900], rotateY: [0, -30] } : { y: [0, -200] }, { duration: 0.38, at: ts, ease: ENTREE });
@@ -241,7 +253,7 @@ function construire() {
   /* ============ 3 bis. L'ORDONNANCE (mesures 7-9) ============ */
   const t7 = T(7);
   sortieEntete('#s3', t7 - 0.5);
-  efface('#arcade', t7 - 0.5, 0.35);
+  efface('#prog', t7 - 0.5, 0.35);
   montre('#couche-feuille', t7 - 0.3, 0.2);
   A('#feuille', { rotateX: [70, 4], y: [600, 0] }, { ...RES(0.14, 0.8), at: t7 - 0.3 });
   cue(t7 - 0.3, 'feuille', 1);
