@@ -11,7 +11,7 @@
  */
 // Modèles essayés dans l'ordre (le premier disponible pour ta clé est utilisé).
 // Google réserve les modèles 2.5 aux anciens projets : une clé récente reçoit une erreur 404.
-const MODELES = ['gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+const MODELES = ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-2.5-flash'];
 
 const CONSIGNES = `Tu es l'assistant clinique de Drill, une app pour étudiants en chirurgie dentaire en France. Tu réponds aux questions de cotation CCAM et de prescription.
 Règles :
@@ -51,41 +51,68 @@ const SCHEMA_LECTURE = {
   required: ['lisible', 'medicaments'],
 };
 
-async function gemini(env, corps) {
-  const liste = env.GEMINI_MODEL ? [env.GEMINI_MODEL, ...MODELES.filter(m => m !== env.GEMINI_MODEL)] : MODELES;
-  let derniere = { erreur: 0, detail: '' };
-  // Deux tours : si tous les modèles sont surchargés, on réessaie une fois après une courte pause.
-  for (let tour = 0; tour < 2; tour++) {
-    if (tour) await new Promise(r => setTimeout(r, 1500));
-    let surcharge = false;
-    for (const modele of liste) {
-      const c = JSON.parse(JSON.stringify(corps));
-      // Les modèles 2.5 réfléchissent sur le budget de sortie : on coupe la réflexion pour aller vite.
-      if (/^gemini-2\.5-flash/.test(modele)) c.generationConfig = { ...c.generationConfig, thinkingConfig: { thinkingBudget: 0 } };
-      let r;
-      try {
-        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-          body: JSON.stringify(c),
-        });
-      } catch (e) { derniere = { erreur: 503, detail: `${modele} : réseau` }; surcharge = true; continue; }
+/* Appel d'un modèle, avec délai maximal et réflexion réduite au minimum (c'est elle qui coûtait
+   des dizaines de secondes). Si un modèle refuse le réglage de réflexion, on le renvoie sans. */
+async function appel(env, modele, corps, delai, signalCommun) {
+  const essai = async (avecReflexion) => {
+    const c = JSON.parse(JSON.stringify(corps));
+    if (avecReflexion) {
+      const t = /^gemini-2\.5/.test(modele) ? { thinkingBudget: 0 } : { thinkingLevel: 'low' };
+      c.generationConfig = { ...c.generationConfig, thinkingConfig: t };
+    }
+    const ctrl = new AbortController();
+    const minuteur = setTimeout(() => ctrl.abort(), delai);
+    const stop = () => ctrl.abort();
+    signalCommun?.addEventListener('abort', stop);
+    const t0 = Date.now();
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
+        method: 'POST', signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+        body: JSON.stringify(c),
+      });
       if (r.ok) {
         const d = await r.json();
-        return { texte: d?.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('') || '', modele };
+        const texte = d?.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('') || '';
+        return { texte, modele, ms: Date.now() - t0 };
       }
       let detail = ''; try { detail = (await r.json())?.error?.message || ''; } catch {}
-      derniere = { erreur: r.status, detail: `${modele} : ${detail}`.slice(0, 300) };
-      // Surcharge ou panne passagère (429, 500, 503…) : on passe au modèle suivant.
-      if (r.status === 429 || r.status >= 500) { surcharge = true; continue; }
-      // Modèle inconnu ou non ouvert à cette clé : modèle suivant.
-      if (r.status === 404 || /model|not found|not supported|no longer/i.test(detail)) continue;
-      // Autre erreur (clé invalide, requête refusée) : inutile d'insister.
-      return derniere;
-    }
-    if (!surcharge) break;
-  }
-  return derniere;
+      return { erreur: r.status, detail: `${modele} : ${detail}`.slice(0, 300) };
+    } catch (e) {
+      return { erreur: ctrl.signal.aborted ? 504 : 503, detail: `${modele} : ${ctrl.signal.aborted ? 'trop lent' : 'réseau'}` };
+    } finally { clearTimeout(minuteur); signalCommun?.removeEventListener('abort', stop); }
+  };
+  let r = await essai(true);
+  if (r.erreur === 400 && /think/i.test(r.detail)) r = await essai(false);
+  return r;
+}
+
+/* Course entre modèles : le premier modèle part tout de suite ; s'il n'a pas répondu après
+   `relance` ms, le suivant part en parallèle ; la première réponse valable gagne et coupe les autres.
+   Un modèle indisponible (404, surcharge, délai dépassé) passe aussitôt la main au suivant. */
+async function gemini(env, corps, { delai = 14000, relance = 3500 } = {}) {
+  const liste = env.GEMINI_MODEL ? [env.GEMINI_MODEL, ...MODELES.filter(m => m !== env.GEMINI_MODEL)] : MODELES;
+  const commun = new AbortController();
+  let derniere = { erreur: 0, detail: '' };
+  return await new Promise(resolve => {
+    let i = 0, enCours = 0, fini = false, prochain = null;
+    const terminer = res => { if (fini) return; fini = true; clearTimeout(prochain); commun.abort(); resolve(res); };
+    const lancer = () => {
+      if (fini || i >= liste.length) { if (!enCours) terminer(derniere); return; }
+      const modele = liste[i++]; enCours++;
+      clearTimeout(prochain); prochain = setTimeout(lancer, relance);
+      appel(env, modele, corps, delai, commun.signal).then(r => {
+        enCours--;
+        if (fini) return;
+        if (!r.erreur) return terminer(r);
+        derniere = r;
+        // Clé invalide ou requête refusée : inutile d'essayer les autres modèles.
+        if ((r.erreur === 400 || r.erreur === 401 || r.erreur === 403) && !/model|not found|not supported|no longer/i.test(r.detail)) return terminer(r);
+        lancer();
+      });
+    };
+    lancer();
+  });
 }
 
 /* ---------- Fiches officielles (RCP de la base publique des médicaments) ---------- */
@@ -169,7 +196,7 @@ async function traiter(request, env) {
         systemInstruction: { parts: [{ text: CONSIGNES_LECTURE }] },
         contents: [{ role: 'user', parts: [{ inline_data: { mime_type: mime, data: image } }, { text: 'Liste les médicaments de cette ordonnance.' }] }],
         generationConfig: { temperature: 0, maxOutputTokens: 4096, responseMimeType: 'application/json', responseSchema: SCHEMA_LECTURE },
-      });
+      }, { delai: 30000, relance: 9000 });
       if (g.erreur) return json({ erreur: 'IA indisponible', statut: g.erreur, detail: g.detail }, 502, cors);
       let res; try { res = JSON.parse(g.texte); } catch { return json({ erreur: 'Lecture impossible' }, 502, cors); }
       const medicaments = (res.medicaments || []).slice(0, 30).map(m => ({ nom: String(m.nom || '').slice(0, 80), dosage: String(m.dosage || '').slice(0, 60), posologie: String(m.posologie || '').slice(0, 160) }));
@@ -190,10 +217,10 @@ async function traiter(request, env) {
     const g = await gemini(env, {
       systemInstruction: { parts: [{ text: ordo ? CONSIGNES_ORDO : CONSIGNES }] },
       contents,
-      generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
-    });
+      generationConfig: { temperature: 0.2, maxOutputTokens: ordo ? 1400 : 900 },
+    }, ordo ? { delai: 25000, relance: 6000 } : { delai: 13000, relance: 3500 });
     if (g.erreur) return json({ erreur: 'IA indisponible', statut: g.erreur, detail: g.detail }, 502, cors);
-    return json({ reponse: g.texte }, 200, cors);
+    return json({ reponse: g.texte, modele: g.modele, ms: g.ms }, 200, cors);
   }
 }
 
