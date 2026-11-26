@@ -197,7 +197,6 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .opt:active{transform:scale(.985)}
 #splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
   background:radial-gradient(70% 40% at 25% 30%,rgba(127,245,221,.28),transparent 70%),linear-gradient(180deg,#20BDA1 0%,#0E9384 45%,#0A3556 100%);transition:opacity .45s ease, visibility .45s}
-#splash::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(125deg,rgba(255,255,255,.05) 0 1px,transparent 1px 9px);pointer-events:none}
 #splash .logo-l{position:relative;width:112px;height:112px}
 #splash img{position:relative;width:112px;height:112px;border-radius:26px;box-shadow:0 18px 40px rgba(4,36,58,.45)}
 #splash .halo{position:absolute;inset:-6px;border-radius:32px;border:3px solid rgba(255,255,255,.75);opacity:0}
@@ -2220,21 +2219,21 @@ aller('accueil');
   if(!MOTION){ sp.classList.add('sans-motion'); return fondu(1100); }
   const A=MOTION.animate, img=sp.querySelector('img'), logoL=sp.querySelector('.logo-l');
   // le logo arrive en rebondissant, un halo s'en échappe, les lettres montent une à une
-  A(img, {opacity:[0,1]}, {duration:.2});
-  A(img, {scale:[.35,1], rotate:[-14,0]}, {type:'spring', bounce:.45, visualDuration:.55});
-  sp.querySelectorAll('.halo').forEach((h,k)=>A(h, {scale:[.8,1,1.9], opacity:[0,0,.7,0]}, {duration:1.1+k*.18, ease:'easeOut', scale:{duration:1.1+k*.18, times:[0,.2+k*.12,1], ease:[.16,1,.3,1]}, opacity:{duration:1.1+k*.18, times:[0,.18+k*.12,.3+k*.12,1]}}));
-  A(sp.querySelectorAll('.mot i'), {y:['110%','0%'], opacity:[0,1]}, {duration:.5, delay:MOTION.stagger(.05,{startDelay:.28}), ease:[.16,1,.3,1]});
+  A(img, {opacity:[0,1]}, {duration:.35});
+  A(img, {scale:[.35,1], rotate:[-14,0]}, {type:'spring', bounce:.4, visualDuration:.85});
+  sp.querySelectorAll('.halo').forEach((h,k)=>A(h, {scale:[.8,1,1.9], opacity:[0,0,.7,0]}, {duration:1.7+k*.25, ease:'easeOut', scale:{duration:1.7+k*.25, times:[0,.2+k*.12,1], ease:[.16,1,.3,1]}, opacity:{duration:1.7+k*.25, times:[0,.18+k*.12,.3+k*.12,1]}}));
+  A(sp.querySelectorAll('.mot i'), {y:['110%','0%'], opacity:[0,1]}, {duration:.75, delay:MOTION.stagger(.08,{startDelay:.45}), ease:[.16,1,.3,1]});
   // l'écran de lancement se referme sur le logo et dévoile l'accueil
   setTimeout(()=>{
     if(barre) barre.content='#F5F8F8';
-    A(logoL, {scale:[1,1.08,0]}, {duration:.5, ease:[.7,0,.84,0], times:[0,.35,1]});
-    A(sp.querySelector('.mot'), {opacity:[1,0], y:[0,10]}, {duration:.2, ease:'easeIn'});
-    A(sp, {clipPath:['circle(150% at 50% 46%)','circle(0% at 50% 46%)']}, {duration:.55, ease:[.7,0,.84,0]})
+    A(logoL, {scale:[1,1.08,0]}, {duration:.8, ease:[.65,0,.35,1], times:[0,.35,1]});
+    A(sp.querySelector('.mot'), {opacity:[1,0], y:[0,10]}, {duration:.3, ease:'easeIn'});
+    A(sp, {clipPath:['circle(150% at 50% 46%)','circle(0% at 50% 46%)']}, {duration:.85, ease:[.65,0,.35,1]})
       .finished.then(()=>sp.remove(), ()=>sp.remove());
     const elements=[...document.querySelectorAll('#app .vue > *:not(.outils), #app .outils > *')].slice(0,9);
-    A(elements, {opacity:[0,1], y:[22,0]}, {duration:.6, delay:MOTION.stagger(.06,{startDelay:.18}), ease:[.22,1,.36,1]});
-    A(document.querySelector('.onglets'), {y:[90,0]}, {duration:.6, delay:.35, ease:[.22,1,.36,1]});
-  }, 1000);
+    A(elements, {opacity:[0,1], y:[22,0]}, {duration:.8, delay:MOTION.stagger(.08,{startDelay:.4}), ease:[.22,1,.36,1]});
+    A(document.querySelector('.onglets'), {y:[90,0]}, {duration:.8, delay:.55, ease:[.22,1,.36,1]});
+  }, 1500);
 })();
 </script>
 </body>
