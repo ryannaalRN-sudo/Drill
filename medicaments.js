@@ -424,8 +424,10 @@ S.verifierAjout = function(texte, rep, lignes){
   const A = []; const ajoute = (niv, txt, src) => { if(!A.some(a=>a.txt===txt)) A.push({niv, txt, src}); };
   // Ce que le patient prend (questionnaire)
   const tagsPatient = new Map();
-  (rep.ttt||[]).forEach(v=>(TAGS_TTT[v]||[]).forEach(t=>tagsPatient.set(t,'son traitement ('+({aap:'antiplaquettaire',aap2:'bithérapie antiplaquettaire',avk:'AVK',aod:'AOD',heparine:'héparine',sulfamide:'sulfamide hypoglycémiant',mtx:'méthotrexate'}[v])+')')));
-  if((rep.atcd||[]).includes('qt')) tagsPatient.set('qt','un médicament allongeant le QT');
+  const Dp = (window.RECO && window.RECO.deriver) ? window.RECO.deriver(rep) : null;
+  if(Dp) Dp.tags.forEach((noms,t)=>tagsPatient.set(t,'son traitement ('+[...noms].join(', ')+')'));
+  else (rep.ttt||[]).forEach(v=>(TAGS_TTT[v]||[]).forEach(t=>tagsPatient.set(t,'son traitement ('+({aap:'antiplaquettaire',aap2:'bithérapie antiplaquettaire',avk:'AVK',aod:'AOD',heparine:'héparine',sulfamide:'sulfamide hypoglycémiant',mtx:'méthotrexate'}[v])+')')));
+  if((Dp ? Dp.F : new Set(rep.atcd||[])).has('qt') && !tagsPatient.has('qt')) tagsPatient.set('qt','un QT long');
   // Ce qui est déjà sur l'ordonnance
   const lignesInfo = (lignes||[]).map(l=>{ const r=S.identifier(l.med); const t=new Set(); r.meds.forEach(m=>m.tags.forEach(x=>t.add(x))); return {nom:l.med.replace(/\s*\(.*?\)/g,''), ids:S.idsDentaires(l.med, r.meds), tags:t}; });
   lignesInfo.forEach(li=>li.tags.forEach(t=>{ if(!tagsPatient.has(t)) tagsPatient.set(t, li.nom+' (déjà sur l’ordonnance)'); }));
@@ -438,7 +440,7 @@ S.verifierAjout = function(texte, rep, lignes){
   }
   lignesInfo.forEach(li=>{ if([...ids].some(d=>li.ids.has(d)) && !A.some(a=>a.txt.includes(li.nom+' (déjà'))) ajoute('ASDEC','Même molécule ou même classe que '+li.nom+', déjà sur l’ordonnance : ne pas cumuler.',''); });
   // Profil du patient
-  const al = new Set(rep.allergies||[]), at = new Set(rep.atcd||[]), p = rep.profil, age = Number(rep.age);
+  const al = new Set(rep.allergies||[]), at = Dp ? Dp.F : new Set(rep.atcd||[]), p = rep.profil, age = Number(rep.age);
   const ains = tags.has('ains') || ids.has('ibu');
   if(al.has('peni') && (ids.has('amox')||ids.has('augm'))) ajoute('CI','Allergie aux pénicillines.','');
   if(al.has('peni') && ids.has('cefpo')) ajoute('PE','Allergie aux pénicillines : allergie croisée possible avec les céphalosporines.','RCP');
@@ -503,7 +505,7 @@ S.posologies = function(texte, rep){
   const t = N(texte);
   if(rep.profil==='enfant') return [];
   const hit = POSO.find(([rx])=>rx.test(t)); if(!hit) return [];
-  const at = new Set(rep.atcd||[]);
+  const at = (window.RECO && window.RECO.deriver) ? window.RECO.deriver(rep).F : new Set(rep.atcd||[]);
   return hit[1].map(p=>{
     let pos = p.pos;
     if(/^Paracétamol 1 g/.test(p.titre) && (at.has('ih')||at.has('ih_severe'))) pos='1 comprimé par prise si douleur, au moins 8 h entre deux prises, sans dépasser 2 comprimés par jour, pendant 5 jours';
@@ -753,5 +755,6 @@ S.resumer = function(meds, R, inconnus, specs){
 };
 
 S.LISTE = LISTE;
+S.INTERACTIONS = I;
 window.MEDS = S;
 })();

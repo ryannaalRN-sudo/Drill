@@ -148,85 +148,466 @@ R.ALLERGIES = [
   {v:'aucune', t:'Aucune allergie connue', d:''},
 ];
 
+/* ---------- Antécédents et traitements ----------
+   Chaque option peut porter :
+   - eq   : les codes qu'elle active dans le moteur de décision (séparés par des espaces) ;
+   - tags : les étiquettes d'interaction du thésaurus ANSM (voir medicaments.js) ;
+   - mots : des mots de recherche supplémentaires ;
+   - sous : des précisions qui s'ouvrent juste en dessous quand l'option est cochée.
+   Une précision est un bloc {k, titre, type:'un'|'multi', requis, mol, options}.
+   La réponse est rangée dans rep[k]. Une précision « requis » doit être remplie pour continuer. */
+const o = (v, t, d='', x) => Object.assign({v, t, d}, x||{});
+const EQUILIBRE = (k, codes, d=['','','']) => ({k, titre:'Équilibre', type:'un', requis:true, options:[
+  o('eq','Équilibré', d[0], {eq:codes[0]}), o('non_eq','Non équilibré', d[1], {eq:codes[1]}), o('nsp','Ne sait pas', d[2], {eq:codes[2]})]});
+const EQ_DIAB = k => EQUILIBRE(k, ['diabete_eq','diabete','diabete_nsp'], ['HbA1c < 9 %','HbA1c ≥ 9 %','Pas d’HbA1c récente']);
+const MOLECULES = (k, liste, titre='Molécule (facultatif)') => ({k, titre, type:'multi', mol:true,
+  options: liste.map(([v,t,d,tags,eq]) => o(v, t, d||'', {tags:tags||'', eq:eq||''}))});
+
 R.ATCD = [
-  {groupe:'Endocardite (HAS 2024)', items:[
-    {v:'ei_haut', t:'Haut risque d’endocardite infectieuse', d:'Antécédent d’endocardite, prothèse valvulaire ou matériel de réparation valvulaire (dont TAVI, clip), cardiopathie congénitale cyanogène complexe, cardiopathie congénitale réparée avec matériel (6 mois, ou à vie si shunt résiduel), assistance ventriculaire'},
-    {v:'ei_inter', t:'Risque intermédiaire d’endocardite', d:'Valvulopathie native, cardiomyopathie hypertrophique obstructive, autre cardiopathie congénitale, stimulateur ou défibrillateur avec sonde'},
+  {groupe:'Cœur et vaisseaux', items:[
+    o('valve_prot','Prothèse valvulaire ou réparation valvulaire','Valve mécanique ou biologique, TAVI, anneau, clip mitral · haut risque d’endocardite',{eq:'ei_haut', mots:'valve mecanique biologique plastie mitraclip remplacement valvulaire'}),
+    o('ei_atcd','Antécédent d’endocardite infectieuse','Haut risque d’endocardite',{eq:'ei_haut'}),
+    o('cardio_cong','Cardiopathie congénitale','Opérée ou non',{mots:'malformation cardiaque', sous:[{k:'p_cong', titre:'Type', type:'un', requis:true, options:[
+      o('cyano','Cyanogène, non opérée ou avec shunt palliatif','Haut risque d’endocardite',{eq:'ei_haut'}),
+      o('mat6','Réparée avec du matériel il y a moins de 6 mois','Chirurgie ou voie percutanée · haut risque',{eq:'ei_haut'}),
+      o('residuel','Réparée, avec shunt résiduel ou fuite valvulaire','Haut risque, à vie',{eq:'ei_haut'}),
+      o('autre','Autre cardiopathie congénitale','Dont réparée sans résidu depuis plus de 6 mois · risque intermédiaire',{eq:'ei_inter'}),
+      o('nsp','Ne sait pas','À demander au cardiologue',{eq:'cong_nsp'}),
+    ]}]}),
+    o('assist_vent','Assistance ventriculaire','Haut risque d’endocardite',{eq:'ei_haut'}),
+    o('valvulo','Valvulopathie native','Rétrécissement ou fuite valvulaire, bicuspidie aortique, prolapsus mitral, rhumatisme articulaire aigu · risque intermédiaire',{eq:'ei_inter', mots:'souffle insuffisance mitrale aortique retrecissement'}),
+    o('cmh','Cardiomyopathie hypertrophique obstructive','Risque intermédiaire d’endocardite',{eq:'ei_inter'}),
+    o('pacemaker','Stimulateur cardiaque ou défibrillateur implantable','Pacemaker, défibrillateur avec sonde · risque intermédiaire',{eq:'ei_inter', mots:'pace maker pile'}),
+    o('hypertension','Hypertension artérielle','',{mots:'hta tension', sous:[EQUILIBRE('eq_hta',['hta_eq','hta','hta'])]}),
+    o('coronarien','Maladie coronarienne','Angor, infarctus, stent, pontage',{mots:'angine de poitrine coronaropathie infarctus stent pontage', sous:[{k:'p_coro', titre:'Précisions (facultatif)', type:'multi', options:[
+      o('stent_recent','Stent coronaire posé il y a moins de 12 mois','Bithérapie antiplaquettaire probable'),
+      o('stent_ancien','Stent coronaire posé il y a plus de 12 mois'),
+      o('pontage','Pontage coronarien'),
+      o('idm_recent','Infarctus récent ou angor instable','Douleurs au repos ou qui s’aggravent'),
+    ]}]}),
+    o('rythme','Trouble du rythme ou de la conduction','Fibrillation atriale, flutter, bloc auriculo-ventriculaire…',{mots:'arythmie'}),
+    o('insuf_card','Insuffisance cardiaque',''),
+    o('arteres','Artériopathie ou anévrisme','Artériopathie des membres inférieurs, anévrisme de l’aorte',{mots:'aomi', sous:[{k:'p_art', titre:'Chirurgie (facultatif)', type:'multi', options:[
+      o('prothese_vasc','Pontage ou prothèse vasculaire'), o('endoprothese','Endoprothèse aortique')]}]}),
+    o('thrombose','Phlébite ou embolie pulmonaire','Thrombose veineuse profonde',{mots:'tvp'}),
+    o('qt','QT long','Congénital, ou médicament qui allonge le QT'),
   ]},
-  {groupe:'Troubles de l’hémostase', items:[
-    {v:'hemophilie', t:'Hémophilie A ou B', d:'Déficit en facteur VIII ou IX, quelle que soit la sévérité'},
-    {v:'willebrand', t:'Maladie de Willebrand', d:''},
-    {v:'deficit_facteur', t:'Autre déficit en facteur de la coagulation', d:'Facteurs II, V, VII, X, XI, fibrinogène…'},
-    {v:'thrombopenie', t:'Thrombopénie ou thrombopathie', d:'Plaquettes basses (PTI, hémopathie, chimiothérapie, cirrhose…) ou anomalie de fonction plaquettaire'},
+  {groupe:'Diabète et hormones', items:[
+    o('dt1','Diabète de type 1','',{mots:'diabete insulinodependant', sous:[EQ_DIAB('eq_dt1')]}),
+    o('dt2','Diabète de type 2','',{mots:'diabete', sous:[EQ_DIAB('eq_dt2')]}),
+    o('diab_autre','Autre diabète','Gestationnel, cortico-induit, pancréatique, MODY',{mots:'diabete', sous:[EQ_DIAB('eq_diab_autre')]}),
+    o('hypothyro','Hypothyroïdie','Hashimoto, thyroïde retirée…',{mots:'thyroide', sous:[EQUILIBRE('eq_hypothyro',['','hypothyro_ne','hypothyro_ne'])]}),
+    o('hyperthyro','Hyperthyroïdie','Maladie de Basedow, nodule toxique',{mots:'thyroide', sous:[EQUILIBRE('eq_hyperthyro',['','hyperthyro_ne','hyperthyro_ne'])]}),
+    o('surrenal','Insuffisance surrénalienne','Maladie d’Addison, corticothérapie prolongée',{mots:'addison'}),
+    o('obesite','Obésité','',{sous:[{k:'p_bari', titre:'Chirurgie bariatrique (facultatif)', type:'un', options:[
+      o('bypass','Bypass gastrique'), o('sleeve','Sleeve gastrectomie'), o('anneau','Anneau gastrique')]}]}),
   ]},
-  {groupe:'Risque infectieux augmenté (HAS 2026)', items:[
-    {v:'chimio', t:'Chimiothérapie aplasiante en cours', d:''},
-    {v:'neutropenie', t:'Neutropénie < 500/mm³', d:''},
-    {v:'immunosup', t:'Immunosuppresseur, immunomodulateur ou biothérapie', d:'Risque à évaluer au cas par cas, au besoin avec le prescripteur'},
-    {v:'cortico', t:'Corticoïdes ≥ 10 mg/j d’équivalent prednisolone depuis plus de 2 semaines', d:''},
-    {v:'greffe', t:'Traitement anti-rejet (greffe d’organe, allogreffe de moelle)', d:''},
-    {v:'vih', t:'VIH avec CD4 < 200/mm³', d:''},
-    {v:'deficit', t:'Déficit immunitaire congénital ou du complément', d:''},
-    {v:'asplenie', t:'Asplénie depuis moins de 5 ans', d:''},
-    {v:'diabete', t:'Diabète avec HbA1c ≥ 9 %', d:'HbA1c de moins de 3 mois'},
-    {v:'ir_severe', t:'Insuffisance rénale sévère (DFG < 30) ou dialyse', d:''},
-    {v:'ih_severe', t:'Insuffisance hépatocellulaire sévère (TP ≤ 50 %)', d:''},
-    {v:'drepano', t:'Syndrome drépanocytaire majeur', d:'Risque à évaluer avec le praticien référent'},
+  {groupe:'Maladies inflammatoires et auto-immunes', items:[
+    o('mici','Maladie inflammatoire chronique de l’intestin (MICI)','',{mots:'crohn rectocolite rch', sous:[{k:'p_mici', titre:'Type (facultatif)', type:'un', options:[
+      o('crohn','Maladie de Crohn'), o('rch','Rectocolite hémorragique'), o('indet','Colite indéterminée')]}]}),
+    o('pr','Polyarthrite rhumatoïde','',{mots:'rhumatisme inflammatoire'}),
+    o('spa','Spondyloarthrite','Spondylarthrite ankylosante, rhumatisme psoriasique',{mots:'spondylarthrite pelvispondylite'}),
+    o('lupus','Lupus érythémateux systémique',''),
+    o('sjogren','Syndrome de Gougerot-Sjögren','Sécheresse buccale et oculaire',{mots:'sjogren secheresse'}),
+    o('sclerodermie','Sclérodermie systémique',''),
+    o('psoriasis','Psoriasis',''),
+    o('behcet','Maladie de Behçet','Aphtose buccale et génitale',{mots:'behcet'}),
+    o('vascularite','Vascularite','Maladie de Horton, granulomatose avec polyangéite…',{mots:'horton wegener'}),
+    o('bulleuse','Pemphigus ou pemphigoïde','Maladie bulleuse auto-immune'),
+    o('lichen','Lichen plan buccal',''),
+    o('celiaque','Maladie cœliaque','',{mots:'gluten'}),
   ]},
-  {groupe:'Haut risque d’ostéonécrose des mâchoires (HAS 2026)', items:[
-    {v:'radio40', t:'Radiothérapie cervico-faciale ≥ 40 Gy sur les mâchoires', d:''},
-    {v:'denosumab', t:'Dénosumab (Prolia, Xgeva) : dernière injection < 6 mois', d:''},
-    {v:'bp_malin', t:'Bisphosphonates pour une pathologie maligne', d:'Traitement en cours ou passé'},
-    {v:'antiangio', t:'Anti-angiogéniques pour une pathologie maligne', d:''},
-    {v:'bp_benin5', t:'Bisphosphonates pour ostéoporose ou Paget, 5 ans cumulés ou plus', d:''},
+  {groupe:'Sang et hémostase', items:[
+    o('hemophilie','Hémophilie A ou B','Déficit en facteur VIII ou IX, quelle que soit la sévérité'),
+    o('willebrand','Maladie de Willebrand',''),
+    o('deficit_facteur','Autre déficit en facteur de la coagulation','Facteurs II, V, VII, X, XI, fibrinogène…'),
+    o('thrombopenie','Thrombopénie ou thrombopathie','Plaquettes basses (PTI, hémopathie, chimiothérapie, cirrhose…) ou anomalie de fonction plaquettaire'),
+    o('anemie','Anémie','Carence en fer, en vitamine B12 ou en folates'),
+    o('drepano','Drépanocytose','Syndrome drépanocytaire majeur'),
+    o('neutropenie','Neutropénie < 500/mm³',''),
   ]},
-  {groupe:'Comparable à la population générale (HAS 2026)', items:[
-    {v:'bp_benin', t:'Bisphosphonates pour pathologie bénigne, moins de 5 ans', d:''},
-    {v:'denosumab_ancien', t:'Dénosumab : dernière injection > 6 mois', d:''},
-    {v:'radio_moins40', t:'Radiothérapie cervico-faciale < 40 Gy', d:''},
-    {v:'remission', t:'Pathologie maligne en rémission', d:''},
-    {v:'prothese_art', t:'Prothèse articulaire', d:''},
-    {v:'diabete_eq', t:'Diabète avec HbA1c < 9 %', d:''},
+  {groupe:'Immunité et infections', items:[
+    o('greffe','Greffe d’organe ou de moelle','Traitement anti-rejet',{mots:'transplantation', sous:[{k:'p_greffe', titre:'Organe (facultatif)', type:'multi', options:[
+      o('rein','Rein'), o('foie','Foie'), o('coeur','Cœur'), o('poumon','Poumon'), o('moelle','Moelle osseuse (allogreffe)')]}]}),
+    o('vih_p','Infection par le VIH','',{mots:'vih sida', sous:[{k:'p_vih', titre:'Derniers CD4', type:'un', requis:true, options:[
+      o('ok','200/mm³ ou plus'), o('bas','Moins de 200/mm³','',{eq:'vih'}), o('nsp','Ne sait pas','',{eq:'vih_nsp'})]}]}),
+    o('splenectomie','Asplénie ou rate retirée','Splénectomie, asplénie fonctionnelle',{mots:'rate asplenie', sous:[{k:'p_asplenie', titre:'Depuis', type:'un', requis:true, options:[
+      o('recent','Moins de 5 ans','',{eq:'asplenie'}), o('ancien','5 ans ou plus'), o('nsp','Ne sait pas','',{eq:'asplenie_nsp'})]}]}),
+    o('deficit','Déficit immunitaire congénital ou du complément',''),
+    o('hepatite','Hépatite virale B ou C','',{mots:'vhb vhc'}),
+    o('tuberculose','Tuberculose','',{sous:[{k:'p_tuberc', titre:'Situation', type:'un', requis:true, options:[
+      o('active','Active ou en cours de traitement'), o('ancienne','Ancienne, traitée')]}]}),
   ]},
-  {groupe:'Cœur et anesthésie locale', items:[
-    {v:'hta', t:'Hypertension artérielle sévère ou mal équilibrée', d:''},
-    {v:'coronarien', t:'Angor, infarctus ou insuffisance coronarienne', d:''},
-    {v:'rythme', t:'Trouble du rythme ou de la conduction cardiaque', d:'Fibrillation atriale, bloc auriculo-ventriculaire…'},
-    {v:'porphyrie', t:'Porphyrie aiguë intermittente', d:'Contre-indique l’articaïne'},
+  {groupe:'Cancer', items:[
+    o('cancer','Cancer ou hémopathie maligne','Tumeur, leucémie, lymphome, myélome',{mots:'tumeur', sous:[
+      {k:'p_k_etat', titre:'Situation', type:'un', requis:true, options:[
+        o('en_cours','En cours de traitement','Chirurgie, chimiothérapie, radiothérapie, hormonothérapie…',{eq:'malin'}),
+        o('remission','En rémission','',{eq:'remission'})]},
+      {k:'p_k_type', titre:'Localisation (facultatif)', type:'multi', options:[
+        o('vads','Bouche, gorge ou larynx (VADS)'), o('sein','Sein'), o('prostate','Prostate'), o('poumon','Poumon'), o('digestif','Côlon, rectum ou autre digestif'),
+        o('rein_vessie','Rein ou vessie'), o('myelome','Myélome'), o('leucemie','Leucémie'), o('lymphome','Lymphome'), o('autre','Autre')]},
+    ]}),
+    o('onm_atcd','Antécédent d’ostéonécrose des mâchoires','Médicamenteuse ou ostéoradionécrose',{mots:'osteoradionecrose'}),
   ]},
-  {groupe:'Neurologie, yeux, voies urinaires', items:[
-    {v:'epilepsie', t:'Épilepsie', d:''},
-    {v:'glaucome', t:'Glaucome à angle fermé', d:''},
-    {v:'prostate', t:'Troubles urétro-prostatiques', d:'Risque de rétention urinaire'},
+  {groupe:'Reins, foie, digestif', items:[
+    o('ir','Insuffisance rénale chronique','',{mots:'renale dfg dialyse rein', sous:[{k:'p_ir', titre:'Stade', type:'un', requis:true, options:[
+      o('moderee','Modérée','DFG 30 à 59 mL/min',{eq:'ir_moderee'}), o('severe','Sévère','DFG < 30 mL/min',{eq:'ir_severe'}),
+      o('dialyse','Dialyse','',{eq:'ir_severe dialyse'}), o('nsp','Ne sait pas','',{eq:'ir_moderee'})]}]}),
+    o('hepatique','Insuffisance hépatique ou cirrhose','',{mots:'foie', sous:[{k:'p_ih', titre:'Gravité', type:'un', requis:true, options:[
+      o('moderee','Modérée','',{eq:'ih'}), o('severe','Sévère','TP ≤ 50 %',{eq:'ih_severe'}), o('nsp','Ne sait pas','',{eq:'ih'})]}]}),
+    o('alcool','Alcoolisme chronique','',{eq:'ih', tags:'alcool'}),
+    o('ulcere','Ulcère gastro-duodénal ou hémorragie digestive',''),
+    o('rgo','Reflux gastro-œsophagien','',{mots:'rgo'}),
+  ]},
+  {groupe:'Poumons', items:[
+    o('asthme','Asthme','',{sous:[{k:'p_asthme', titre:'Aspirine et AINS (facultatif)', type:'un', options:[
+      o('declenche','Crise déclenchée par l’aspirine ou un AINS','',{eq:'asthme_ains'}), o('tolere','AINS déjà pris sans problème','',{eq:'asthme_tolere'}), o('nsp','Ne sait pas')]}]}),
+    o('bpco','BPCO ou insuffisance respiratoire','Bronchite chronique, emphysème'),
+    o('saos','Apnée du sommeil','',{mots:'saos'}),
+  ]},
+  {groupe:'Neurologie et psychiatrie', items:[
+    o('epilepsie','Épilepsie','',{sous:[EQUILIBRE('eq_epi',['','epi_ne','epi_ne'],['Pas de crise sous traitement','Crises récentes',''])]}),
+    o('avc','AVC ou AIT','Accident vasculaire cérébral, accident ischémique transitoire'),
+    o('parkinson','Maladie de Parkinson',''),
+    o('sep','Sclérose en plaques',''),
+    o('demence','Maladie d’Alzheimer ou troubles cognitifs','',{mots:'alzheimer'}),
+    o('psy','Trouble psychiatrique','Dépression, anxiété, trouble bipolaire, schizophrénie…',{sous:[{k:'p_psy', titre:'Type (facultatif)', type:'multi', options:[
+      o('depression','Dépression'), o('anxiete','Trouble anxieux, phobie des soins'), o('bipolaire','Trouble bipolaire'), o('psychose','Schizophrénie ou trouble psychotique'),
+      o('tca','Anorexie ou boulimie'), o('addiction','Addiction','Opiacés, cannabis, cocaïne…')]}]}),
+    o('handicap','Handicap ou trouble du neurodéveloppement','Autisme, trisomie 21, paralysie cérébrale…'),
+  ]},
+  {groupe:'Os et articulations', items:[
+    o('osteoporose','Ostéoporose','Son traitement se coche à la question suivante'),
+    o('paget','Maladie de Paget osseuse',''),
+    o('prothese_art','Prothèse articulaire','Hanche, genou, épaule'),
   ]},
   {groupe:'Autres', items:[
-    {v:'malin', t:'Pathologie maligne en cours de traitement', d:'Contre-indique certains actes'},
-    {v:'ir_moderee', t:'Insuffisance rénale modérée', d:''},
-    {v:'ih', t:'Insuffisance hépatique ou alcoolisme chronique', d:''},
-    {v:'ulcere', t:'Ulcère ou antécédent d’hémorragie digestive', d:''},
-    {v:'asthme', t:'Asthme', d:''},
-    {v:'insuf_card', t:'Insuffisance cardiaque', d:''},
-    {v:'qt', t:'QT long ou médicament allongeant le QT', d:''},
-    {v:'aucun', t:'Aucun antécédent notable', d:''},
+    o('tabac','Tabagisme',''),
+    o('glaucome','Glaucome à angle fermé',''),
+    o('prostate','Troubles urétro-prostatiques','Risque de rétention urinaire'),
+    o('porphyrie','Porphyrie aiguë intermittente','Contre-indique l’articaïne'),
+    o('aucun','Aucun antécédent notable',''),
   ]},
 ];
 R.RIA = ['chimio','neutropenie','immunosup','cortico','greffe','vih','deficit','asplenie','diabete','ir_severe','ih_severe','drepano'];
-R.HRON = ['radio40','denosumab','bp_malin','antiangio','bp_benin5'];
+R.HRON = ['radio40','denosumab','bp_malin','antiangio','bp_benin5','deno_malin','bp_nsp','onm_atcd'];
+/* Réponses « ne sait pas » qui feraient basculer le patient dans le risque infectieux augmenté */
+R.A_VERIFIER = {
+  diabete_nsp:'l’HbA1c est de 9 % ou plus',
+  cortico_nsp:'la corticothérapie atteint 10 mg/j d’équivalent prednisolone depuis plus de 2 semaines',
+  chimio_nsp:'la chimiothérapie est aplasiante',
+  vih_nsp:'les CD4 sont sous 200/mm³',
+  asplenie_nsp:'l’asplénie date de moins de 5 ans',
+};
 
 R.TTT = [
-  {v:'aap', t:'Un antiplaquettaire', d:'Kardégic, aspirine, Plavix (clopidogrel), Brilique, Efient'},
-  {v:'aap2', t:'Deux antiplaquettaires (bithérapie)', d:'Par exemple aspirine + clopidogrel'},
-  {v:'avk', t:'Antivitamine K', d:'Coumadine (warfarine), Préviscan (fluindione), Sintrom'},
-  {v:'aod', t:'Anticoagulant oral direct', d:'Eliquis (apixaban), Xarelto (rivaroxaban), Pradaxa, Lixiana'},
-  {v:'heparine', t:'Héparine', d:'Lovenox, Innohep, Fragmine, héparine non fractionnée'},
-  {v:'sulfamide', t:'Sulfamide hypoglycémiant', d:'Gliclazide, glimépiride…'},
-  {v:'mtx', t:'Méthotrexate', d:''},
-  {v:'aucun', t:'Aucun de ces traitements', d:''},
+  {groupe:'Antithrombotiques', items:[
+    o('antiplaq','Antiplaquettaires','Kardégic, Plavix, Brilique, Efient…',{tags:'aap', mots:'antiagregant aspirine', sous:[
+      {k:'p_aap', titre:'Combien ?', type:'un', requis:true, options:[o('mono','Un seul antiplaquettaire','',{eq:'aap'}), o('bi','Deux (bithérapie)','',{eq:'aap2'})]},
+      MOLECULES('m_aap',[
+        ['aspirine','Aspirine','Kardégic, Résitune','aap aspirine'],
+        ['clopidogrel','Clopidogrel','Plavix','aap'],
+        ['duoplavin','Clopidogrel + aspirine','Duoplavin','aap aap_double aspirine'],
+        ['prasugrel','Prasugrel','Efient','aap'],
+        ['ticagrelor','Ticagrélor','Brilique','aap ticagrelor'],
+        ['asasantine','Dipyridamole + aspirine','Asasantine','aap aspirine']])]}),
+    o('avk','Antivitamines K (AVK)','Coumadine, Préviscan, Sintrom',{tags:'avk anticoag', mots:'anticoagulant', sous:[MOLECULES('m_avk',[
+      ['warfarine','Warfarine','Coumadine','avk anticoag'],['fluindione','Fluindione','Préviscan','avk anticoag'],['acenocoumarol','Acénocoumarol','Sintrom, Minisintrom','avk anticoag']])]}),
+    o('aod','Anticoagulants oraux directs (AOD)','Eliquis, Xarelto, Pradaxa, Lixiana',{tags:'aod anticoag', mots:'anticoagulant naco', sous:[MOLECULES('m_aod',[
+      ['apixaban','Apixaban','Eliquis','aod anticoag'],['rivaroxaban','Rivaroxaban','Xarelto','aod anticoag'],['dabigatran','Dabigatran','Pradaxa','aod anticoag'],['edoxaban','Édoxaban','Lixiana','aod anticoag']])]}),
+    o('heparine','Héparines et anticoagulants injectables','Lovenox, Innohep, Arixtra…',{tags:'heparine', mots:'anticoagulant hbpm', sous:[MOLECULES('m_hep',[
+      ['enoxaparine','Énoxaparine','Lovenox','heparine'],['tinzaparine','Tinzaparine','Innohep','heparine'],['dalteparine','Daltéparine','Fragmine','heparine'],
+      ['nadroparine','Nadroparine','Fraxiparine','heparine'],['fondaparinux','Fondaparinux','Arixtra','heparine'],['hnf','Héparine non fractionnée','Calciparine, héparine sodique','heparine']])]}),
+  ]},
+  {groupe:'Cœur et tension', items:[
+    o('iec','IEC','Ramipril, périndopril, énalapril…',{tags:'iec antihta', mots:'inhibiteur enzyme conversion tension hypertension', sous:[MOLECULES('m_iec',[
+      ['ramipril','Ramipril','Triatec','iec antihta'],['perindopril','Périndopril','Coversyl','iec antihta'],['enalapril','Énalapril','Rénitec','iec antihta'],['lisinopril','Lisinopril','Zestril','iec antihta'],
+      ['captopril','Captopril','Lopril','iec antihta'],['trandolapril','Trandolapril','Odrik','iec antihta'],['benazepril','Bénazépril','Cibacène','iec antihta']])]}),
+    o('ara2','Sartans (ARA II)','Losartan, valsartan, irbésartan…',{tags:'ara2 antihta', mots:'antagoniste angiotensine tension hypertension', sous:[MOLECULES('m_ara2',[
+      ['losartan','Losartan','Cozaar','ara2 antihta'],['valsartan','Valsartan','Tareg, Nisis','ara2 antihta'],['irbesartan','Irbésartan','Aprovel','ara2 antihta'],['candesartan','Candésartan','Atacand, Kenzen','ara2 antihta'],
+      ['olmesartan','Olmésartan','Alteis, Olmetec','ara2 antihta'],['telmisartan','Telmisartan','Micardis','ara2 antihta'],['entresto','Sacubitril + valsartan','Entresto','ara2 ic']])]}),
+    o('diuretique','Diurétiques','Furosémide, indapamide, spironolactone…',{tags:'diuretique antihta', mots:'tension hypertension', sous:[MOLECULES('m_diur',[
+      ['furosemide','Furosémide','Lasilix','diuretique antihta'],['bumetanide','Bumétanide','Burinex','diuretique antihta'],['hydrochlorothiazide','Hydrochlorothiazide','Esidrex, associations','diuretique antihta'],
+      ['indapamide','Indapamide','Fludex','diuretique antihta'],['spironolactone','Spironolactone','Aldactone','diuretique antihta'],['eplerenone','Éplérénone','Inspra','diuretique eplerenone ic']])]}),
+    o('betabloquant','Bêtabloquants','Bisoprolol, aténolol, propranolol…',{tags:'betabloquant antihta', mots:'tension hypertension', sous:[MOLECULES('m_bb',[
+      ['bisoprolol','Bisoprolol','Cardensiel, Détensiel','betabloquant antihta'],['nebivolol','Nébivolol','Temerit','betabloquant antihta'],['atenolol','Aténolol','Ténormine','betabloquant antihta'],
+      ['metoprolol','Métoprolol','Lopressor, Seloken','betabloquant antihta'],['acebutolol','Acébutolol','Sectral','betabloquant antihta'],['propranolol','Propranolol','Avlocardyl','betabloquant antihta bb_ns'],
+      ['carvedilol','Carvédilol','Kredex','betabloquant antihta bb_ns'],['nadolol','Nadolol','Corgard','betabloquant antihta bb_ns'],['sotalol','Sotalol','Sotalex','betabloquant antiarythmique qt bb_ns']])]}),
+    o('ica','Inhibiteurs calciques','Amlodipine, diltiazem, vérapamil…',{tags:'ica antihta hyperplasie', mots:'tension hypertension', sous:[MOLECULES('m_ica',[
+      ['amlodipine','Amlodipine','Amlor','ica antihta hyperplasie'],['nifedipine','Nifédipine','Adalate','ica antihta hyperplasie'],['felodipine','Félodipine','Flodil','ica antihta hyperplasie'],
+      ['nicardipine','Nicardipine','Loxen','ica antihta hyperplasie'],['lercanidipine','Lercanidipine','Zanidip','lercanidipine antihta hyperplasie'],['diltiazem','Diltiazem','Tildiem','ica antihta hyperplasie'],
+      ['verapamil','Vérapamil','Isoptine','verapamil antihta hyperplasie']])]}),
+    o('antihta_c','Autres antihypertenseurs','Clonidine, rilménidine, urapidil…',{tags:'antihta', mots:'tension hypertension', sous:[MOLECULES('m_ahc',[
+      ['clonidine','Clonidine','Catapressan','antihta xerostomie'],['rilmenidine','Rilménidine','Hyperium','antihta'],['moxonidine','Moxonidine','Physiotens','antihta'],['urapidil','Urapidil','Eupressyl','antihta'],['methyldopa','Méthyldopa','Aldomet','antihta']])]}),
+    o('antiarythmique','Antiarythmiques et digoxine','Amiodarone, flécaïnide, digoxine…',{tags:'antiarythmique', sous:[MOLECULES('m_aa',[
+      ['amiodarone','Amiodarone','Cordarone','antiarythmique qt amiodarone'],['dronedarone','Dronédarone','Multaq','antiarythmique dronedarone'],['flecainide','Flécaïnide','Flécaïne','antiarythmique'],
+      ['propafenone','Propafénone','Rythmol','antiarythmique'],['hydroquinidine','Hydroquinidine','Sérécor','antiarythmique qt'],['digoxine','Digoxine','Hémigoxine','digoxine']])]}),
+    o('antiangor','Anti-angoreux et dérivés nitrés','Trinitrine, nicorandil, ivabradine…',{tags:'angor', sous:[MOLECULES('m_angor',[
+      ['trinitrine','Trinitrine','Natispray, patchs','angor'],['isosorbide','Isosorbide dinitrate','Risordan','angor'],['molsidomine','Molsidomine','Corvasal','angor'],
+      ['nicorandil','Nicorandil','Adancor, Ikorel','nicorandil angor'],['ivabradine','Ivabradine','Procoralan','ivabradine'],['ranolazine','Ranolazine','Ranexa','ranolazine angor']])]}),
+    o('hypolip','Hypolipémiants','Statines, ézétimibe, fibrates',{tags:'statine', mots:'cholesterol', sous:[MOLECULES('m_lip',[
+      ['simvastatine','Simvastatine','Zocor, Inegy','simva statine'],['atorvastatine','Atorvastatine','Tahor','atorva statine'],['pravastatine','Pravastatine','Elisor, Vasten','prava statine'],
+      ['rosuvastatine','Rosuvastatine','Crestor','statine'],['fluvastatine','Fluvastatine','Lescol','statine'],['ezetimibe','Ézétimibe','Ezetrol',''],['fenofibrate','Fénofibrate','Lipanthyl','fibrate']])]}),
+  ]},
+  {groupe:'Diabète et hormones', items:[
+    o('antidiab','Antidiabétiques','Metformine, gliclazide, gliptines, Ozempic…',{tags:'antidiab', mots:'diabete', sous:[MOLECULES('m_antidiab',[
+      ['metformine','Metformine','Glucophage, Stagid, associations','antidiab metformine'],
+      ['gliclazide','Gliclazide','Diamicron · sulfamide','antidiab sulfamide','sulfamide'],
+      ['glimepiride','Glimépiride','Amarel · sulfamide','antidiab sulfamide','sulfamide'],
+      ['glibenclamide','Glibenclamide','Daonil, Glucovance · sulfamide','antidiab sulfamide','sulfamide'],
+      ['glipizide','Glipizide','Glibénèse, Ozidia · sulfamide','antidiab sulfamide','sulfamide'],
+      ['repaglinide','Répaglinide','Novonorm','antidiab repaglinide'],
+      ['sitagliptine','Sitagliptine','Januvia, Xelevia, Janumet','antidiab'],
+      ['vildagliptine','Vildagliptine','Galvus, Eucreas','antidiab'],
+      ['saxagliptine','Saxagliptine','Onglyza','antidiab'],
+      ['linagliptine','Linagliptine','Trajenta','antidiab'],
+      ['dapagliflozine','Dapagliflozine','Forxiga, Xigduo','antidiab gliflozine'],
+      ['empagliflozine','Empagliflozine','Jardiance, Synjardy','antidiab gliflozine'],
+      ['semaglutide','Sémaglutide','Ozempic, Rybelsus, Wegovy','antidiab glp1'],
+      ['dulaglutide','Dulaglutide','Trulicity','antidiab glp1'],
+      ['liraglutide','Liraglutide','Victoza, Saxenda','antidiab glp1'],
+      ['tirzepatide','Tirzépatide','Mounjaro','antidiab glp1'],
+      ['exenatide','Exénatide','Byetta, Bydureon','antidiab glp1'],
+      ['acarbose','Acarbose','Glucor','antidiab']])]}),
+    o('insuline','Insulines','Lantus, Novorapid, pompe…',{tags:'antidiab insuline', mots:'diabete', sous:[MOLECULES('m_ins',[
+      ['ins_lente','Insuline lente','Lantus, Toujeo, Tresiba, Abasaglar','antidiab insuline'],['ins_rapide','Insuline rapide','Novorapid, Humalog, Fiasp, Apidra','antidiab insuline'],
+      ['ins_mixte','Insuline mixte','Novomix, Humalog Mix','antidiab insuline'],['pompe','Pompe à insuline','','antidiab insuline']], 'Type (facultatif)')]}),
+    o('thyroide','Traitements de la thyroïde','Levothyrox, Néomercazole…',{sous:[MOLECULES('m_thyr',[
+      ['levothyroxine','Lévothyroxine','Levothyrox, L-Thyroxine',''],['liothyronine','Liothyronine','Cynomel',''],['carbimazole','Carbimazole','Néomercazole','antithyro'],
+      ['thiamazole','Thiamazole','Thyrozol','antithyro'],['ptu','Propylthiouracile','Proracyl','antithyro']])]}),
+    o('cortico_c','Corticoïdes par voie orale','Cortancyl, Solupred, Médrol…',{tags:'cortico_os', mots:'corticoide corticotherapie', sous:[
+      {k:'p_cortico', titre:'Dose et durée', type:'un', requis:true, options:[
+        o('fort','10 mg/j ou plus depuis plus de 2 semaines','En équivalent prednisolone',{eq:'cortico'}),
+        o('faible','Moins de 10 mg/j, ou depuis moins de 2 semaines','',{eq:'cortico_faible'}),
+        o('nsp','Ne sait pas','',{eq:'cortico_nsp'})]},
+      MOLECULES('m_cortico',[['prednisone','Prednisone','Cortancyl','cortico_os'],['prednisolone','Prednisolone','Solupred','cortico_os'],['methylprednisolone','Méthylprednisolone','Médrol','cortico_os'],
+        ['dexamethasone','Dexaméthasone','Dectancyl, Néofordex','cortico_os'],['betamethasone','Bétaméthasone','Célestène','cortico_os'],['hydrocortisone','Hydrocortisone','Substitution surrénalienne','hydrocortisone']])]}),
+  ]},
+  {groupe:'Immunité et inflammation', items:[
+    o('mtx','Méthotrexate','Novatrex, Metoject, Imeth, Nordimet',{tags:'mtx immunosup ulcerations', eq:'immunosup'}),
+    o('immunosup','Immunosuppresseurs et inhibiteurs de JAK','Imurel, Cellcept, Arava, Néoral, Prograf, Xeljanz…',{tags:'immunosup', sous:[MOLECULES('m_is',[
+      ['azathioprine','Azathioprine','Imurel','immunosup'],['mycophenolate','Mycophénolate','Cellcept, Myfortic','immunosup mycophenolate'],['leflunomide','Léflunomide','Arava','immunosup'],
+      ['ciclosporine','Ciclosporine','Néoral, Sandimmun','antirejet is_cyp immunosup ciclosporine hyperplasie'],['tacrolimus','Tacrolimus','Prograf, Advagraf','antirejet is_cyp immunosup tacrolimus'],
+      ['sirolimus','Sirolimus','Rapamune','antirejet is_cyp immunosup'],['everolimus','Évérolimus','Certican','antirejet is_cyp immunosup'],
+      ['tofacitinib','Tofacitinib','Xeljanz','immunosup'],['baricitinib','Baricitinib','Olumiant','immunosup'],['upadacitinib','Upadacitinib','Rinvoq','immunosup'],['filgotinib','Filgotinib','Jyseleca','immunosup']])]}),
+    o('biotherapie','Biothérapies','Humira, Enbrel, Rémicade, Stelara, Cosentyx…',{tags:'immunosup', eq:'immunosup', mots:'anti tnf anticorps', sous:[MOLECULES('m_bio',[
+      ['adalimumab','Adalimumab','Humira et biosimilaires','immunosup'],['etanercept','Étanercept','Enbrel, Benepali','immunosup'],['infliximab','Infliximab','Rémicade, Inflectra','immunosup'],
+      ['certolizumab','Certolizumab','Cimzia','immunosup'],['golimumab','Golimumab','Simponi','immunosup'],['tocilizumab','Tocilizumab','RoActemra','immunosup'],['abatacept','Abatacept','Orencia','immunosup'],
+      ['rituximab','Rituximab','Mabthera, Truxima','immunosup'],['ustekinumab','Ustékinumab','Stelara','immunosup'],['secukinumab','Sécukinumab','Cosentyx','immunosup'],['ixekizumab','Ixékizumab','Taltz','immunosup'],
+      ['guselkumab','Guselkumab','Tremfya','immunosup'],['risankizumab','Risankizumab','Skyrizi','immunosup'],['vedolizumab','Védolizumab','Entyvio','immunosup'],['natalizumab','Natalizumab','Tysabri','immunosup'],
+      ['ocrelizumab','Ocrélizumab','Ocrevus','immunosup']])]}),
+    o('fond','Autres traitements de fond','Plaquenil, Salazopyrine, Pentasa…',{sous:[MOLECULES('m_fond',[
+      ['hydroxychloroquine','Hydroxychloroquine','Plaquenil','qt'],['sulfasalazine','Sulfasalazine','Salazopyrine',''],['mesalazine','Mésalazine','Pentasa, Fivasa',''],['apremilast','Aprémilast','Otezla',''],
+      ['interferon','Interféron bêta ou glatiramère','Dans la sclérose en plaques','']])]}),
+    o('ains_c','Anti-inflammatoires (AINS) au long cours','Ibuprofène, kétoprofène, célécoxib…',{tags:'ains', sous:[MOLECULES('m_ains',[
+      ['ibuprofene','Ibuprofène','Advil, Nurofen','ains'],['ketoprofene','Kétoprofène','Profénid','ains'],['naproxene','Naproxène','Apranax','ains'],['diclofenac','Diclofénac','Voltarène','ains'],
+      ['celecoxib','Célécoxib','Celebrex','ains'],['etoricoxib','Étoricoxib','Arcoxia','ains'],['piroxicam','Piroxicam','Feldène','ains'],['meloxicam','Méloxicam','Mobic','ains'],
+      ['aspirine_forte','Aspirine à dose antalgique','500 mg ou plus','ains aspirine_forte']])]}),
+    o('goutte','Traitements de la goutte','Colchicine, allopurinol, fébuxostat',{sous:[MOLECULES('m_goutte',[
+      ['colchicine','Colchicine','Colchimax','colchicine'],['allopurinol','Allopurinol','Zyloric','allopurinol'],['febuxostat','Fébuxostat','Adenuric','']])]}),
+  ]},
+  {groupe:'Os', items:[
+    o('bisphos','Bisphosphonates','Fosamax, Actonel, Bonviva, Aclasta, Zometa…',{mots:'biphosphonate osteoporose', sous:[
+      {k:'p_bp', titre:'Indication et durée', type:'un', requis:true, options:[
+        o('malin','Pour un cancer','Métastases osseuses, myélome',{eq:'bp_malin'}),
+        o('benin5','Ostéoporose ou Paget, 5 ans cumulés ou plus','',{eq:'bp_benin5'}),
+        o('benin','Ostéoporose ou Paget, moins de 5 ans','',{eq:'bp_benin'}),
+        o('nsp','Ne sait pas','Considéré à haut risque par prudence',{eq:'bp_nsp'})]},
+      MOLECULES('m_bp',[['alendronate','Alendronate','Fosamax, Fosavance',''],['risedronate','Risédronate','Actonel',''],['ibandronate','Ibandronate','Bonviva',''],
+        ['zoledronate','Zolédronate','Aclasta (ostéoporose), Zometa (cancer)',''],['pamidronate','Pamidronate','Pour un cancer',''],['clodronate','Clodronate','Clastoban','']])]}),
+    o('denosumab_c','Dénosumab','Prolia, Xgeva',{sous:[{k:'p_deno', titre:'Indication et dernière injection', type:'un', requis:true, options:[
+      o('malin','Xgeva, pour un cancer','',{eq:'deno_malin'}),
+      o('recent','Prolia, dernière injection il y a moins de 6 mois','',{eq:'denosumab'}),
+      o('ancien','Prolia, dernière injection il y a plus de 6 mois','',{eq:'denosumab_ancien'}),
+      o('nsp','Ne sait pas','Considéré à haut risque par prudence',{eq:'denosumab deno_nsp'})]}]}),
+    o('osteo_autre','Autres traitements de l’ostéoporose','Evenity, Forsteo, raloxifène',{sous:[MOLECULES('m_osteo',[
+      ['romosozumab','Romosozumab','Evenity','romosozumab'],['teriparatide','Tériparatide','Forsteo, Movymia',''],['raloxifene','Raloxifène','Evista, Optruma','']])]}),
+  ]},
+  {groupe:'Poumons et allergies', items:[
+    o('respi','Bronchodilatateurs et antiasthmatiques','Ventoline, Spiriva, Singulair…',{tags:'respi', mots:'asthme bpco', sous:[MOLECULES('m_respi',[
+      ['salbutamol','Salbutamol','Ventoline, Airomir','respi'],['terbutaline','Terbutaline','Bricanyl','respi'],['formoterol','Formotérol ou salmétérol','Foradil, Serevent','respi'],
+      ['tiotropium','Tiotropium','Spiriva','respi xerostomie'],['montelukast','Montélukast','Singulair','respi'],['theophylline','Théophylline','Théostat','theophylline']])]}),
+    o('cortico_inh','Corticoïdes inhalés','Symbicort, Seretide, Flixotide, Qvar…',{tags:'cortico_inh', mots:'asthme bpco', sous:[MOLECULES('m_ci',[
+      ['budesonide','Budésonide','Pulmicort, Symbicort','cortico_inh cortico_inh_metab'],['fluticasone','Fluticasone','Flixotide, Seretide, Relvar','cortico_inh cortico_inh_metab'],
+      ['beclometasone','Béclométasone','Qvar, Innovair, Formodual','cortico_inh']])]}),
+    o('antihist','Antihistaminiques','Cétirizine, Aerius, Atarax…',{mots:'allergie', sous:[MOLECULES('m_ah',[
+      ['cetirizine','Cétirizine','Zyrtec, Virlix','xerostomie'],['desloratadine','Desloratadine','Aerius',''],['bilastine','Bilastine','Inorial',''],
+      ['hydroxyzine','Hydroxyzine','Atarax','qt xerostomie'],['mequitazine','Méquitazine','Primalan','qt xerostomie']])]}),
+  ]},
+  {groupe:'Système nerveux et psychiatrie', items:[
+    o('antidep','Antidépresseurs','Sertraline, Deroxat, Effexor, Laroxyl…',{tags:'xerostomie', sous:[MOLECULES('m_ad',[
+      ['sertraline','Sertraline','Zoloft · ISRS','isrs xerostomie'],['fluoxetine','Fluoxétine','Prozac · ISRS','isrs cyp2d6 xerostomie'],['paroxetine','Paroxétine','Deroxat · ISRS','isrs cyp2d6 xerostomie'],
+      ['citalopram','Citalopram','Seropram · ISRS','isrs qt xerostomie'],['escitalopram','Escitalopram','Seroplex · ISRS','isrs qt xerostomie'],['fluvoxamine','Fluvoxamine','Floxyfral · ISRS','isrs fluvoxamine xerostomie'],
+      ['venlafaxine','Venlafaxine','Effexor · IRSNA','irsna venlafaxine xerostomie'],['duloxetine','Duloxétine','Cymbalta · IRSNA','irsna cyp2d6 xerostomie'],['milnacipran','Milnacipran','Ixel · IRSNA','irsna xerostomie'],
+      ['amitriptyline','Amitriptyline','Laroxyl · tricyclique','tricyclique xerostomie'],['clomipramine','Clomipramine','Anafranil · tricyclique','tricyclique xerostomie'],['imipramine','Imipramine','Tofranil · tricyclique','tricyclique xerostomie'],
+      ['mirtazapine','Mirtazapine','Norset','xerostomie'],['mianserine','Miansérine','','xerostomie'],['agomelatine','Agomélatine','Valdoxan',''],['vortioxetine','Vortioxétine','Brintellix',''],
+      ['moclobemide','Moclobémide','Moclamine · IMAO-A','imao_a'],['iproniazide','Iproniazide','Marsilid · IMAO','imao']])]}),
+    o('thymo','Thymorégulateurs','Lithium, Dépakote…',{mots:'bipolaire', sous:[MOLECULES('m_thymo',[
+      ['lithium','Lithium','Téralithe','lithium'],['divalproate','Divalproate ou valpromide','Dépakote, Dépamide','antiepi valproate'],['lamotrigine_t','Lamotrigine','Lamictal','antiepi']])]}),
+    o('antipsy','Antipsychotiques','Abilify, Zyprexa, Risperdal, Tercian…',{tags:'xerostomie', mots:'neuroleptique', sous:[MOLECULES('m_ap',[
+      ['aripiprazole','Aripiprazole','Abilify',''],['olanzapine','Olanzapine','Zyprexa','xerostomie'],['risperidone','Rispéridone','Risperdal','xerostomie'],['quetiapine','Quétiapine','Xeroquel','quetiapine xerostomie'],
+      ['clozapine','Clozapine','Leponex','clozapine'],['haloperidol','Halopéridol','Haldol','qt xerostomie'],['amisulpride','Amisulpride','Solian','qt xerostomie'],['cyamemazine','Cyamémazine','Tercian','qt xerostomie'],
+      ['levomepromazine','Lévomépromazine','Nozinan','qt xerostomie'],['loxapine','Loxapine','Loxapac','xerostomie'],['pimozide','Pimozide','Orap','pimozide qt'],['lurasidone','Lurasidone','','lurasidone']])]}),
+    o('benzo','Anxiolytiques et somnifères','Xanax, Lexomil, Stilnox…',{tags:'benzo', mots:'benzodiazepine hypnotique', sous:[MOLECULES('m_bz',[
+      ['alprazolam','Alprazolam','Xanax','benzo alprazolam xerostomie'],['bromazepam','Bromazépam','Lexomil','benzo xerostomie'],['lorazepam','Lorazépam','Témesta','benzo xerostomie'],
+      ['oxazepam','Oxazépam','Séresta','benzo xerostomie'],['diazepam','Diazépam','Valium','benzo xerostomie'],['prazepam','Prazépam','Lysanxia','benzo xerostomie'],
+      ['zolpidem','Zolpidem','Stilnox','benzo hypnotique'],['zopiclone','Zopiclone','Imovane','benzo hypnotique']])]}),
+    o('antiepi','Antiépileptiques','Dépakine, Tégrétol, Keppra, Lamictal…',{tags:'antiepi', mots:'epilepsie', sous:[MOLECULES('m_ae',[
+      ['valproate','Valproate','Dépakine','antiepi valproate'],['carbamazepine','Carbamazépine','Tégrétol','antiepi inducteur carbamazepine'],['oxcarbazepine','Oxcarbazépine','Trileptal','antiepi'],
+      ['phenytoine','Phénytoïne','Di-Hydan','antiepi inducteur phenytoine hyperplasie'],['phenobarbital','Phénobarbital','Gardénal','antiepi inducteur'],['lamotrigine','Lamotrigine','Lamictal','antiepi'],
+      ['levetiracetam','Lévétiracétam','Keppra','antiepi'],['topiramate','Topiramate','Epitomax','antiepi'],['lacosamide','Lacosamide','Vimpat','antiepi'],['clonazepam','Clonazépam','Rivotril','benzo antiepi'],
+      ['pregabaline','Prégabaline','Lyrica','xerostomie'],['gabapentine','Gabapentine','Neurontin','']])]}),
+    o('parkinson_t','Antiparkinsoniens','Modopar, Sinemet, Azilect…',{tags:'parkinson', mots:'parkinson', sous:[MOLECULES('m_pk',[
+      ['levodopa','Lévodopa','Modopar, Sinemet, Stalevo','parkinson'],['pramipexole','Pramipexole','Sifrol','parkinson'],['ropinirole','Ropinirole','Requip','parkinson'],
+      ['rasagiline','Rasagiline','Azilect · IMAO-B','imao_b'],['selegiline','Sélégiline','Deprenyl · IMAO-B','imao_b'],['safinamide','Safinamide','Xadago · IMAO-B','imao_b'],['bromocriptine','Bromocriptine','Parlodel','ergot_dopa']])]}),
+    o('migraine','Antimigraineux','Triptans, dihydroergotamine',{sous:[MOLECULES('m_mig',[['triptan','Triptan','Sumatriptan, zolmitriptan…',''],['dhe','Dihydroergotamine','dérivé de l’ergot','ergot']])]}),
+    o('opioides','Antalgiques opioïdes au long cours','Tramadol, codéine, morphine, oxycodone…',{tags:'morphinique', mots:'morphinique', sous:[MOLECULES('m_op',[
+      ['tramadol','Tramadol','Topalgic, Ixprim','morphinique'],['codeine','Codéine','Dafalgan codéiné, Codoliprane','morphinique'],['morphine','Morphine','Skenan, Actiskenan','morphinique xerostomie'],
+      ['oxycodone','Oxycodone','Oxycontin, Oxynorm','morphinique oxycodone xerostomie'],['fentanyl','Fentanyl','Durogesic, Abstral','morphinique fentanyl']])]}),
+    o('substitution','Traitement de substitution aux opiacés','Méthadone, Subutex',{tags:'substitution', mots:'tso', sous:[MOLECULES('m_tso',[
+      ['methadone','Méthadone','','morphinique qt substitution'],['buprenorphine','Buprénorphine','Subutex, Orobupré, Suboxone','morph_aa substitution']])]}),
+    o('sevrage','Aide au sevrage alcoolique','Espéral, Aotal, Baclocur…',{tags:'alcool', mots:'alcool', sous:[MOLECULES('m_sev',[
+      ['disulfirame','Disulfirame','Espéral','disulfirame alcool'],['acamprosate','Acamprosate','Aotal','alcool'],['naltrexone','Naltrexone','Revia','alcool'],['baclofene','Baclofène','Baclocur, Liorésal','alcool']])]}),
+  ]},
+  {groupe:'Digestif et urologie', items:[
+    o('estomac','Médicaments de l’estomac','IPP, pansements gastriques, Motilium',{mots:'ipp reflux', sous:[MOLECULES('m_gi',[
+      ['omeprazole','Oméprazole','Mopral','ipp'],['esomeprazole','Ésoméprazole','Inexium','ipp'],['pantoprazole','Pantoprazole','Inipomp, Eupantol','ipp'],['lansoprazole','Lansoprazole','Lanzor, Ogast','ipp'],
+      ['rabeprazole','Rabéprazole','Pariet','ipp'],['antiacide','Pansement gastrique ou antiacide','Gaviscon, Maalox, Smecta','antiacide'],['domperidone','Dompéridone','Motilium','domperidone qt']])]}),
+    o('uro','Prostate, vessie, érection','Tamsulosine, Xatral, Vesicare, Cialis…',{sous:[MOLECULES('m_uro',[
+      ['tamsulosine','Tamsulosine','Omix, Josir','alphab'],['alfuzosine','Alfuzosine','Xatral','alphab'],['silodosine','Silodosine','Silodyx, Urorec','alphab'],
+      ['finasteride','Finastéride ou dutastéride','Chibro-Proscar, Avodart',''],['oxybutynine','Oxybutynine','Ditropan','xerostomie'],['solifenacine','Solifénacine','Vesicare','xerostomie'],
+      ['sildenafil','Sildénafil','Viagra, Revatio','pde5'],['tadalafil','Tadalafil','Cialis, Adcirca','pde5']])]}),
+  ]},
+  {groupe:'Infections', items:[
+    o('arv','Antirétroviraux (VIH)','Biktarvy, Genvoya, Triumeq, Norvir…',{tags:'arv', mots:'vih', sous:[MOLECULES('m_arv',[
+      ['ritonavir','Ritonavir ou cobicistat (booster)','Norvir, Kaletra, Genvoya, Symtuza','arv ritonavir'],['darunavir','Darunavir','Prezista','arv'],['bictegravir','Bictégravir','Biktarvy','arv'],
+      ['dolutegravir','Dolutégravir','Tivicay, Triumeq, Dovato','arv'],['tenofovir','Ténofovir','Viread, Truvada','arv tenofovir'],['prep','Prophylaxie pré-exposition (PrEP)','Truvada','tenofovir']])]}),
+    o('antituberc','Antituberculeux','Rifampicine, isoniazide…',{mots:'tuberculose', sous:[MOLECULES('m_tb',[
+      ['rifampicine','Rifampicine','Rifadine, Rifinah','inducteur rifampicine'],['isoniazide','Isoniazide','Rimifon',''],['ethambutol','Éthambutol ou pyrazinamide','','']])]}),
+  ]},
+  {groupe:'Cancer : chimiothérapie, radiothérapie, hormonothérapie', items:[
+    o('chimio_t','Chimiothérapie','',{tags:'chimio', mots:'cancer', sous:[
+      {k:'p_chimio', titre:'Situation', type:'un', requis:true, options:[
+        o('aplasiante','En cours, aplasiante','Baisse attendue des globules blancs',{eq:'chimio'}),
+        o('non_aplasiante','En cours, non aplasiante','',{eq:'chimio_na'}),
+        o('nsp','En cours, ne sait pas si elle est aplasiante','',{eq:'chimio_nsp'}),
+        o('terminee','Terminée','',{eq:'chimio_finie'})]},
+      MOLECULES('m_chimio',[
+        ['platine','Sels de platine','Cisplatine, carboplatine, oxaliplatine',''],
+        ['taxane','Taxanes','Paclitaxel, docétaxel',''],
+        ['anthracycline','Anthracyclines','Doxorubicine, épirubicine',''],
+        ['fluoropyr','Fluoropyrimidines','5-FU, capécitabine (Xeloda)','fluoropyr'],
+        ['alkylant','Alkylants','Cyclophosphamide, ifosfamide, melphalan',''],
+        ['busulfan','Busulfan','Myleran, Busilvex','busulfan'],
+        ['mtx_fort','Méthotrexate à forte dose','','mtx'],
+        ['gemcitabine','Gemcitabine ou pémétrexed','',''],
+        ['vinca','Vinca-alcaloïdes','Vincristine, vinorelbine',''],
+        ['topo','Étoposide ou irinotécan','','']], 'Familles et molécules (facultatif)')]}),
+    o('radiotherapie','Radiothérapie','',{mots:'rayons irradiation cancer', sous:[
+      {k:'p_radio', titre:'Zone et dose', type:'un', requis:true, options:[
+        o('cf40','Tête et cou, 40 Gy ou plus sur les mâchoires','',{eq:'radio40'}),
+        o('cf_moins40','Tête et cou, moins de 40 Gy','',{eq:'radio_moins40'}),
+        o('cf_nsp','Tête et cou, dose inconnue','Considérée ≥ 40 Gy par prudence',{eq:'radio40 radio_nsp'}),
+        o('autre','Autre zone','Sein, prostate, thorax…',{eq:'radio_autre'})]},
+      {k:'p_radio_q', titre:'Quand ? (facultatif)', type:'un', options:[o('en_cours','En cours'), o('terminee','Terminée')]},
+    ]}),
+    o('hormono','Hormonothérapie','Cancer du sein ou de la prostate',{tags:'hormono_k', mots:'cancer', sous:[MOLECULES('m_horm',[
+      ['tamoxifene','Tamoxifène','Nolvadex · sein','tamoxifene'],
+      ['letrozole','Létrozole','Femara · anti-aromatase','hormono_k'],
+      ['anastrozole','Anastrozole','Arimidex · anti-aromatase','hormono_k'],
+      ['exemestane','Exémestane','Aromasine · anti-aromatase','hormono_k'],
+      ['fulvestrant','Fulvestrant','Faslodex · sein','hormono_k'],
+      ['lhrh','Agoniste ou antagoniste de la LH-RH','Décapeptyl, Eligard, Zoladex, Firmagon','hormono_k'],
+      ['antiandrogene','Anti-androgène','Casodex, Xtandi, Erleada, Zytiga · prostate','hormono_k']], 'Molécules (facultatif)')]}),
+    o('antiangio','Anti-angiogéniques','Avastin, Sutent, Nexavar, Votrient…',{tags:'antiangio', mots:'cancer', sous:[MOLECULES('m_angio',[
+      ['bevacizumab','Bévacizumab','Avastin et biosimilaires','antiangio'],['sunitinib','Sunitinib','Sutent','antiangio'],['sorafenib','Sorafénib','Nexavar','antiangio'],['pazopanib','Pazopanib','Votrient','antiangio'],
+      ['axitinib','Axitinib','Inlyta','antiangio'],['cabozantinib','Cabozantinib','Cabometyx','antiangio'],['lenvatinib','Lenvatinib','Lenvima','antiangio'],['regorafenib','Régorafénib','Stivarga','antiangio'],
+      ['aflibercept','Aflibercept','Zaltrap','antiangio'],['ramucirumab','Ramucirumab','Cyramza','antiangio']])]}),
+    o('ciblee','Autres thérapies ciblées et immunothérapie','Keytruda, Opdivo, Herceptin, Glivec…',{mots:'cancer', sous:[MOLECULES('m_cib',[
+      ['immuno','Immunothérapie (anti-PD-1, anti-PD-L1)','Keytruda, Opdivo, Tecentriq',''],['her2','Anti-HER2','Herceptin, Perjeta, Enhertu',''],
+      ['itk','Inhibiteurs de tyrosine kinase','Imatinib (Glivec), osimertinib (Tagrisso)…',''],['mtor','Inhibiteurs de mTOR','Évérolimus (Afinitor)','is_cyp chimio'],
+      ['cdk','Inhibiteurs de CDK4/6','Ibrance, Kisqali, Verzenios','']], 'Molécules (facultatif)')]}),
+  ]},
+  {groupe:'Autres', items:[
+    o('phyto','Phytothérapie','Millepertuis…',{sous:[MOLECULES('m_phyto',[['millepertuis','Millepertuis','','millepertuis inducteur']])]}),
+    o('aucun','Aucun traitement en cours',''),
+  ]},
 ];
+R.ANTITHROMBO = ['antiplaq','aap','aap2','avk','aod','heparine'];
 R.RISQUE_HEMO = [
   {v:'faible', t:'Risque hémorragique faible', d:'Avulsions sur un secteur, dents de sagesse, implant(s) sur un secteur, biopsie, kyste < 4 cm'},
   {v:'eleve', t:'Risque hémorragique élevé', d:'Avulsions de toute une arcade, implants sur plusieurs secteurs, greffe osseuse avec prélèvement, sinus lift, greffe gingivale palatine, kyste > 4 cm'},
 ];
+R.BLOC_RISQUE = {k:'risque_hemo', titre:'Risque hémorragique de l’acte', type:'un', requis:true, grand:true, options:R.RISQUE_HEMO};
+
+/* Toutes les options d'une question, à plat */
+const plat = liste => liste.flatMap(g=>g.items||[g]);
+R.option = (liste, v) => plat(liste).find(x=>x.v===v);
+
+/* Lecture des réponses : codes du moteur (F), étiquettes d'interaction (tags : tag -> noms)
+   et classes cochées sans molécule précisée (hypo). */
+R.deriver = function(rep){
+  const F = new Set(), tags = new Map(), hypo = [];
+  const ajTags = (str, nom) => String(str||'').split(/\s+/).filter(Boolean).forEach(t=>{ if(!tags.has(t)) tags.set(t, new Set()); tags.get(t).add(nom); });
+  const ajCodes = str => String(str||'').split(/\s+/).filter(Boolean).forEach(c=>F.add(c));
+  const lire = (liste, choisis) => (choisis||[]).forEach(v=>{
+    F.add(v);
+    const it = R.option(liste, v); if(!it) return;
+    ajCodes(it.eq);
+    let molBloc = null, molChoisie = false;
+    (it.sous||[]).forEach(b=>{
+      const r = rep[b.k], vals = Array.isArray(r) ? r : (r ? [r] : []);
+      if(b.mol) molBloc = b;
+      vals.forEach(x=>{ const so = b.options.find(y=>y.v===x); if(!so) return; F.add(b.k+'.'+x); ajCodes(so.eq); if(b.mol){ molChoisie = true; ajTags(so.tags, so.t); } });
+    });
+    if(!molChoisie) ajTags(it.tags, it.t);
+    if(molBloc && !molChoisie) hypo.push({classe:it.t, mols:molBloc.options});
+  });
+  lire(R.ATCD, rep.atcd); lire(R.TTT, rep.ttt);
+  // Antiplaquettaires : la bithérapie l'emporte (deux molécules cochées ou Duoplavin)
+  const mAap = rep.m_aap || [];
+  if((rep.ttt||[]).includes('antiplaq') && (mAap.length>=2 || mAap.includes('duoplavin'))) F.add('aap2');
+  if((rep.ttt||[]).includes('antiplaq') && !F.has('aap2')) F.add('aap');
+  if(F.has('aap2')) F.delete('aap');
+  return {F, tags, hypo};
+};
+/* Précisions obligatoires non remplies pour une question */
+R.manquants = function(rep, id){
+  const liste = id==='atcd' ? R.ATCD : R.TTT;
+  const out = [];
+  (rep[id]||[]).forEach(v=>{ const it = R.option(liste, v); (it?.sous||[]).forEach(b=>{ const r=rep[b.k]; if(b.requis && !(Array.isArray(r)?r.length:r)) out.push(b.k); }); });
+  return out;
+};
+/* Médicaments reconnus par le scanner -> réponses de Prescri'Dent */
+R.depuisScanner = function(meds){
+  const N0 = t => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\(.*?\)/g,'').replace(/\s+/g,' ').trim();
+  const res = {ttt:[], sous:{}, atcd:[]};
+  const coche = (cl, k, v) => { if(!res.ttt.includes(cl)) res.ttt.push(cl); if(k){ res.sous[k] = res.sous[k]||[]; if(v && !res.sous[k].includes(v)) res.sous[k].push(v); } };
+  const reglerUn = (k, v) => { res.sous[k] = v; };
+  const PAR_TAG = [['aod','aod'],['avk','avk'],['heparine','heparine'],['aap','antiplaq'],['insuline','insuline'],['antidiab','antidiab'],['iec','iec'],['ara2','ara2'],['diuretique','diuretique'],
+    ['betabloquant','betabloquant'],['ica','ica'],['antiarythmique','antiarythmique'],['angor','antiangor'],['statine','hypolip'],['cortico_os','cortico_c'],['cortico_inh','cortico_inh'],['respi','respi'],
+    ['isrs','antidep'],['irsna','antidep'],['tricyclique','antidep'],['antiepi','antiepi'],['benzo','benzo'],['antiangio','antiangio'],['arv','arv'],['ipp','estomac'],['antiacide','estomac'],['alphab','uro'],
+    ['pde5','uro'],['ains','ains_c'],['substitution','substitution'],['morphinique','opioides'],['mtx','mtx'],['immunosup','immunosup'],['lithium','thymo'],['bp_os','bisphos'],['hormono_k','hormono'],
+    ['tamoxifene','hormono'],['fluoropyr','chimio_t'],['parkinson','parkinson_t'],['imao_b','parkinson_t'],['alcool','sevrage']];
+  for(const m of meds){
+    const d = N0(m.dci), tg = m.tags || new Set();
+    if(tg.has('antirejet') && !res.atcd.includes('greffe')) res.atcd.push('greffe');
+    if(d==='everolimus' && /cancer/i.test(m.classe||'')){ coche('ciblee','m_cib','mtor'); continue; }
+    if(tg.has('aspirine_forte')){ coche('ains_c','m_ains','aspirine_forte'); continue; }
+    if(/zoledronate .*zometa|zometa/.test(N0(m.dci+' '+m.classe)) || tg.has('bp_malin')){ coche('bisphos','m_bp', /pamidron/.test(d)?'pamidronate':/clodron/.test(d)?'clodronate':'zoledronate'); reglerUn('p_bp','malin'); continue; }
+    if(tg.has('denosumab_malin')){ coche('denosumab_c'); reglerUn('p_deno','malin'); continue; }
+    if(tg.has('denosumab_os')){ coche('denosumab_c'); continue; }
+    if(tg.has('insuline')){ coche('insuline'); continue; }
+    let trouve = null;
+    for(const it of plat(R.TTT)) for(const b of (it.sous||[])) if(b.mol) for(const so of b.options){ if(!trouve && N0(so.t)===d) trouve = [it.v, b.k, so.v]; }
+    const prem = w => String(w).split(/[ +]/)[0];
+    if(!trouve) for(const it of plat(R.TTT)) for(const b of (it.sous||[])) if(b.mol) for(const so of b.options){ if(!trouve && prem(N0(so.t))===prem(d) && prem(d).length>=5) trouve = [it.v, b.k, so.v]; }
+    if(!trouve){ const t = PAR_TAG.find(([g])=>tg.has(g)); if(t) trouve=[t[1]]; }
+    if(trouve) coche(...trouve);
+  }
+  if(res.ttt.includes('antiplaq')){ const n=(res.sous.m_aap||[]); res.sous.p_aap = (n.length>=2 || n.includes('duoplavin')) ? 'bi' : 'mono'; }
+  return res;
+};
 
 /* ---------- Outils de dose ---------- */
 const arr = x => Math.round(x/10)*10;
@@ -241,12 +622,12 @@ const PROLONGER = 'à prolonger de 2 jours si les symptômes persistent';
 R.decider = function(rep){
   const m = rep.motif, M = R.MOTIF[m] || {};
   const p = rep.profil||'adulte', enfant = p==='enfant', kg = Number(rep.poids)||0, age = Number(rep.age);
-  const al = new Set(rep.allergies||[]), at = new Set(rep.atcd||[]), tt = new Set(rep.ttt||[]), ext = new Set(rep.extension||[]);
+  const D = R.deriver(rep), at = D.F, tt = D.F, al = new Set(rep.allergies||[]), ext = new Set(rep.extension||[]);
   const ria = R.RIA.some(x=>at.has(x)), hron = R.HRON.some(x=>at.has(x)), eiHaut = at.has('ei_haut');
-  const malin = at.has('malin') || at.has('bp_malin') || at.has('antiangio'), radio = at.has('radio40');
+  const malin = at.has('malin') || at.has('bp_malin') || at.has('antiangio') || at.has('deno_malin'), radio = at.has('radio40');
   const enceinte = p==='enceinte', terme6 = enceinte && rep.terme==='apres';
   const K = enfant && kg>0, moins6 = enfant && (!(age>=0) || age<6);
-  const sousAOD = tt.has('aod'), qt = at.has('qt');
+  const sousAOD = tt.has('aod'), qt = at.has('qt') || D.tags.has('qt');
   const O = {gestes:[], pourquoi:[], alertes:[], lignes:[], hospit:false, atb:false, prophy:false};
   const src = s => s ? ` <span class="src">${s}</span>` : '';
   const why = (t,s) => O.pourquoi.push(t+src(s));
@@ -255,13 +636,43 @@ R.decider = function(rep){
   const buv = moins6 ? ' (forme buvable)' : '';
   const kgManquant = '(dose au poids : renseigner le poids)';
 
+  /* ---- Interactions avec le traitement du patient [thésaurus ANSM, table de medicaments.js] ----
+     Une classe cochée sans molécule donne des interactions « hypothétiques » : elles ne changent pas
+     le choix des molécules, mais demandent de préciser. */
+  const IX = (typeof window!=='undefined' && window.MEDS && window.MEDS.INTERACTIONS) || [];
+  const RANG = {CI:4, ASDEC:3, PE:2, APEC:1};
+  const memo = {};
+  function inter(id){
+    if(memo[id]) return memo[id];
+    const out = [];
+    for(const [dents, tg, niv, txt, src] of IX){
+      if(!dents.split(' ').includes(id)) continue;
+      const T = tg.split(' '), noms = new Set(), vus = [];
+      T.forEach(t=>{ if(D.tags.has(t)){ vus.push(t); D.tags.get(t).forEach(n=>noms.add(n)); } });
+      if(noms.size) out.push({niv, txt, src, tags:vus, meds:[...noms]});
+      else D.hypo.forEach(h=>{ const ms = h.mols.filter(mo=>String(mo.tags).split(' ').some(t=>T.includes(t))); if(ms.length) out.push({niv, txt, src, tags:[], meds:ms.map(x=>x.t), hypo:h.classe}); });
+    }
+    return memo[id] = out;
+  }
+  const niv = id => Math.max(0, ...inter(id).filter(x=>!x.hypo).map(x=>RANG[x.niv]));
+  const raisons = id => inter(id).filter(x=>!x.hypo && RANG[x.niv]>=3).map(x=>x.txt).join(' ');
+  const TH = 'Thésaurus ANSM';
+
   /* ---- Alternatives aux pénicillines, par ordre de préférence HAS ---- */
-  const macroOK = !al.has('macrolides') && !qt;
-  const clariOK = macroOK && !sousAOD;
-  const pristOK = !al.has('pristina') && !moins6;
+  const macroOK = !al.has('macrolides') && !qt && niv('azi')<3;
+  const clariOK = !al.has('macrolides') && !qt && !sousAOD && niv('clari')<3;
+  const pristOK = !al.has('pristina') && !moins6 && niv('prist')<3;
+  const metroNon = al.has('metro') || niv('metro')>=3;
+  const noteMetro = () => { if(!al.has('metro') && niv('metro')>=3) alerte('moy','Métronidazole écarté', raisons('metro'), TH); };
   function noteAlternative(){
-    if(!macroOK) alerte('moy','Macrolides écartés', qt?'QT long : azithromycine et clarithromycine à éviter.':'Allergie aux macrolides.', qt?'HAS 2024':'');
-    else if(sousAOD) alerte('moy','Clarithromycine écartée','À éviter chez un patient sous AOD : azithromycine proposée.','SFCO 2015');
+    if(al.has('macrolides')) alerte('moy','Macrolides écartés','Allergie aux macrolides.','');
+    else if(qt) alerte('moy','Macrolides écartés','QT long ou médicament qui allonge le QT : azithromycine et clarithromycine à éviter.','HAS 2024');
+    else {
+      if(sousAOD) alerte('moy','Clarithromycine écartée','À éviter chez un patient sous AOD : azithromycine proposée.','SFCO 2015');
+      else if(niv('clari')>=3) alerte('moy','Clarithromycine écartée', raisons('clari'), TH);
+      if(niv('azi')>=3) alerte('moy','Azithromycine écartée', raisons('azi'), TH);
+    }
+    if(!al.has('pristina') && !moins6 && niv('prist')>=3) alerte('moy','Pristinamycine écartée', raisons('prist'), TH);
   }
 
   /* ---- Antibioprophylaxie [HAS 2026 tableaux 11-12 ; HAS 2024] ---- */
@@ -307,13 +718,13 @@ R.decider = function(rep){
     const qsp3 = `3 jours (${PROLONGER})`;
     const metroLigne = () => { ligne('abc','Antibiotique','Métronidazole'+buv, metroPos, qsp3); alerte('moy','Métronidazole et alcool','Effet antabuse : pas d’alcool pendant le traitement.','RCP'); };
     if(type==='mpn'){
-      if(!al.has('metro')) { metroLigne(); why(raison+' Métronidazole en 1re intention, 3 jours.','HAS 2026'); }
-      else if(!peni) { ligne('abc','Antibiotique','Amoxicilline'+buv, amoxPos, qsp3); why(raison+' Allergie au métronidazole : amoxicilline en alternative, 3 jours.','HAS 2026'); }
+      if(!metroNon) { metroLigne(); why(raison+' Métronidazole en 1re intention, 3 jours.','HAS 2026'); }
+      else if(!peni) { ligne('abc','Antibiotique','Amoxicilline'+buv, amoxPos, qsp3); why(raison+(al.has('metro')?' Allergie au métronidazole':' Métronidazole écarté (interaction)')+' : amoxicilline en alternative, 3 jours.','HAS 2026'); noteMetro(); }
       else alerte('forte','Allergies multiples','Avis spécialisé.','');
     } else if(!peni){
       ligne('abc','Antibiotique','Amoxicilline'+buv, amoxPos, qsp3);
       why(raison+' Amoxicilline en 1re intention, 3 jours.','HAS 2026');
-    } else if(type==='peri' && !al.has('metro')){
+    } else if(type==='peri' && !metroNon){
       metroLigne();
       why(raison+' Allergie aux pénicillines : métronidazole en alternative, 3 jours.','HAS 2026');
     } else {
@@ -321,7 +732,7 @@ R.decider = function(rep){
       else if(macroOK) ligne('abc','Antibiotique','Azithromycine'+buv, K?`${g(dose(kg,20,500))} 1 fois par jour (20 mg/kg/j, max 500 mg/j)`:(enfant?kgManquant:'500 mg 1 fois par jour'),'3 jours');
       else if(pristOK) ligne('abc','Antibiotique','Pristinamycine (hors AMM)', K?`${g(parPrise(kg,50,2000,3))} 3 fois par jour (50 mg/kg/j, max 2 g/j)`:(enfant?kgManquant:'1 g 2 fois par jour'), qsp3);
       else alerte('forte','Aucune alternative orale','Avis spécialisé.','');
-      noteAlternative();
+      noteAlternative(); if(type==='peri') noteMetro();
       why(raison+' Allergie aux pénicillines : alternative par ordre de préférence (clarithromycine, azithromycine, pristinamycine).','HAS 2026');
     }
     const deux = enfant
@@ -436,10 +847,10 @@ R.decider = function(rep){
       if(enfant){ why('Indication décrite chez l’adulte : avis spécialisé.','HAS 2026'); break; }
       O.atb = true;
       O.gestes.push('Antibiotique à débuter après la dernière séance d’instrumentation sous-gingivale.');
-      if(!al.has('peni') && !al.has('metro')) ligne('abc','Antibiotique','Amoxicilline + métronidazole','500 mg + 500 mg, 3 fois par jour','3 jours');
-      else if(!al.has('metro')) ligne('abc','Antibiotique','Métronidazole','500 mg 3 fois par jour','3 jours');
+      if(!al.has('peni') && !metroNon) ligne('abc','Antibiotique','Amoxicilline + métronidazole','500 mg + 500 mg, 3 fois par jour','3 jours');
+      else if(!metroNon) ligne('abc','Antibiotique','Métronidazole','500 mg 3 fois par jour','3 jours');
       else if(macroOK) ligne('abc','Antibiotique','Azithromycine','500 mg 1 fois par jour','3 jours');
-      if(!al.has('metro')) alerte('moy','Métronidazole et alcool','Effet antabuse : pas d’alcool pendant le traitement.','RCP');
+      if(!metroNon) alerte('moy','Métronidazole et alcool','Effet antabuse : pas d’alcool pendant le traitement.','RCP'); else noteMetro();
       why('Parodontite de stade III/IV avec inadéquation biofilm/destruction et ratio perte osseuse/âge > 1 : bithérapie recommandée après la dernière séance (grade AE).','HAS 2026');
       break;
     case 'sinusite':
@@ -477,8 +888,8 @@ R.decider = function(rep){
       break;
     case 'candidose': {
       O.gestes.push('Rechercher la cause : prothèse (nettoyage, retrait la nuit), corticoïdes inhalés (rincer la bouche après usage), immunodépression, diabète, sécheresse buccale.');
-      if(tt.has('avk') || tt.has('sulfamide')){
-        alerte('forte','Miconazole contre-indiqué','Contre-indiqué avec les antivitamines K (hémorragies graves) et les sulfamides hypoglycémiants, y compris en gel buccal.','RCP');
+      if(tt.has('avk') || tt.has('sulfamide') || niv('micon')>=3){
+        alerte('forte','Miconazole contre-indiqué', (tt.has('avk')||tt.has('sulfamide')) ? 'Contre-indiqué avec les antivitamines K (hémorragies graves) et les sulfamides hypoglycémiants, y compris en gel buccal.' : raisons('micon')+' Y compris en gel buccal.','RCP');
         ligne('afg','Antifongique','Amphotéricine B 10 % suspension buvable (Fungizone)', enfant ? (kg>30?'15 mL par jour (3 cuillères à café), en bain de bouche puis avalé':(kg?`${Math.round(kg/2)} mL par jour (1 mL pour 2 kg), en 2 prises`:'1 mL pour 2 kg et par jour')) : '15 à 20 mL par jour (3 à 4 cuillères à café) en 2 à 3 prises, en bain de bouche puis avalé','2 à 3 semaines');
       } else if(ria && !enfant){
         ligne('afg','Antifongique','Miconazole 50 mg comprimé gingival muco-adhésif (Loramyc)','1 comprimé par jour appliqué sur la gencive','7 à 14 jours');
@@ -528,12 +939,23 @@ R.decider = function(rep){
   if(at.has('ih_severe')) ainsNon.push('insuffisance hépatique sévère');
   if(at.has('insuf_card')) ainsNon.push('insuffisance cardiaque');
   if(tt.has('mtx')) ainsNon.push('méthotrexate (interaction)');
+  if(at.has('asthme_ains')) ainsNon.push('asthme déclenché par l’aspirine ou les AINS');
+  if(at.has('p_bari.bypass')) ainsNon.push('bypass gastrique (risque d’ulcère anastomotique)');
+  inter('ibu').filter(x=>!x.hypo && RANG[x.niv]>=3 && !x.tags.some(t=>['anticoag','heparine','aap','mtx'].includes(t)))
+    .forEach(x=>{ const r=x.txt.split(' :')[0].toLowerCase()+' (interaction)'; if(!ainsNon.includes(r)) ainsNon.push(r); });
+  const ainsPrudence = [];
+  if(at.has('mici')) ainsPrudence.push('MICI : risque de poussée');
+  if(at.has('p_bari.sleeve')) ainsPrudence.push('sleeve gastrectomie : risque d’ulcère');
+  inter('ibu').filter(x=>!x.hypo && x.niv==='PE').forEach(x=>ainsPrudence.push(x.txt.replace(/\.$/,'')));
   const ainsUtile = !actCI && ['pulpite','abces','abces_paro','alveolite_seche','alveolite_suppuree','pericoronarite','avulsion','avulsion_incluse','autotransplantation','chir_preortho','chir_preprothetique','implant','greffe_osseuse','chir_paro','chir_periapicale','chir_periimplantaire','trauma_luxation','trauma_expulsion','endo','endo_vitale','herpes_primo','biopsie_os'].includes(m);
   if(ainsUtile){
-    if(!ainsNon.length) ligne('ibu','Anti-inflammatoire','Ibuprofène', enfant ? (kg?`${arr(kg*10)} mg 3 fois par jour au cours des repas (10 mg/kg, max 30 mg/kg/j, dès 3 mois)`:'10 mg/kg 3 fois par jour (renseigner le poids)') : '400 mg 3 fois par jour au cours des repas (max 1 200 mg/j)','3 jours');
-    // avulsion simple : l'ibuprofène reste proposé mais n'est pas coché d'office
-    if(!ainsNon.length && m==='avulsion') O.lignes[O.lignes.length-1].decoche = true;
-    else alerte('info','Ibuprofène écarté', ainsNon.join(' ; ')+'.', enceinte?'ANSM':'RCP');
+    if(!ainsNon.length){
+      ligne('ibu','Anti-inflammatoire','Ibuprofène', enfant ? (kg?`${arr(kg*10)} mg 3 fois par jour au cours des repas (10 mg/kg, max 30 mg/kg/j, dès 3 mois)`:'10 mg/kg 3 fois par jour (renseigner le poids)') : '400 mg 3 fois par jour au cours des repas (max 1 200 mg/j)','3 jours');
+      const li = O.lignes[O.lignes.length-1];
+      // proposé mais pas coché d'office : avulsion simple, ou terrain qui demande de la prudence
+      if(ainsPrudence.length){ li.decoche = true; alerte('moy','Ibuprofène proposé, non coché', ainsPrudence.join(' ; ')+'. À cocher seulement si le bénéfice l’emporte.', 'RCP ; '+TH); }
+      else if(m==='avulsion') li.decoche = true;
+    } else alerte('info','Ibuprofène écarté', ainsNon.join(' ; ')+'.', enceinte?'ANSM':'RCP');
     if(O.atb && !ainsNon.length) why('L’anti-inflammatoire ne justifie pas à lui seul un antibiotique.','HAS 2026');
   }
   if(!actCI && ['avulsion','avulsion_incluse','autotransplantation','implant','greffe_osseuse','chir_paro','chir_periimplantaire','chir_preprothetique','chir_preortho','mpn','alveolite_suppuree','biopsie_os','chir_periapicale'].includes(m)){
@@ -549,7 +971,7 @@ R.decider = function(rep){
   if(at.has('immunosup')) alerte('info','Immunosuppresseur ou biothérapie','Risque infectieux à évaluer selon la molécule, au besoin avec le prescripteur.','HAS 2026');
   if(at.has('drepano')) alerte('moy','Drépanocytose majeure','Risque infectieux à évaluer avec le praticien référent.','HAS 2026');
   if(hron) alerte('forte','Haut risque d’ostéonécrose des mâchoires','Privilégier les actes non invasifs. Anesthésies intraligamentaire et ostéocentrale seulement en 2e intention.','HAS 2026');
-  if(['bp_benin','denosumab_ancien','radio_moins40','remission','prothese_art','diabete_eq'].some(x=>at.has(x)) && !ria && !hron) alerte('info','Assimilé à la population générale','Cet antécédent ne modifie pas l’indication d’antibiotique selon la HAS.','HAS 2026');
+  if(['bp_benin','denosumab_ancien','radio_moins40','remission','prothese_art','diabete_eq','p_vih.ok','p_asplenie.ancien','cortico_faible'].some(x=>at.has(x)) && !ria && !hron) alerte('info','Assimilé à la population générale','Cet antécédent ne modifie pas l’indication d’antibiotique selon la HAS.','HAS 2026');
   if(at.has('ir_severe') || at.has('ir_moderee')) alerte('moy','Insuffisance rénale','Antibioprophylaxie en prise unique : pas d’adaptation. Antibiothérapie prolongée ou curative : adapter au DFG. AINS à éviter.','HAS 2026');
   if(at.has('ih') || at.has('ih_severe')) alerte('moy','Insuffisance hépatique ou alcoolisme','Paracétamol : 2 g par jour au maximum, 8 h entre les prises.','RCP');
   if(qt && !al.has('peni')) alerte('info','QT long','Si une alternative à l’amoxicilline était nécessaire : éviter azithromycine et clarithromycine.','HAS 2024');
@@ -567,12 +989,90 @@ R.decider = function(rep){
     else alerte('moy','Maladie hémorragique constitutionnelle','Soins non chirurgicaux possibles ; anesthésie locale avec vasoconstricteur à privilégier. Avant tout geste sanglant, contacter le centre qui suit le patient. Pas d’aspirine ni d’AINS.','Med Buccale Chir Buccale 2005 ; PNDS Willebrand HAS 2021');
   }
   if(at.has('thrombopenie')) alerte(chirH?'forte':'moy','Thrombopénie ou thrombopathie', (chirH?'Demander une numération plaquettaire récente et l’avis de l’hématologue. Seuil habituellement retenu pour un geste invasif : au moins 50 G/L ; en dessous, à organiser avec l’hématologue. ':'')+'Hémostase locale systématique. Pas d’aspirine ni d’AINS.','Littérature (World Workshop on Oral Medicine 2019)');
-  if(at.has('hta')) alerte('moy','Hypertension artérielle sévère','Prendre la tension avant le soin. Adrénaline avec précaution : doses minimales, injection lente après aspiration.','RCP articaïne adrénalinée');
+  if(at.has('hta')) alerte('moy', rep.eq_hta==='nsp'?'Hypertension : équilibre inconnu':'Hypertension non équilibrée','Prendre la tension avant le soin : à 180/110 mmHg ou plus, reporter les soins non urgents. Adrénaline avec précaution : doses minimales, injection lente après aspiration.','RCP articaïne adrénalinée');
   if(at.has('coronarien')) alerte('moy','Insuffisance coronarienne','Adrénaline avec précaution : doses minimales, injection lente après aspiration. Séances courtes, trinitrine du patient à portée de main.','RCP articaïne adrénalinée');
   if(at.has('rythme')) alerte('moy','Trouble du rythme ou de la conduction','Adrénaline avec précaution. Trouble de la conduction auriculo-ventriculaire sévère non appareillé : articaïne contre-indiquée.','RCP articaïne adrénalinée');
   if(at.has('porphyrie')) alerte('forte','Porphyrie aiguë intermittente','Articaïne contre-indiquée : vérifier le RCP de l’anesthésique utilisé.','RCP articaïne adrénalinée');
-  if(at.has('epilepsie')) alerte('moy','Épilepsie','Épilepsie non contrôlée par un traitement : articaïne et tramadol contre-indiqués. Néfopam contre-indiqué (antécédent de convulsions).','RCP');
+  if(at.has('epilepsie')){
+    const ne = at.has('epi_ne');
+    alerte(ne?'forte':'moy', ne ? (rep.eq_epi==='nsp'?'Épilepsie : équilibre inconnu':'Épilepsie non équilibrée') : 'Épilepsie', (ne?'Reporter les soins non urgents si les crises ne sont pas contrôlées. ':'')+'Épilepsie non contrôlée par un traitement : articaïne et tramadol contre-indiqués. Néfopam contre-indiqué (antécédent de convulsions).','RCP');
+  }
   if(at.has('glaucome') || at.has('prostate')) alerte('info', at.has('glaucome')?'Glaucome à angle fermé':'Troubles urétro-prostatiques','Néfopam contre-indiqué (effets atropiniques).','RCP');
+
+  /* ---- 4 ter. Autres antécédents, chirurgies et traitements ---- */
+  const noms = t => [...(D.tags.get(t)||[])].join(', ');
+  const auto = ['mici','pr','spa','lupus','sjogren','sclerodermie','psoriasis','behcet','vascularite','sep','bulleuse'];
+  const T2 = [
+    ['cong_nsp','moy','Cardiopathie congénitale : type à préciser','Demander au cardiologue si elle relève du haut risque d’endocardite (cyanogène, réparée avec du matériel depuis moins de 6 mois, shunt ou fuite résiduels) avant tout acte invasif.','HAS 2024'],
+    ['pacemaker','info','Stimulateur ou défibrillateur','Éviter le bistouri électrique monopolaire.',''],
+    ['hta_eq','info','Hypertension équilibrée','Prendre la tension en début de séance. Adrénaline utilisable, injection lente après aspiration.',''],
+    ['p_coro.stent_recent','forte','Stent coronaire de moins de 12 mois','Bithérapie antiplaquettaire probable : ne jamais l’interrompre sans l’avis du cardiologue (risque de thrombose de stent). Soins non urgents à discuter avec lui. Le stent ne crée pas de risque d’endocardite : pas d’antibioprophylaxie pour cette raison.','SFCO 2015 ; HAS 2024'],
+    ['p_coro.stent_ancien','info','Stent coronaire','Il ne crée pas de risque d’endocardite : pas d’antibioprophylaxie pour cette raison. Ne pas arrêter l’antiplaquettaire.','HAS 2024 ; SFCO 2015'],
+    ['p_coro.pontage','info','Pontage coronarien','Il ne crée pas de risque d’endocardite : pas d’antibioprophylaxie pour cette raison.','HAS 2024'],
+    ['p_coro.idm_recent','forte','Infarctus récent ou angor instable','Reporter les soins non urgents. En urgence : geste minimal, après avis du cardiologue, idéalement en milieu hospitalier. Trinitrine à portée de main.',''],
+    [()=>at.has('p_art.prothese_vasc')||at.has('p_art.endoprothese'),'info','Prothèse ou pontage vasculaire','Ne fait pas partie des situations à risque d’endocardite : pas d’antibioprophylaxie pour cette raison.','HAS 2024'],
+    ['thrombose','info','Phlébite ou embolie pulmonaire','Souvent sous anticoagulant : à cocher dans les traitements.',''],
+    ['avc','info','AVC ou AIT','Souvent sous antiplaquettaire ou anticoagulant. Après un AVC récent, reporter les soins non urgents, en lien avec le neurologue.',''],
+    ['diabete_nsp','moy','Diabète : équilibre inconnu','Demander une HbA1c de moins de 3 mois ou contacter le médecin traitant : 9 % ou plus = risque infectieux augmenté.','HAS 2026'],
+    [()=>at.has('dt1')||D.tags.has('insuline')||D.tags.has('sulfamide')||D.tags.has('repaglinide'),'info','Risque d’hypoglycémie','Rendez-vous après un repas, sans sauter la prise alimentaire ; sucre à portée de main.',''],
+    [()=>D.tags.has('gliflozine'),'info','Gliflozine ('+noms('gliflozine')+')','Risque d’acidocétose en cas de jeûne prolongé ou de chirurgie lourde : ne pas laisser le patient à jeun.','RCP'],
+    ['hypothyro_ne','moy','Hypothyroïdie non équilibrée','Reporter les soins non urgents jusqu’à l’équilibre. Prudence avec les sédatifs et les opioïdes.',''],
+    ['hyperthyro_ne','moy','Hyperthyroïdie non équilibrée','Reporter les soins non urgents. Adrénaline à éviter ou à doses minimales (troubles du rythme).',''],
+    [()=>D.tags.has('antithyro'),'moy','Antithyroïdien de synthèse ('+noms('antithyro')+')','Fièvre, angine ou ulcérations buccales : NFS en urgence (agranulocytose).','RCP'],
+    [()=>at.has('surrenal')||at.has('cortico')||D.tags.has('hydrocortisone'),'moy','Risque d’insuffisance surrénale aiguë','Insuffisance surrénalienne ou corticothérapie prolongée : un geste stressant ou chirurgical peut la déclencher. Adapter la dose de corticoïde avec le médecin (souvent augmentée le jour du geste). Séances courtes, le matin.',''],
+    ['mici','info','MICI','Aphtes et lésions granulomateuses possibles (maladie de Crohn). AINS à éviter (risque de poussée).','RCP ibuprofène'],
+    ['pr','info','Polyarthrite rhumatoïde','Atteinte possible de l’ATM et des mains : hygiène orale plus difficile, brosse électrique utile.',''],
+    ['spa','info','Spondyloarthrite','Raideur cervicale : installation adaptée au fauteuil.',''],
+    ['lupus','info','Lupus','Atteinte rénale, thrombopénie ou syndrome des antiphospholipides possibles : demander le dernier bilan.',''],
+    ['sjogren','moy','Syndrome de Gougerot-Sjögren','Sécheresse buccale : risque carieux et candidosique élevé. Fluor, substituts salivaires, suivi rapproché.',''],
+    ['sclerodermie','info','Sclérodermie','Ouverture buccale réduite : séances courtes, matériel adapté.',''],
+    ['behcet','info','Maladie de Behçet','Aphtose buccale récidivante. Souvent sous colchicine : à préciser dans les traitements (interaction avec les macrolides).',''],
+    ['bulleuse','info','Maladie bulleuse','Muqueuse fragile : gestes doux, éviter les frottements. Souvent sous corticoïdes.',''],
+    ['lichen','info','Lichen plan buccal','Surveillance régulière : biopsie si une lésion change d’aspect.',''],
+    ['celiaque','info','Maladie cœliaque','Défauts de l’émail et aphtes fréquents.',''],
+    [()=>auto.some(x=>at.has(x)) && !['immunosup','cortico','cortico_faible','cortico_nsp'].some(x=>at.has(x)),'info','Maladie inflammatoire ou auto-immune','Le risque infectieux dépend du traitement : immunosuppresseur, biothérapie ou corticoïdes sont à cocher à la question des traitements.','HAS 2026'],
+    ['anemie','info','Anémie','Glossite, perlèche, aphtes et retard de cicatrisation possibles. Anémie sévère : bilan avant une chirurgie.',''],
+    ['vih_nsp','moy','VIH : CD4 inconnus','Demander le dernier bilan : moins de 200 CD4/mm³ = risque infectieux augmenté.','HAS 2026'],
+    ['asplenie_nsp','moy','Asplénie : date inconnue','Moins de 5 ans = risque infectieux augmenté : le demander.','HAS 2026'],
+    ['hepatite','info','Hépatite virale','Précautions standard. Si le foie est atteint : voir l’insuffisance hépatique (thrombopénie, troubles de la coagulation possibles).',''],
+    ['p_tuberc.active','forte','Tuberculose active','Reporter les soins non urgents jusqu’à la fin de la contagiosité (avis du médecin). En urgence : masque FFP2, limiter les aérosols.',''],
+    ['p_k_type.vads','moy','Cancer des voies aérodigestives supérieures','Rechercher une radiothérapie cervico-faciale et la dose reçue sur les mâchoires (question des traitements).','HAS 2026'],
+    [()=>['p_k_type.myelome','p_k_type.sein','p_k_type.prostate'].some(x=>at.has(x)) && !['bisphos','denosumab_c'].some(x=>at.has(x)),'moy','Métastases osseuses fréquentes','Rechercher un bisphosphonate ou du dénosumab (risque d’ostéonécrose).','HAS 2026'],
+    [()=>at.has('p_k_type.leucemie')||at.has('p_k_type.lymphome'),'moy','Hémopathie maligne','Demander une NFS récente (neutrophiles, plaquettes) : risque infectieux et hémorragique.',''],
+    ['onm_atcd','forte','Antécédent d’ostéonécrose des mâchoires','Avis du service qui l’a prise en charge avant tout geste invasif.',''],
+    ['dialyse','moy','Dialyse','Soins le lendemain d’une séance (héparine pendant la dialyse). Ne pas prendre la tension ni piquer sur le bras de la fistule.',''],
+    ['rgo','info','Reflux gastro-œsophagien','Érosions dentaires possibles, surtout sur les faces palatines.',''],
+    ['bpco','info','BPCO ou insuffisance respiratoire','Position semi-assise, séances courtes. Éviter les sédatifs (benzodiazépines) et les opioïdes.',''],
+    ['saos','info','Apnée du sommeil','Éviter les sédatifs et les opioïdes.',''],
+    ['parkinson','info','Maladie de Parkinson','Rendez-vous environ 1 h après la prise du traitement. Se relever lentement (hypotension orthostatique).',''],
+    ['sep','info','Sclérose en plaques','Fatigue : séances courtes, plutôt le matin. Névralgie du trijumeau possible.',''],
+    ['demence','info','Troubles cognitifs','Associer l’aidant au consentement et aux consignes ; consignes écrites ; hygiène orale à superviser.',''],
+    ['p_psy.anxiete','info','Phobie des soins','Séances courtes, expliquer chaque étape ; sédation consciente (MEOPA) si besoin.',''],
+    ['p_psy.tca','info','Trouble du comportement alimentaire','Érosions dentaires possibles (vomissements) : fluor, ne pas brosser juste après un vomissement.',''],
+    ['p_psy.addiction','info','Addiction','Opioïdes (codéine, tramadol) à éviter : paracétamol et AINS en premier.',''],
+    ['handicap','info','Handicap ou trouble du neurodéveloppement','Adapter la communication et la durée des séances. Trisomie 21 : rechercher une cardiopathie congénitale ; parodontite précoce fréquente.',''],
+    [()=>(at.has('osteoporose')||at.has('paget')) && !['bisphos','denosumab_c','osteo_autre'].some(x=>at.has(x)),'info','Ostéoporose ou Paget','Le risque d’ostéonécrose dépend du traitement (bisphosphonate et sa durée, dénosumab et sa dernière injection) : coche-le dans les traitements.','HAS 2026'],
+    ['tabac','info','Tabagisme','Risque accru d’alvéolite, de retard de cicatrisation et d’échec implantaire : conseiller l’arrêt, au moins autour du geste.',''],
+    ['bp_nsp','moy','Bisphosphonate : indication ou durée inconnue','Considéré à haut risque d’ostéonécrose par prudence : demander l’indication et la durée cumulée.','HAS 2026'],
+    ['deno_nsp','moy','Dénosumab : dernière injection inconnue','Considéré à haut risque d’ostéonécrose par prudence : demander la date de la dernière injection.','HAS 2026'],
+    [()=>D.tags.has('romosozumab'),'moy','Romosozumab (Evenity)','Des ostéonécroses des mâchoires sont décrites : gestes les moins invasifs.','RCP Evenity'],
+    ['radio_nsp','moy','Radiothérapie : dose inconnue','Considérée à 40 Gy ou plus par prudence : demander la dosimétrie au radiothérapeute.','HAS 2026'],
+    ['radio_autre','info','Radiothérapie hors tête et cou','Pas de risque d’ostéoradionécrose des mâchoires.','HAS 2026'],
+    ['p_radio_q.en_cours','forte','Radiothérapie en cours','Mucite, candidose et sécheresse fréquentes. Pas de geste invasif sans l’avis du radiothérapeute ; gouttières fluorées.',''],
+    ['chimio_nsp','moy','Chimiothérapie : aplasiante ?','Demander à l’oncologue si elle est aplasiante et la date de la dernière NFS.','HAS 2026'],
+    ['chimio_na','info','Chimiothérapie non aplasiante','Demander la date de la dernière NFS avant un geste invasif.',''],
+    ['chimio_finie','info','Chimiothérapie terminée','Si l’arrêt est récent, vérifier la récupération sur une NFS.',''],
+    [()=>(D.tags.has('hormono_k')||D.tags.has('tamoxifene')) && !['bisphos','denosumab_c'].some(x=>at.has(x)),'info','Hormonothérapie du cancer','Souvent associée à un bisphosphonate ou au dénosumab : le demander.',''],
+    ['cortico_nsp','moy','Corticoïdes : dose inconnue','Demander la dose et la durée : 10 mg/j ou plus depuis plus de 2 semaines = risque infectieux augmenté.','HAS 2026'],
+    [()=>D.tags.has('cortico_inh'),'info','Corticoïdes inhalés','Candidose buccale possible : rincer la bouche après chaque inhalation.',''],
+    [()=>D.tags.has('respi'),'info','Traitement respiratoire','Ventoline du patient à portée de main pendant le soin.',''],
+    [()=>D.tags.has('angor') && !at.has('coronarien'),'moy','Angor','Trinitrine du patient à portée de main. Adrénaline avec précaution : doses minimales, aspiration avant injection.','RCP articaïne adrénalinée'],
+    [()=>D.tags.has('bb_ns'),'moy','Bêtabloquant non cardiosélectif ('+noms('bb_ns')+')','Avec l’adrénaline : poussée hypertensive et bradycardie possibles. Doses minimales, injection lente après aspiration.','RCP articaïne adrénalinée'],
+    [()=>D.tags.has('valproate'),'moy','Valproate','Thrombopénie et troubles de l’hémostase possibles : plaquettes et bilan d’hémostase avant une chirurgie.','RCP Dépakine'],
+    [()=>D.tags.has('hyperplasie'),'info','Accroissement gingival possible','Avec '+noms('hyperplasie')+' : contrôle de plaque strict, détartrages rapprochés.',''],
+    [()=>D.tags.has('xerostomie'),'info','Sécheresse buccale probable','Avec '+noms('xerostomie')+' : risque carieux et candidosique accru. Fluor, hydratation, substituts salivaires.',''],
+  ];
+  T2.forEach(([c,n,t,d,s])=>{ if(typeof c==='function' ? c() : at.has(c)) alerte(n,t,d,s); });
 
   /* ---- 5. Antithrombotiques [SFCO 2015] ---- */
   const chir = !!M.chir;
@@ -589,7 +1089,38 @@ R.decider = function(rep){
     alerte('info','Organisation','Intervenir le matin et en début de semaine, de préférence par secteur. Patient joignable en cas de saignement, hôpital à moins d’une heure.','SFCO 2015');
     if(tt.has('aod')||tt.has('avk')) alerte('info','Cotation','Supplément YYYY614 (20 €) si le patient est en ALD et traité par AOD ou AVK, une fois par séance.','CCAM V84');
   }
-  if(tt.has('mtx') && O.lignes.some(l=>/Amoxicilline/.test(l.med))) alerte('moy','Méthotrexate et amoxicilline','Interaction : risque de toxicité du méthotrexate. Avis du prescripteur.','RCP');
+
+  /* ---- 5 bis. Interactions de l'ordonnance avec son traitement [thésaurus ANSM] ---- */
+  const NIVN = {CI:'forte', ASDEC:'forte', PE:'moy', APEC:'info'};
+  const NIVT = {CI:'contre-indiqué', ASDEC:'déconseillé', PE:'précaution d’emploi', APEC:'à prendre en compte'};
+  const idsLigne = l => { const s = new Set((typeof window!=='undefined' && window.MEDS) ? window.MEDS.idsDentaires(l.med, []) : []); if(l.id==='para') s.add('para'); if(l.id==='ibu') s.add('ibu'); return [...s]; };
+  const vusTxt = new Set(), hypos = [];
+  const court = med => med.replace(/\s*\(.*?\)/g,'').replace(/ \d.*$/,'');
+  const traiter = (nom, ids) => {
+    const L = ids.flatMap(id=>inter(id).filter(x=>!(x.tags.includes('avk') && id!=='para'))); // INR : déjà dans l'alerte AVK
+    const reel = L.filter(x=>!x.hypo && !vusTxt.has(x.txt));
+    reel.forEach(x=>vusTxt.add(x.txt));
+    L.filter(x=>x.hypo && !vusTxt.has(x.hypo+x.txt)).forEach(x=>{ vusTxt.add(x.hypo+x.txt);
+      const effet = x.txt.includes(' : ') ? x.txt.slice(x.txt.indexOf(' : ')+3) : x.txt;
+      const qui = x.meds.length<=3 ? x.meds.join(' ou ').toLowerCase() : x.txt.split(' : ')[0].toLowerCase();
+      hypos.push(`${x.hypo} : si ${qui}, ${effet.charAt(0).toLowerCase()+effet.slice(1).replace(/\.$/,'')} (${nom.toLowerCase()} : ${NIVT[x.niv]}).`); });
+    if(!reel.length) return;
+    const pire = reel.reduce((a,x)=>RANG[x.niv]>RANG[a]?x.niv:a, 'APEC');
+    alerte(NIVN[pire], `${nom} et son traitement`, reel.map(x=>`${x.txt.replace(/\.$/,'')} (${NIVT[x.niv]}).`).join(' '), TH);
+  };
+  O.lignes.forEach(l=>traiter(court(l.med), idsLigne(l)));
+  const anesth = !actCI && !['candidose','herpes_primo','herpes_recurrent','aphte','lesion_persistante','sinusite','sialadenite'].includes(m);
+  if(anesth) traiter('L’anesthésie locale', ['adre','lido']);
+  if(anesth && D.hypo.some(h=>h.classe==='Bêtabloquants')) hypos.push('Bêtabloquants : si propranolol, carvédilol, nadolol ou sotalol (non cardiosélectifs), poussée hypertensive et bradycardie possibles avec l’adrénaline.');
+  if(hypos.length) alerte('moy','Précise la molécule', hypos.join(' '), TH);
+
+  /* ---- 5 ter. Réponses « ne sait pas » qui changeraient l'indication [HAS 2026] ---- */
+  const doutes = Object.keys(R.A_VERIFIER).filter(k=>at.has(k));
+  if(doutes.length && !ria && !actCI){
+    const si = 'Si '+doutes.map(k=>R.A_VERIFIER[k]).join(', ou si ');
+    if(T && !O.prophy && T.p[1]!=='non') alerte('moy','À vérifier avant le geste', `${si}, le patient est à risque infectieux augmenté : l’antibioprophylaxie est alors ${T.p[1]==='cas'?'à discuter au cas par cas':'recommandée'} pour cet acte.`,'HAS 2026');
+    else if(['abces','abces_paro','alveolite_suppuree','periimplantite','mpn'].includes(m) && !O.atb) alerte('moy','À vérifier', `${si}, le patient est à risque infectieux augmenté : un antibiotique devient alors recommandé en complément du geste.`,'HAS 2026');
+  }
 
   /* ---- 6. Grossesse, allaitement, enfant ---- */
   if(enceinte) alerte('info','Grossesse','Amoxicilline, clarithromycine, azithromycine et métronidazole sont utilisables quel que soit le terme (vérifier sur lecrat.fr). Paracétamol en 1re intention ; AINS contre-indiqués à partir du 6e mois.','HAS 2026');
@@ -655,49 +1186,96 @@ R.analyserQuestion = function(texte){
   const rep = {allergies:[], atcd:[], ttt:[], extension:[]};
   for(const [v,rx] of R.MOTS_MOTIFS){ if(rx.test(t)){ rep.motif=v; break; } }
   if(rep.motif==='alveolite_seche' && !/seche/.test(t)) rep.alvAmbigu=true;
-  const aapNoms = new Set((t.match(/kardegic|aspirine|aspegic|resitune|plavix|clopidogrel|brilique|ticagrelor|efient|prasugrel/g)||[]).map(x=>({aspegic:'aspirine',resitune:'aspirine',kardegic:'aspirine',plavix:'clopidogrel',brilique:'ticagrelor',efient:'prasugrel'}[x]||x)));
-  if(/eliquis|apixaban|xarelto|rivaroxaban|pradaxa|dabigatran|lixiana|edoxaban|\baod\b/.test(t)) rep.ttt.push('aod');
-  if(/coumadine|warfarine|previscan|fluindione|sintrom|acenocoumarol|\bavk\b/.test(t)) rep.ttt.push('avk');
-  if(/lovenox|enoxaparine|innohep|tinzaparine|fragmine|dalteparine|heparine|\bhbpm\b/.test(t)) rep.ttt.push('heparine');
-  if(aapNoms.size>=2 || /bitherapie|double anti/.test(t)) rep.ttt.push('aap2');
-  else if(aapNoms.size===1 || /antiagregant|antiplaquettaire|\baap\b/.test(t)) rep.ttt.push('aap');
-  if(/gliclazide|diamicron|glimepiride|amarel|glibenclamide|daonil/.test(t)) rep.ttt.push('sulfamide');
-  if(/methotrexate|novatrex|metoject|imeth/.test(t)) rep.ttt.push('mtx');
-  if(/zometa|zoledron|xgeva|(bisphosph|\bbp\b).{0,30}(cancer|metast|myelome)|(cancer|metast|myelome).{0,30}bisphosph/.test(t)) rep.atcd.push('bp_malin');
-  else if(/prolia|denosumab/.test(t)) rep.atcd.push(/plus de 6 mois|> ?6 mois/.test(t)?'denosumab_ancien':'denosumab');
-  else if(/bisphosph|fosamax|alendron|actonel|risedron|bonviva|ibandron|aclasta/.test(t)) rep.atcd.push(/([5-9]|\d\d) ans|plus de 5 ans|depuis longtemps/.test(t)?'bp_benin5':'bp_benin');
-  if(/avastin|bevacizumab|sunitinib|sutent|anti-?angio/.test(t)) rep.atcd.push('antiangio');
-  if(/radioth|irradi/.test(t)){ const gy=t.match(/(\d+)\s*gy/); rep.atcd.push(gy && Number(gy[1])<40 ? 'radio_moins40' : 'radio40'); }
-  if(/prothese valvul|valve mecanique|valve biologique|\btavi\b|endocardite|cyanogene|assistance ventriculaire/.test(t)) rep.atcd.push('ei_haut');
-  else if(/valvulopathie|souffle|pacemaker|stimulateur|defibrillateur|retrecissement aortique|insuffisance mitrale|cardiomyopathie/.test(t)) rep.atcd.push('ei_inter');
-  if(/diabet/.test(t)) rep.atcd.push(/desequilibr|mal equilibr|hba1c\s*(de\s*|a\s*)?(9|1\d)/.test(t)?'diabete':'diabete_eq');
-  if(/chimio|aplasi/.test(t)) rep.atcd.push('chimio');
-  if(/neutropen/.test(t)) rep.atcd.push('neutropenie');
-  if(/greff(e|ee)\b.{0,15}(rein|foie|coeur|poumon|organe|moelle)|transplant/.test(t)) rep.atcd.push('greffe');
-  if(/cortico|prednisolone|prednisone|solupred|cortancyl/.test(t)) rep.atcd.push('cortico');
-  if(/biotherap|immunosupp|immunomodul|humira|adalimumab|enbrel|remicade|infliximab/.test(t)) rep.atcd.push('immunosup');
-  if(/\bvih\b|\bsida\b/.test(t)) rep.atcd.push('vih');
-  if(/splenectom|asplen/.test(t)) rep.atcd.push('asplenie');
-  if(/dialys/.test(t)) rep.atcd.push('ir_severe'); else if(/insuffisan\w* renal/.test(t)) rep.atcd.push(/sever|terminal|dfg ?< ?30/.test(t)?'ir_severe':'ir_moderee');
-  if(/cirrhose|insuffisan\w* hepat/.test(t)) rep.atcd.push(/sever|cirrhose/.test(t)?'ih_severe':'ih'); else if(/alcool/.test(t)) rep.atcd.push('ih');
-  if(/ulcere|hemorragie digest/.test(t)) rep.atcd.push('ulcere');
-  if(/asthm/.test(t)) rep.atcd.push('asthme');
-  if(/drepanocyt/.test(t)) rep.atcd.push('drepano');
-  if(/qt long/.test(t)) rep.atcd.push('qt');
-  if(/hemophil/.test(t)) rep.atcd.push('hemophilie');
-  if(/willebrand/.test(t)) rep.atcd.push('willebrand');
-  if(/deficit en facteur|deficit facteur/.test(t)) rep.atcd.push('deficit_facteur');
-  if(/thrombopeni|thrombopathi|plaquettes? bass|\bpti\b/.test(t)) rep.atcd.push('thrombopenie');
-  if(/epilep|convuls/.test(t)) rep.atcd.push('epilepsie');
-  if(/glaucome/.test(t)) rep.atcd.push('glaucome');
-  if(/prostat|retention urinaire/.test(t)) rep.atcd.push('prostate');
-  if(/porphyri/.test(t)) rep.atcd.push('porphyrie');
-  if(/angor|infarctus|coronar/.test(t)) rep.atcd.push('coronarien');
-  if(/\bhta\b|hypertension/.test(t)) rep.atcd.push('hta');
-  if(/arythmie|fibrillation|trouble du rythme|bloc auriculo/.test(t)) rep.atcd.push('rythme');
-  if(/insuffisan\w* cardiaque/.test(t)) rep.atcd.push('insuf_card');
-  if(/remission/.test(t)) rep.atcd.push('remission'); else if(/cancer|tumeur|lymphome|leucemie/.test(t)) rep.atcd.push('malin');
-  if(/prothese (de hanche|de genou|articulaire)/.test(t)) rep.atcd.push('prothese_art');
+  const ajT = (cl, k, v) => { if(!rep.ttt.includes(cl)) rep.ttt.push(cl); if(k && v){ rep[k] = rep[k]||[]; if(!rep[k].includes(v)) rep[k].push(v); } };
+  const ajA = (v, k, val) => { if(!rep.atcd.includes(v)) rep.atcd.push(v); if(k && val!=null && rep[k]==null) rep[k] = val; };
+  const hyp = rep._hyp = [];
+  // Antithrombotiques
+  const aapNoms = new Set((t.match(/kardegic|aspirine|aspegic|resitune|plavix|clopidogrel|brilique|ticagrelor|efient|prasugrel|duoplavin/g)||[]).map(x=>({aspegic:'aspirine',resitune:'aspirine',kardegic:'aspirine',plavix:'clopidogrel',brilique:'ticagrelor',efient:'prasugrel'}[x]||x)));
+  if(/eliquis|apixaban|xarelto|rivaroxaban|pradaxa|dabigatran|lixiana|edoxaban|\baod\b/.test(t)) ajT('aod');
+  if(/coumadine|warfarine|previscan|fluindione|sintrom|acenocoumarol|\bavk\b/.test(t)) ajT('avk');
+  if(/lovenox|enoxaparine|innohep|tinzaparine|fragmine|dalteparine|heparine|\bhbpm\b|arixtra/.test(t)) ajT('heparine');
+  if(aapNoms.size || /bitherapie|double anti|antiagregant|antiplaquettaire|\baap\b/.test(t)){
+    ajT('antiplaq'); aapNoms.forEach(n=>ajT('antiplaq','m_aap',n));
+    rep.p_aap = (aapNoms.size>=2 || aapNoms.has('duoplavin') || /bitherapie|double anti/.test(t)) ? 'bi' : 'mono';
+  }
+  // Molécules et spécialités citées (classes que le dentiste ne prescrit pas lui-même)
+  const PAS_AUTO = ['antiplaq','avk','aod','heparine','ains_c','opioides','cortico_c','antihist'];
+  for(const it of plat(R.TTT)){ if(PAS_AUTO.includes(it.v)) continue;
+    for(const b of (it.sous||[])) if(b.mol) for(const so of b.options){
+      const mots = [N(so.t).replace(/\(.*?\)/g,'').trim(), ...String(so.d).split(/[,·]/).flatMap(x=>x.trim().split(/\s+/)).filter(w=>/^[A-ZÀ-Ý]/.test(w) && w.length>=5).map(w=>N(w))];
+      if(mots.some(w=>w.length>=5 && new RegExp('(^|[^a-z])'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?![a-z])').test(t))) ajT(it.v, b.k, so.v);
+    }
+  }
+  if(/methotrexate|novatrex|metoject|imeth/.test(t)) ajT('mtx');
+  // Os : anti-résorbeurs
+  if(/xgeva/.test(t)){ ajT('denosumab_c'); rep.p_deno='malin'; }
+  else if(/zometa|(bisphosph|\bbp\b).{0,30}(cancer|metast|myelome)|(cancer|metast|myelome).{0,30}bisphosph|zoledron.{0,20}4 ?mg/.test(t)){ ajT('bisphos'); rep.p_bp='malin'; }
+  else if(/prolia|denosumab/.test(t)){ ajT('denosumab_c'); rep.p_deno = /plus de 6 mois|> ?6 mois/.test(t) ? 'ancien' : /moins de 6 mois|< ?6 mois/.test(t) ? 'recent' : 'nsp'; }
+  else if(/bisphosph|fosamax|alendron|actonel|risedron|bonviva|ibandron|aclasta|zoledron/.test(t)){ ajT('bisphos'); if(/([5-9]|\d\d) ans|plus de 5 ans|depuis longtemps/.test(t)) rep.p_bp='benin5'; else { rep.p_bp='benin'; hyp.push('bisphosphonate pour ostéoporose depuis moins de 5 ans'); } }
+  if(/avastin|bevacizumab|sunitinib|sutent|anti-?angio/.test(t)) ajT('antiangio');
+  if(/radioth|irradi/.test(t)){ const gy=t.match(/(\d+)\s*gy/); ajT('radiotherapie'); rep.p_radio = gy ? (Number(gy[1])<40 ? 'cf_moins40' : 'cf40') : 'cf_nsp'; }
+  // Cœur
+  if(/prothese valvul|valve mecanique|valve biologique|\btavi\b|remplacement valvulaire/.test(t)) ajA('valve_prot');
+  if(/endocardite/.test(t)) ajA('ei_atcd');
+  if(/cyanogene/.test(t)) ajA('cardio_cong','p_cong','cyano');
+  if(/assistance ventriculaire/.test(t)) ajA('assist_vent');
+  if(/pacemaker|pace-maker|stimulateur|defibrillateur/.test(t)) ajA('pacemaker');
+  if(/cardiomyopathie/.test(t)) ajA('cmh');
+  if(/valvulopathie|souffle|retrecissement aortique|insuffisance (mitrale|aortique)|bicuspid/.test(t)) ajA('valvulo');
+  if(/\bhta\b|hypertension/.test(t)) ajA('hypertension','eq_hta', /desequilibr|mal equilibr|non controle|sever/.test(t) ? 'non_eq' : /equilibr|controle/.test(t) ? 'eq' : 'nsp');
+  if(/angor|infarctus|coronar|stent|pontage/.test(t)){ ajA('coronarien'); const pc=[];
+    if(/stent/.test(t)){ if(/stent.{0,40}(moins d.un an|moins de (12|6) mois|recent|\b[1-9] mois|\b1[01] mois)/.test(t)) pc.push('stent_recent'); else { pc.push('stent_ancien'); hyp.push('stent posé il y a plus de 12 mois'); } }
+    if(/pontage/.test(t)) pc.push('pontage'); if(/infarctus recent|angor instable/.test(t)) pc.push('idm_recent');
+    if(pc.length) rep.p_coro = pc; }
+  if(/arythmie|fibrillation|trouble du rythme|bloc auriculo/.test(t)) ajA('rythme');
+  if(/insuffisan\w* cardiaque/.test(t)) ajA('insuf_card');
+  if(/phlebite|embolie pulmonaire|thrombose veineuse/.test(t)) ajA('thrombose');
+  if(/\bavc\b|\bait\b|accident vasculaire/.test(t)) ajA('avc');
+  if(/qt long/.test(t)) ajA('qt');
+  // Diabète et hormones
+  if(/diabet/.test(t)) ajA(/type 1|\bdt1\b|insulinodependant/.test(t) ? 'dt1' : 'dt2', /type 1|\bdt1\b|insulinodependant/.test(t) ? 'eq_dt1' : 'eq_dt2',
+    /desequilibr|mal equilibr|hba1c\s*(de\s*|a\s*)?(9|1\d)/.test(t) ? 'non_eq' : /equilibr|hba1c\s*(de\s*|a\s*)?[5-8]\b/.test(t) ? 'eq' : 'nsp');
+  if(/insuline/.test(t)) ajT('insuline');
+  if(/addison|insuffisance surrenal/.test(t)) ajA('surrenal');
+  if(/bypass|sleeve|chirurgie bariatrique/.test(t)) ajA('obesite','p_bari', /bypass/.test(t)?'bypass':/sleeve/.test(t)?'sleeve':null);
+  // Immunité, cancer
+  if(/chimio|aplasi/.test(t)){ ajT('chimio_t'); rep.p_chimio = /aplasi/.test(t) ? 'aplasiante' : /termine|fini|ancienne/.test(t) ? 'terminee' : 'nsp'; }
+  if(/neutropen/.test(t)) ajA('neutropenie');
+  if(/greff(e|ee)\b.{0,15}(rein|foie|coeur|poumon|organe|moelle)|transplant/.test(t)) ajA('greffe');
+  if(/cortico|prednisolone|prednisone|solupred|cortancyl/.test(t) && !/cortico\w* inhal/.test(t)){ ajT('cortico_c'); rep.p_cortico = /(forte dose|long cours|au long|depuis (des|plusieurs) (mois|annees))/.test(t) ? 'fort' : 'nsp'; }
+  if(/biotherap|humira|adalimumab|enbrel|remicade|infliximab|anti-?tnf/.test(t)) ajT('biotherapie');
+  if(/immunosupp|immunomodul/.test(t)) ajT('immunosup');
+  if(/\bvih\b|\bsida\b/.test(t)) ajA('vih_p','p_vih', /cd4.{0,15}(<|inferieur|moins de|sous) ?200/.test(t) ? 'bas' : /cd4.{0,15}(>|superieur|plus de) ?200/.test(t) ? 'ok' : 'nsp');
+  if(/splenectom|asplen|rate (retiree|enlevee)/.test(t)) ajA('splenectomie','p_asplenie', /moins de [1-5] ans/.test(t) ? 'recent' : /plus de 5 ans/.test(t) ? 'ancien' : 'nsp');
+  if(/remission/.test(t)) ajA('cancer','p_k_etat','remission'); else if(/cancer|tumeur|lymphome|leucemie|myelome/.test(t)) ajA('cancer','p_k_etat','en_cours');
+  if(/osteonecrose/.test(t) && /(antecedent|deja eu|ancienne)/.test(t)) ajA('onm_atcd');
+  // Reins, foie, digestif
+  if(/dialys/.test(t)) ajA('ir','p_ir','dialyse'); else if(/insuffisan\w* renal/.test(t)) ajA('ir','p_ir', /sever|terminal|dfg ?< ?30/.test(t)?'severe':'moderee');
+  if(/cirrhose|insuffisan\w* hepat/.test(t)) ajA('hepatique','p_ih', /sever|cirrhose/.test(t)?'severe':'moderee');
+  if(/alcool/.test(t) && !/sans alcool/.test(t)) ajA('alcool');
+  if(/ulcere|hemorragie digest/.test(t)) ajA('ulcere');
+  if(/crohn|rectocolite|\bmici\b|\brch\b/.test(t)) ajA('mici','p_mici', /crohn/.test(t)?'crohn':/rectocolite|\brch\b/.test(t)?'rch':null);
+  // Inflammation, poumons, neurologie
+  if(/polyarthrite/.test(t)) ajA('pr');
+  if(/spondyl/.test(t)) ajA('spa');
+  if(/lupus/.test(t)) ajA('lupus');
+  if(/sjogren/.test(t)) ajA('sjogren');
+  if(/asthm/.test(t)) ajA('asthme');
+  if(/bpco|emphyseme pulm|bronchite chronique/.test(t)) ajA('bpco');
+  if(/drepanocyt/.test(t)) ajA('drepano');
+  if(/hemophil/.test(t)) ajA('hemophilie');
+  if(/willebrand/.test(t)) ajA('willebrand');
+  if(/deficit en facteur|deficit facteur/.test(t)) ajA('deficit_facteur');
+  if(/thrombopeni|thrombopathi|plaquettes? bass|\bpti\b/.test(t)) ajA('thrombopenie');
+  if(/epilep|convuls/.test(t)) ajA('epilepsie');
+  if(/parkinson/.test(t)) ajA('parkinson');
+  if(/sclerose en plaques/.test(t)) ajA('sep');
+  if(/alzheimer|demence/.test(t)) ajA('demence');
+  if(/glaucome/.test(t)) ajA('glaucome');
+  if(/prostat|retention urinaire/.test(t)) ajA('prostate');
+  if(/porphyri/.test(t)) ajA('porphyrie');
+  if(/tabac|fumeu|cigarette/.test(t)) ajA('tabac');
+  if(/prothese (de hanche|de genou|articulaire)/.test(t)) ajA('prothese_art');
   const al = (rx) => new RegExp('allerg\\w*.{0,30}('+rx+')').test(t) || new RegExp('('+rx+').{0,15}allerg').test(t);
   if(al('penicill|amox|augmentin|clamoxyl|betalactam|beta-lactam')) rep.allergies.push('peni');
   if(al('cephalo|betalactam|beta-lactam')) rep.allergies.push('cephalo');

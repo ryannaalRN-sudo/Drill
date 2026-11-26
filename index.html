@@ -326,6 +326,23 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .ordo-texte .ol span{display:block;color:var(--encre-2)}
 .q-rech{margin:14px 0 2px}
 .epingle .opt{border-style:dashed}
+/* précisions qui s'ouvrent sous une option cochée */
+.precis{margin:-4px 0 4px 16px;padding:10px 0 6px 14px;border-left:2px solid var(--lagon-pale);display:grid;gap:14px}
+.precis[hidden]{display:none}
+.bloc-t{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0 0 7px;font-family:var(--display);font-weight:700;font-size:.84rem;color:var(--encre-2)}
+.bloc-t .requis{font-family:var(--texte);font-size:.72rem;font-weight:700;color:var(--ambre);background:var(--ambre-pale);border-radius:999px;padding:2px 9px}
+.bloc-t .requis[hidden]{display:none}
+.puces{display:flex;flex-wrap:wrap;gap:8px}
+.puce{display:inline-flex;flex-direction:column;align-items:flex-start;text-align:left;max-width:100%;padding:8px 13px;border-radius:14px;background:var(--carte);border:1.5px solid var(--trait);font-size:.9rem;line-height:1.25;transition:border-color .15s, background .15s}
+.puce b{font-weight:700}
+.puce small{color:var(--encre-2);font-size:.76rem;margin-top:2px}
+.puce[aria-pressed="true"]{border-color:var(--lagon);background:var(--lagon-pale)}
+.puce[aria-pressed="true"] b::before{content:"✓\00a0";color:var(--lagon)}
+.bloc.grand .puces{display:grid}
+.bloc.grand .puce{width:100%;padding:11px 14px}
+.bloc.attire .requis{animation:attire .5s ease 2}
+@keyframes attire{50%{transform:scale(1.12)}}
+.btn.a-preciser{background:var(--ambre)}
 .choix .grp{display:grid;gap:10px}
 .choix .grp[hidden],.opt[hidden]{display:none}
 .ajout-med-zone{margin-top:16px;padding:14px;border-radius:var(--r-m);border:1.5px dashed var(--trait);background:var(--carte)}
@@ -624,8 +641,8 @@ function etapes(){
   L.push({id:'profil', titre:'Qui est le patient ?', aide:'Une seule réponse.', type:'un', options:[
     {v:'adulte',t:'Adulte',d:''},{v:'enfant',t:'Enfant',d:'Doses calculées au poids'},{v:'enceinte',t:'Femme enceinte',d:''},{v:'allaite',t:'Femme qui allaite',d:''}]});
   L.push({id:'allergies', titre:'Allergies connues ?', aide:'Plusieurs réponses possibles.', type:'multi', aucun:'aucune', options:RECO.ALLERGIES});
-  L.push({id:'atcd', titre:'Antécédents médicaux ?', aide:'Plusieurs réponses possibles. Chaque antécédent coché est pris en compte.', type:'multi', aucun:'aucun', groupes:RECO.ATCD});
-  L.push({id:'ttt', titre:'Traitements en cours ?', aide:'Antithrombotiques et médicaments qui interagissent.', type:'multi', aucun:'aucun', options:RECO.TTT});
+  L.push({id:'atcd', titre:'Antécédents médicaux et chirurgicaux ?', aide:'Plusieurs réponses possibles. Touche une pathologie : ses précisions s’ouvrent juste en dessous.', type:'multi', aucun:'aucun', groupes:RECO.ATCD});
+  L.push({id:'ttt', titre:'Traitements et thérapies en cours ?', aide:'Médicaments, chimiothérapie, radiothérapie, hormonothérapie… Touche une classe pour préciser la molécule.', type:'multi', aucun:'aucun', groupes:RECO.TTT});
   return L;
 }
 function etapeValide(e){
@@ -633,17 +650,88 @@ function etapeValide(e){
   if(e.type==='multi' ? !(v&&v.length) : !v) return false;
   if(e.id==='profil' && v==='enfant') return Number(r.poids)>0 && Number(r.age)>=0 && r.age!=='' && r.age!=null;
   if(e.id==='profil' && v==='enceinte') return !!r.terme;
+  if((e.id==='atcd' || e.id==='ttt') && RECO.manquants(r, e.id).length) return false;
   if(e.id==='ttt' && besoinRisqueHemo()) return !!r.risque_hemo;
   return true;
 }
+const CLASSES_AT = ['antiplaq','avk','aod','heparine'];
 function besoinRisqueHemo(){
   const r=P.rep, M=RECO.MOTIF[r.motif]||{};
-  return !!M.chir && (r.ttt||[]).some(x=>['aap','aap2','avk','aod','heparine'].includes(x));
+  return !!M.chir && (r.ttt||[]).some(x=>CLASSES_AT.includes(x));
+}
+/* Le choix du risque hémorragique s'ouvre sous le premier antithrombotique coché */
+function hoteRisque(){ return besoinRisqueHemo() ? (P.rep.ttt||[]).find(v=>CLASSES_AT.includes(v)) : null; }   // le premier coché le garde
+function blocsDe(o, e){
+  const b = [...(o.sous||[])];
+  if(e.id==='ttt' && hoteRisque()===o.v) b.unshift(RECO.BLOC_RISQUE);
+  return b;
+}
+function blocHTML(b){
+  const r = P.rep[b.k], vals = Array.isArray(r) ? r : (r ? [r] : []);
+  return `<div class="bloc${b.grand?' grand':''}" data-k="${b.k}" data-type="${b.type}"${b.requis?' data-requis="1"':''}>
+    <p class="bloc-t">${b.titre}${b.requis?`<span class="requis"${vals.length?' hidden':''}>À préciser</span>`:''}</p>
+    <div class="puces">${b.options.map(x=>`<button type="button" class="puce" data-pv="${x.v}" aria-pressed="${vals.includes(x.v)}"><b>${x.t}</b>${x.d?`<small>${x.d}</small>`:''}</button>`).join('')}</div></div>`;
+}
+function panneauHTML(o, e){
+  const b = blocsDe(o, e);
+  return b.length ? `<div class="precis" data-pour="${o.v}" data-sig="${b.map(x=>x.k).join(',')}">${b.map(blocHTML).join('')}</div>` : '';
+}
+const motsOption = o => [o.mots||'', ...(o.sous||[]).flatMap(b=>b.options.map(x=>x.t+' '+x.d))].join(' ').trim();
+/* Ouverture et fermeture animées des précisions */
+function deplier(p){
+  if(!MOTION || sansMouvement.matches) return;
+  const cs = getComputedStyle(p), h = p.scrollHeight;
+  p.style.overflow = 'hidden';
+  MOTION.animate(p, {height:[0, h+'px'], paddingTop:['0px', cs.paddingTop], paddingBottom:['0px', cs.paddingBottom], opacity:[0,1]}, {duration:.34, ease:[.22,1,.36,1]})
+    .finished.then(()=>{ ['height','paddingTop','paddingBottom','overflow','opacity'].forEach(k=>p.style[k]=''); }, ()=>{});
+  MOTION.animate(p.querySelectorAll('.bloc'), {opacity:[0,1], y:[-8,0]}, {duration:.32, delay:MOTION.stagger(.06, {startDelay:.05}), ease:[.22,1,.36,1]});
+}
+function replier(p){
+  p.dataset.ferme = '1';
+  if(!MOTION || sansMouvement.matches){ p.remove(); return; }
+  p.style.overflow = 'hidden';
+  MOTION.animate(p, {height:[p.offsetHeight+'px', '0px'], paddingTop:'0px', paddingBottom:'0px', opacity:0}, {duration:.22, ease:[.4,0,1,1]})
+    .finished.then(()=>p.remove(), ()=>p.remove());
+}
+/* Ouvre, ferme ou met à jour les précisions selon les options cochées */
+function majPanneaux(e){
+  app.querySelectorAll('.choix .opt[data-v]').forEach(btn=>{
+    const o = e.groupes ? e.groupes.flatMap(g=>g.items).find(x=>x.v===btn.dataset.v) : null;
+    let p = btn.nextElementSibling;
+    if(!(p && p.classList.contains('precis'))) p = null;
+    if(p && p.dataset.ferme){ p.remove(); p = null; }
+    const on = btn.getAttribute('aria-pressed')==='true';
+    const blocs = o && on && o.v!==e.aucun ? blocsDe(o, e) : [];
+    if(blocs.length){
+      const sig = blocs.map(x=>x.k).join(',');
+      if(!p){ btn.insertAdjacentHTML('afterend', panneauHTML(o, e)); p = btn.nextElementSibling; p.hidden = btn.hidden; deplier(p); }
+      else if(p.dataset.sig !== sig){ p.outerHTML = panneauHTML(o, e); }
+    } else if(p) replier(p);
+  });
+}
+/* Met à jour les puces et les mentions « À préciser » */
+function majBlocs(){
+  app.querySelectorAll('.precis .bloc').forEach(bl=>{
+    const r = P.rep[bl.dataset.k], vals = Array.isArray(r) ? r : (r ? [r] : []);
+    bl.querySelectorAll('.puce').forEach(pu=>pu.setAttribute('aria-pressed', vals.includes(pu.dataset.pv)));
+    const q = bl.querySelector('.requis'); if(q) q.hidden = !!vals.length;
+  });
+}
+/* Bouton Continuer : désactivé, ou orange s'il ne manque que des précisions */
+function majSuiv(e){
+  const b = $('#suiv'); if(!b) return;
+  const ok = etapeValide(e);
+  const manque = !ok && (e.id==='atcd' || e.id==='ttt') && (P.rep[e.id]||[]).length>0;
+  b.disabled = !ok && !manque;
+  b.classList.toggle('a-preciser', manque);
+  b.textContent = manque ? 'Précise les choix en orange' : b.dataset.label;
 }
 
 function optHTML(o, e, rep){
   const on = e.type==='multi' ? (rep||[]).includes(o.v) : rep===o.v;
-  return `<button class="opt ${e.type==='multi'?'multi':''}" data-v="${o.v}" aria-pressed="${on}"><span class="coche"></span><span><b>${o.t}</b>${o.d?`<small>${o.d}</small>`:''}</span></button>`;
+  const mots = (e.id==='atcd' || e.id==='ttt') ? motsOption(o) : '';
+  return `<button class="opt ${e.type==='multi'?'multi':''}" data-v="${o.v}" aria-pressed="${on}"${mots?` data-mots="${esc(mots)}"`:''}><span class="coche"></span><span><b>${o.t}</b>${o.d?`<small>${o.d}</small>`:''}</span></button>`
+    + (on && e.type==='multi' && o.v!==e.aucun && (e.id==='atcd' || e.id==='ttt') ? panneauHTML(o, e) : '');
 }
 const ICO_COCHE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>';
 const fracProgression = (n, i) => n>1 ? Math.min(1, i/(n-1)) : 1;
@@ -681,7 +769,6 @@ function vPrescri(){
   let extra='';
   if(e.id==='profil' && rep==='enfant') extra = `<div class="deux"><div class="champ"><label for="age">Âge (ans)</label><input id="age" inputmode="numeric" value="${esc(P.rep.age??'')}" placeholder="ex. 8"></div><div class="champ"><label for="poids">Poids (kg)</label><input id="poids" inputmode="decimal" value="${esc(P.rep.poids??'')}" placeholder="ex. 25"></div></div>`;
   if(e.id==='profil' && rep==='enceinte') extra = `<p class="groupe">Terme</p><div class="seg" data-k="terme">${[['avant','Avant le 6e mois'],['apres','6e mois ou plus (≥ 24 SA)']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${P.rep.terme===v}">${t}</button>`).join('')}</div>`;
-  if(e.id==='ttt' && besoinRisqueHemo()) extra = `<p class="groupe">Risque hémorragique de l’acte</p>${RECO.RISQUE_HEMO.map(o=>`<button class="opt" data-rh="${o.v}" aria-pressed="${P.rep.risque_hemo===o.v}"><span class="coche"></span><span><b>${o.t}</b><small>${o.d}</small></span></button>`).join('')}`;
 
   app.innerHTML = `<div class="vue-q">
     <header class="top">
@@ -694,12 +781,13 @@ function vPrescri(){
       ${P.i===0?bandeauFavoris():''}
       <h2>${e.titre}</h2><p class="sous">${e.aide}</p>
       ${e.id==='ttt'?`<button class="lien-scan" id="versScan">${ICO_SCAN}Scanner l’ordonnance du patient</button>`:''}
-      ${avecRecherche?`<div class="recherche q-rech">${ICO.loupe}<input id="filtreQ" type="search" placeholder="${e.id==='motif'?'Rechercher un acte ou une affection':e.id==='allergies'?'Rechercher une allergie':e.id==='atcd'?'Rechercher un antécédent':'Rechercher un traitement'}" value="${esc(P.filtre[e.id]||'')}" autocomplete="off"></div>`:''}
+      ${avecRecherche?`<div class="recherche q-rech">${ICO.loupe}<input id="filtreQ" type="search" placeholder="${e.id==='motif'?'Rechercher un acte ou une affection':e.id==='allergies'?'Rechercher une allergie':e.id==='atcd'?'Pathologie, chirurgie (ex. Crohn, stent)':'Médicament ou classe (ex. Eliquis, metformine)'}" value="${esc(P.filtre[e.id]||'')}" autocomplete="off"></div>`:''}
       <div class="choix">${corps}</div>
       <div class="choix" style="margin-top:6px">${extra}</div>
     </section>
   </div>
-  <div class="barre-action"><div class="in"><button class="btn" id="suiv" ${etapeValide(e)?'':'disabled'}>${P.i===L.length-1?'Voir la conduite à tenir':'Continuer'}</button></div></div>`;
+  <div class="barre-action"><div class="in"><button class="btn" id="suiv" data-label="${P.i===L.length-1?'Voir la conduite à tenir':'Continuer'}">${P.i===L.length-1?'Voir la conduite à tenir':'Continuer'}</button></div></div>`;
+  majSuiv(e);
 
   animerProgression(L.length, P.i);
   if(vPrescri.vu !== e.id) anime($('.question',app), {opacity:[0,1], x:[P.sens>0?28:-28, 0]}, RESSORT);
@@ -714,21 +802,31 @@ function vPrescri(){
       app.querySelectorAll('.opt[data-v]').forEach(x=>x.setAttribute('aria-pressed', x===b));
       const sousChamp = (e.id==='profil' && (v==='enfant'||v==='enceinte'));
       if(sousChamp){ vPrescri(); return; }
-      $('#suiv').disabled = !etapeValide(e);
+      majSuiv(e);
       clearTimeout(vPrescri.t); vPrescri.t=setTimeout(suivant, 550);
     } else {
       let r=[...(P.rep[e.id]||[])];
       if(v===e.aucun) r = r.includes(v)?[]:[v];
       else { r=r.filter(x=>x!==e.aucun); r = r.includes(v)? r.filter(x=>x!==v) : [...r,v]; }
       P.rep[e.id]=r;
-      if(e.id==='ttt'){ vPrescri(); return; }
       app.querySelectorAll('.opt[data-v]').forEach(x=>x.setAttribute('aria-pressed', r.includes(x.dataset.v)));
-      $('#suiv').disabled = !etapeValide(e);
+      if(e.id==='atcd' || e.id==='ttt') majPanneaux(e);
+      majSuiv(e);
     }
   });
-  app.querySelectorAll('[data-rh]').forEach(b=>b.onclick=()=>{ P.rep.risque_hemo=b.dataset.rh; app.querySelectorAll('[data-rh]').forEach(x=>x.setAttribute('aria-pressed',x===b)); $('#suiv').disabled=!etapeValide(e); });
-  app.querySelectorAll('.seg[data-k="terme"] button').forEach(b=>b.onclick=()=>{ P.rep.terme=b.dataset.v; app.querySelectorAll('.seg[data-k="terme"] button').forEach(x=>x.setAttribute('aria-pressed',x===b)); $('#suiv').disabled=!etapeValide(e); });
-  ['age','poids'].forEach(id=>{ const i=$('#'+id); if(i) i.oninput=()=>{ P.rep[id]=i.value.replace(',','.'); $('#suiv').disabled=!etapeValide(e); }; });
+  // précisions (délégation : les panneaux s'ouvrent et se ferment)
+  const zoneQ = app.querySelector('.question .choix');
+  if(zoneQ) zoneQ.addEventListener('click', ev=>{
+    const pu = ev.target.closest('.puce'); if(!pu) return;
+    const bl = pu.closest('.bloc'), k = bl.dataset.k, v = pu.dataset.pv;
+    if(bl.dataset.type==='multi'){ const r=[...(P.rep[k]||[])]; P.rep[k] = r.includes(v) ? r.filter(x=>x!==v) : [...r, v]; }
+    else P.rep[k] = (P.rep[k]===v && !bl.dataset.requis) ? null : v;
+    if(k==='m_aap'){ const n=P.rep.m_aap||[]; if(n.length>=2 || n.includes('duoplavin')) P.rep.p_aap='bi'; }
+    majBlocs(); majSuiv(e);
+    anime(pu, {scale:[.94,1]}, {type:'spring', bounce:.5, visualDuration:.25});
+  });
+  app.querySelectorAll('.seg[data-k="terme"] button').forEach(b=>b.onclick=()=>{ P.rep.terme=b.dataset.v; app.querySelectorAll('.seg[data-k="terme"] button').forEach(x=>x.setAttribute('aria-pressed',x===b)); majSuiv(e); });
+  ['age','poids'].forEach(id=>{ const i=$('#'+id); if(i) i.oninput=()=>{ P.rep[id]=i.value.replace(',','.'); majSuiv(e); }; });
   $('#suiv').onclick=suivant;
   if($('#prec')) $('#prec').onclick=()=>{ clearTimeout(vPrescri.t); P.sens=-1; P.i--; vPrescri(); window.scrollTo(0,0); };
   $('#raz').onclick=()=>{ clearTimeout(vPrescri.t); P=nouveauP(); vPrescri(); };
@@ -743,9 +841,10 @@ function filtrerOptions(q){
     const titreG=normQ(g.querySelector('.groupe')?.textContent||'');
     let vis=0;
     g.querySelectorAll('.opt[data-v]').forEach(o=>{
-      const t=normQ(o.textContent)+' '+titreG;
+      const t=normQ(o.textContent+' '+(o.dataset.mots||''))+' '+titreG;
       const ok=!mots.length || mots.every(w=>t.includes(w) || (SYN_Q[w] && t.includes(SYN_Q[w])));
       o.hidden=!ok; if(ok) vis++;
+      const p=o.nextElementSibling; if(p && p.classList.contains('precis')) p.hidden=!ok;
     });
     g.hidden=!vis; n+=vis;
   });
@@ -754,7 +853,12 @@ function filtrerOptions(q){
 function suivant(){
   clearTimeout(vPrescri.t);
   if(sortieQ) return;
-  const L=etapes(); if(P.i<L.length && !etapeValide(L[P.i])) return;
+  const L=etapes();
+  if(P.i<L.length && !etapeValide(L[P.i])){
+    const bl=[...app.querySelectorAll('.precis .bloc[data-requis]')].find(b=>!b.querySelector('.requis')?.hidden);
+    if(bl){ bl.scrollIntoView({behavior:sansMouvement.matches?'auto':'smooth', block:'center'}); bl.classList.remove('attire'); void bl.offsetWidth; bl.classList.add('attire'); }
+    return;
+  }
   const q=app.querySelector('.question');
   const go=()=>{ P.sens=1; P.i++; P.lignesOff=new Set(); P.decochesFaits=false; vPrescri(); window.scrollTo(0,0); };
   const a=anime(q, {opacity:0, x:-24}, {duration:.18, ease:'easeIn'});
@@ -814,7 +918,7 @@ function vOrdo(){
         ${toutes.length?`<button class="btn sec" id="favSave">${ICO_ETOILE} Enregistrer comme ordonnance type</button>`:''}
         ${lireFavoris().length?`<button class="btn sec" id="favIns">Insérer une ordonnance type</button><div id="favInsListe" class="sugg-liste"></div>`:''}
       </div>
-      <p class="demo">Sources : HAS 2026 (antibiotiques en pratique bucco-dentaire), HAS 2024 (endocardite), SFCO 2015 (antithrombotiques), ANSM, RCP. Médicaments ajoutés : base publique des médicaments (ANSM), thésaurus ANSM des interactions et RCP. Outil d'aide à la décision : il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
+      <p class="demo">Sources : HAS 2026 (antibiotiques en pratique bucco-dentaire), HAS 2024 (endocardite), SFCO 2015 (antithrombotiques), ANSM, RCP. Interactions avec le traitement du patient et médicaments ajoutés : thésaurus ANSM des interactions, base publique des médicaments (ANSM) et RCP. Outil d'aide à la décision : il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
     </section>
   </div>
   ${toutes.length?`<div class="barre-action"><div class="in"><button class="btn" id="copierOrdo">Copier l’ordonnance</button></div></div>`:''}`;
@@ -1691,7 +1795,7 @@ function intentionPrescription(texte){
 function repondrePrescription(texte){
   const rep = RECO.analyserQuestion(texte);
   const t = norm(texte), hyp = [];
-  const antithrombo = (rep.ttt||[]).some(x=>['aap','aap2','avk','aod','heparine'].includes(x));
+  const antithrombo = (rep.ttt||[]).some(x=>RECO.ANTITHROMBO.includes(x));
   if(!rep.motif && antithrombo && /avuls|extrai|extraction|enlever|arracher|chirurg|operer|implant/.test(t)) rep.motif = /implant/.test(t)?'implant':'avulsion';
   if(!rep.motif){
     return {html:`<p>Je peux t’aider, mais j’ai besoin de la situation clinique : quel acte ou quelle affection (abcès, cellulite, alvéolite, avulsion, péricoronarite, candidose…) ? Précise aussi l’âge si c’est un enfant, les allergies, les antécédents et les traitements.</p>`, brut:'', ia:true};
@@ -1702,6 +1806,7 @@ function repondrePrescription(texte){
   if(rep.alvAmbigu) hyp.push('alvéolite sèche, sans pus (si elle est suppurée, dis-le moi : la règle change)');
   if(rep.allergies[0]==='aucune') hyp.push('pas d’allergie');
   if(rep.atcd[0]==='aucun') hyp.push('pas d’antécédent particulier');
+  if(rep._hyp && rep._hyp.length) hyp.push(...rep._hyp);
   if(RECO.AVEC_EXTENSION.includes(rep.motif) && !rep.extension.length){ rep.extension=['aucun']; hyp.push('pas de signe d’extension (ni pus, ni tuméfaction, ni fièvre)'); }
   if(rep.motif==='cellulite' && !rep.gravite){ rep.gravite=['aucun']; hyp.push('pas de signe de gravité'); }
   const M=RECO.MOTIF[rep.motif];
@@ -1966,7 +2071,7 @@ function vScanResultat(){
                : `<div class="pr ok"><span>${esc(it.nom)}</span><span class="niv ok">${lib}</span></div>`;
   }).join('')}</div>`).join('');
   const bouche = R.bouche.map(b=>`<li><b>${esc(b.t)}</b>${esc(b.d)}</li>`).join('');
-  const prefN = R.prefill.ttt.length + R.prefill.atcd.length;
+  const pfP = RECO.depuisScanner(SC.meds), prefN = pfP.ttt.length + pfP.atcd.length;
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="ret">${ICO.retour}Modifier la liste</button><button class="retour" id="raz" style="padding-left:12px">Nouveau scan</button></header>
     <h2 style="margin-top:6px">Ce que ce traitement change pour toi</h2>
@@ -1989,10 +2094,11 @@ function vScanResultat(){
   $('#ret').onclick=()=>{ SC.etape='liste'; vScan(); };
   $('#raz').onclick=()=>{ SC=nouveauSC(); vScan(); };
   $('#versP').onclick=()=>{
-    const pf=R.prefill;
+    const pf=pfP;
     if(!SC.depuisPrescri) P=nouveauP();
     const fus=(k,vals,aucun)=>{ if(!vals.length) return; const cur=(P.rep[k]||[]).filter(x=>x!==aucun); P.rep[k]=[...new Set([...cur,...vals])]; };
     fus('ttt',pf.ttt,'aucun'); fus('atcd',pf.atcd,'aucun');
+    Object.entries(pf.sous).forEach(([k,v])=>{ if(Array.isArray(v)) P.rep[k]=[...new Set([...(P.rep[k]||[]), ...v])]; else if(P.rep[k]==null) P.rep[k]=v; });
     SC.depuisPrescri=false;
     aller('prescri'); if(prefN) toast('Traitements pré-cochés');
   };
