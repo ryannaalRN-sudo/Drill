@@ -139,6 +139,11 @@ h3{font-size:1.1rem;font-weight:700}
 .stepper{display:flex;align-items:center;gap:6px}
 .stepper button{width:44px;height:44px;border-radius:50%;background:var(--email);border:1.5px solid var(--trait);font-size:1.3rem;font-weight:700}
 .stepper output{min-width:52px;text-align:center;font-family:var(--display);font-weight:800;font-size:1.8rem}
+.stepper .nb{width:68px;height:48px;padding:0;text-align:center;font-family:var(--display);font-weight:800;font-size:1.7rem;color:var(--encre);background:var(--email);border:1.5px solid var(--trait);border-radius:14px;-moz-appearance:textfield;appearance:textfield}
+.stepper .nb:focus{outline:none;border-color:var(--lagon);background:var(--carte)}
+.stepper .nb::-webkit-inner-spin-button,.stepper .nb::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.seg.trois button{font-size:.8rem;line-height:1.2;padding:9px 4px}
+.compteur .limite{margin-top:6px;font-size:.78rem;color:var(--encre-2);text-align:right}
 .seg{display:flex;background:var(--email);border-radius:999px;padding:4px;margin-top:10px}
 .seg button{flex:1;padding:10px 6px;border-radius:999px;font-weight:700;font-size:.88rem;color:var(--encre-2)}
 .seg button[aria-pressed="true"]{background:var(--carte);color:var(--encre);box-shadow:0 1px 3px rgba(15,42,51,.12)}
@@ -1219,12 +1224,13 @@ fetch('ccam-dentaire.json').then(r=>r.json()).then(liste=>{
     if(!(x.c in PRIX)) PRIX[x.c]=x.p;
   });
   NB_ACTES = liste.length;
+  AV_IDX = null;
   if(vue==='code') vCode();
 }).catch(e=>console.warn('Base CCAM non chargée', e));
 
 const euro = n => n.toLocaleString('fr-FR',{minimumFractionDigits:2, maximumFractionDigits:2})+' €';
 
-let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:1, nRx:1, sect:'pm', faces:2, dent:'m', vital:'v', mods:new Set(), ddn:''};
+let C = {cat:'Chirurgie', q:'', panier:[], ouvert:false, nAv:1, nRx:1, avQual:'simple', sect:'pm', faces:2, dent:'m', vital:'v', mods:new Set(), ddn:''};
 
 /* Calcul du panier : actes cumulés à taux plein (dérogation bucco-dentaire),
    N et E en pourcentage sur chaque acte éligible,
@@ -1274,20 +1280,23 @@ function carteActe(a){ const dans=C.panier.some(p=>p.c===a.c); return `<button c
 function resultat(c, vide){
   return `<div class="resultat-code"><span><span class="code">${c||'—'}</span>${c?` <span class="prix fort">${euro(PRIX[c])}</span>`:''}<small>${c?LIB[c].l:vide}</small></span>${c?`<button class="mini" data-ajout="${c}">Ajouter</button>`:''}</div>`;
 }
-function stepper(id, val, label){
-  return `<div class="rangee"><span class="sous">${label}</span><div class="stepper"><button data-step="${id}" data-d="-1" aria-label="Moins">−</button><output>${val}</output><button data-step="${id}" data-d="1" aria-label="Plus">+</button></div></div>`;
+function stepper(id, val, label, max){
+  return `<div class="rangee"><span class="sous">${label}</span><div class="stepper"><button data-step="${id}" data-d="-1" aria-label="Moins">−</button><input class="nb" type="number" inputmode="numeric" pattern="[0-9]*" min="1" max="${max}" value="${val}" data-nb="${id}" aria-label="${label} (1 à ${max})" autocomplete="off"><button data-step="${id}" data-d="1" aria-label="Plus">+</button></div></div>`;
 }
 
 function outilsCategorie(){
   if(C.cat==='Chirurgie'){
-    return `<div class="compteur"><h3>Avulsions de dents permanentes</h3><p class="sous" style="font-size:.88rem">Sur arcade, sans alvéolectomie, dans la même séance.</p>
-      ${stepper('nAv', C.nAv, 'Nombre de dents')}
-      ${resultat(AVULSIONS[C.nAv], 'Au-delà de 16 dents : code à ajouter à la base')}</div>`;
+    return `<div class="compteur"><h3>Avulsions de dents permanentes</h3><p class="sous" style="font-size:.88rem">Sur arcade, dans la même séance : un seul code pour toutes les dents.</p>
+      <div class="seg trois" data-k="avQual">${[['simple','Sans alvéolectomie'],['alveo','Avec alvéolectomie'],['separation','Séparation des racines']].map(([v,t])=>`<button data-v="${v}" aria-pressed="${C.avQual===v}">${t}</button>`).join('')}</div>
+      ${stepper('nAv', C.nAv, 'Nombre de dents', MAX_COMPTEUR.nAv())}
+      <p class="limite">${MAX_COMPTEUR.nAv()} dents au maximum${C.avQual==='separation'?' avec séparation des racines':''}</p>
+      <div id="res-nAv">${resultatCompteur('nAv')}</div></div>`;
   }
   if(C.cat==='Radiologie'){
     return `<div class="compteur"><h3>Radios rétroalvéolaires</h3><p class="sous" style="font-size:.88rem">Un secteur = 1 à 3 dents contiguës.</p>
-      ${stepper('nRx', C.nRx, 'Nombre de secteurs')}
-      ${resultat(RADIOS[C.nRx], '')}</div>`;
+      ${stepper('nRx', C.nRx, 'Nombre de secteurs', MAX_COMPTEUR.nRx())}
+      <p class="limite">14 secteurs au maximum (limite de la CCAM)</p>
+      <div id="res-nRx">${resultatCompteur('nRx')}</div></div>`;
   }
   if(C.cat==='Soins'){
     return `<div class="compteur"><h3>Restauration en phase plastique</h3><p class="sous" style="font-size:.88rem">Composite ou amalgame, sans ancrage radiculaire.</p>
@@ -1303,11 +1312,42 @@ function outilsCategorie(){
   }
   return '';
 }
+// Bornes des compteurs : codes existant dans la CCAM V84
+const MAX_COMPTEUR = { nAv:()=>C.avQual==='separation' ? 4 : 32, nRx:()=>14 };
+const UNITE_COMPTEUR = { nAv:'dents', nRx:'secteurs' };
+function codeAvulsion(n, qual){
+  return avulsion(n,'perm',qual) || (qual==='simple' ? AVULSIONS[n] : qual==='alveo' ? {1:'HBGD022',2:'HBGD034'}[n] : undefined);
+}
+function resultatCompteur(k){
+  return k==='nAv' ? resultat(codeAvulsion(C.nAv, C.avQual), 'Base CCAM en cours de chargement…') : resultat(RADIOS[C.nRx], '');
+}
+function brancherAjout(racine){
+  racine.querySelectorAll('[data-ajout]').forEach(b=>b.onclick=()=>{ if(!C.panier.some(p=>p.c===b.dataset.ajout)) basculer(b.dataset.ajout); else toast('Déjà dans la sélection'); });
+}
+function majCompteur(k){
+  const r=$('#res-'+k); if(!r) return;
+  r.innerHTML = resultatCompteur(k); brancherAjout(r);
+}
 function brancherOutils(){
-  const max={nAv:16,nRx:14};
-  app.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{const k=b.dataset.step; C[k]=Math.min(max[k],Math.max(1,C[k]+Number(b.dataset.d))); vCode();});
-  app.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=s.dataset.k; C[k]= k==='faces'?Number(b.dataset.v):b.dataset.v; vCode();}));
-  app.querySelectorAll('[data-ajout]').forEach(b=>b.onclick=()=>{ if(!C.panier.some(p=>p.c===b.dataset.ajout)) basculer(b.dataset.ajout); else toast('Déjà dans la sélection'); });
+  app.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{const k=b.dataset.step; C[k]=Math.min(MAX_COMPTEUR[k](),Math.max(1,C[k]+Number(b.dataset.d))); vCode();});
+  app.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.onclick=()=>{const k=s.dataset.k; C[k]= k==='faces'?Number(b.dataset.v):b.dataset.v; if(k==='avQual') C.nAv=Math.min(C.nAv, MAX_COMPTEUR.nAv()); vCode();}));
+  // saisie directe du nombre, bloquée au-delà du maximum possible
+  app.querySelectorAll('[data-nb]').forEach(inp=>{
+    const k=inp.dataset.nb;
+    let precedent=String(C[k]);
+    inp.onfocus=()=>inp.select();
+    inp.oninput=()=>{
+      const brut=inp.value.replace(/\D/g,'');
+      if(brut===''){ inp.value=''; return; }
+      const n=parseInt(brut,10), max=MAX_COMPTEUR[k]();
+      if(n>max){ inp.value=precedent; toast(`${max} ${UNITE_COMPTEUR[k]} au maximum`); return; }
+      inp.value=String(n); precedent=inp.value;
+      if(n>=1){ C[k]=n; majCompteur(k); }
+    };
+    inp.onchange=inp.onblur=()=>{ const n=parseInt(inp.value,10), avant=C[k], affiche=inp.value; C[k]=Math.min(MAX_COMPTEUR[k](), Math.max(1, isNaN(n)?1:n)); inp.value=String(C[k]); precedent=inp.value; if(C[k]!==avant || affiche!==inp.value) majCompteur(k); };
+    inp.onkeydown=e=>{ if(e.key==='Enter') inp.blur(); };
+  });
+  brancherAjout(app);
 }
 function basculer(c){
   const i=C.panier.findIndex(p=>p.c===c);
