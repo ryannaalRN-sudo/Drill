@@ -757,7 +757,7 @@ function suivant(){
   if(sortieQ) return;
   const L=etapes(); if(P.i<L.length && !etapeValide(L[P.i])) return;
   const q=app.querySelector('.question');
-  const go=()=>{ P.sens=1; P.i++; P.lignesOff=new Set(); vPrescri(); window.scrollTo(0,0); };
+  const go=()=>{ P.sens=1; P.i++; P.lignesOff=new Set(); P.decochesFaits=false; vPrescri(); window.scrollTo(0,0); };
   const a=anime(q, {opacity:0, x:-24}, {duration:.18, ease:'easeIn'});
   if(!a) return go();
   sortieQ=a;
@@ -766,6 +766,7 @@ function suivant(){
 
 function vOrdo(){
   const r=P.rep, O=RECO.decider(r), M=RECO.MOTIF[r.motif]||{};
+  if(!P.decochesFaits){ O.lignes.filter(l=>l.decoche).forEach(l=>P.lignesOff.add(l.id)); P.decochesFaits=true; }
   if(!P.ajouts) P.ajouts=[];
   const ajoutsL = P.ajouts.map(a=>({id:a.id, cat:'Ajout', med:a.titre, pos:a.pos, qsp:'', ajout:true, ordre:a.ordre, classe:a.classe, alertes:a.alertes, source:a.source}));
   const toutes = trierLignes([...O.lignes, ...ajoutsL]);
@@ -1715,7 +1716,7 @@ function repondrePrescription(texte){
   if(O.hospit) h += `<p><b>Adresser à l’hôpital :</b> un signe de gravité est présent.</p>`;
   h += `<p><b>${O.atb?'Antibiotique : oui.':'Antibiotique : non.'}</b> ${O.pourquoi.map(strip).join(' ')}</p>`;
   if(O.gestes.length) h += `<p><b>Geste :</b> ${O.gestes.join(' ')}</p>`;
-  if(O.lignes.length) h += `<p><b>À prescrire :</b></p><ul class="rx">${O.lignes.map(l=>`<li><b>${l.med}</b> : ${l.pos}, ${l.qsp.toLowerCase()}</li>`).join('')}</ul>`;
+  if(O.lignes.length) h += `<p><b>À prescrire :</b></p><ul class="rx">${O.lignes.map(l=>`<li><b>${l.med}</b>${l.decoche?' (facultatif)':''} : ${l.pos}, ${l.qsp.toLowerCase()}</li>`).join('')}</ul>`;
   const autres = O.alertes.filter(a=>a!==alerteAT && (a.n!=='info' || /écarté|Grossesse|moins de 6 ans/.test(a.t))).slice(0,5);
   if(autres.length) h += autres.map(a=>`<p><b>${a.t} :</b> ${a.d}</p>`).join('');
   if(hyp.length) h += `<p class="sous" style="font-size:.85rem">J’ai supposé : ${hyp.join(', ')}. Si ce n’est pas le cas, précise-le.</p>`;
