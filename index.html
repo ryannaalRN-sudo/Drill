@@ -71,12 +71,15 @@ h3{font-size:1.1rem;font-weight:700}
 .pastille{font-size:.75rem;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--trait);color:var(--encre-2)}
 .bloc-titre{margin:26px 0 10px;font-family:var(--display);font-weight:700;font-size:1.05rem;color:var(--encre-2)}
 
-/* ---------- Prescri'Dent : l'arcade de progression ---------- */
-.arcade{display:flex;justify-content:center;gap:3px;margin:14px 0 4px}
-.arcade svg{width:22px;height:26px;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
-.arcade path{fill:var(--trait);transition:fill .3s}
-.arcade .on path{fill:var(--lagon)}
-.arcade .on{transform:translateY(-3px)}
+/* ---------- Prescri'Dent : progression du questionnaire ---------- */
+.progression{position:relative;margin:18px 6px 8px}
+.prog-rail{position:absolute;left:15px;right:15px;top:13px;height:4px;border-radius:2px;background:var(--trait);overflow:hidden}
+.prog-plein{position:absolute;inset:0;border-radius:2px;background:var(--lagon);transform-origin:0 50%}
+.prog-etapes{position:relative;display:flex;justify-content:space-between;list-style:none;margin:0;padding:0}
+.prog-etapes li{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--carte);border:2px solid var(--trait);font-family:var(--display);font-weight:800;font-size:.82rem;color:var(--encre-2)}
+.prog-etapes li.fait{background:var(--lagon);border-color:var(--lagon);color:#fff}
+.prog-etapes li svg{width:16px;height:16px}
+.prog-etapes li.cours{border-color:var(--lagon);color:var(--lagon);box-shadow:0 0 0 5px var(--lagon-pale)}
 .etape-n{text-align:center;font-size:.85rem;color:var(--encre-2)}
 .question{padding:18px 0 110px}
 .question h2{margin-bottom:6px}
@@ -433,10 +436,15 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .m-opt .m-ok::after{content:"";width:8px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
 .m-opt span{position:relative}
 .m-opt .m-doigt{position:absolute}
-.m-arcade{display:flex;justify-content:center;gap:3px;margin-bottom:14px}
-.m-arcade svg{width:18px;height:22px}
-.m-arcade .b{fill:rgba(255,255,255,.25)}
-.m-arcade .l{fill:#fff;opacity:0}
+.m-prog{position:relative;width:78%;max-width:300px;margin-bottom:14px}
+.m-prog .r{position:absolute;left:10px;right:10px;top:9px;height:3px;border-radius:2px;background:rgba(255,255,255,.3);overflow:hidden}
+.m-prog .r i{position:absolute;inset:0;background:#fff;transform-origin:0 50%;transform:scaleX(.5)}
+.m-prog ol{position:relative;display:flex;justify-content:space-between;list-style:none;margin:0;padding:0}
+.m-prog li{position:relative;width:21px;height:21px;border-radius:50%;border:2px solid rgba(255,255,255,.45);background:#0E7F73}
+.m-prog li.fait,.m-prog li .m-fait{background:#fff;border-color:#fff;color:var(--lagon);display:grid;place-items:center}
+.m-prog li .m-fait{position:absolute;inset:-2px;border-radius:50%;opacity:0}
+.m-prog li.cours{border-color:#fff}
+.m-prog svg{width:12px;height:12px}
 .m-doigt{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(255,255,255,.6);border:2px solid rgba(15,42,51,.3);box-shadow:0 4px 12px rgba(0,0,0,.2);opacity:0;pointer-events:none}
 .m-orbite{position:absolute;width:min(180px,calc(min(31vh,250px) - 70px));height:min(180px,calc(min(31vh,250px) - 70px));border-radius:50%;border:1.5px dashed rgba(255,255,255,.35)}
 .m-orbite span{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:14px;display:grid;place-items:center;background:#fff;color:var(--lagon);box-shadow:0 8px 18px rgba(0,0,0,.2)}
@@ -536,7 +544,7 @@ function aller(v){
   const onglets=[...document.querySelectorAll('.onglet')];
   onglets.forEach(b=>b.setAttribute('aria-current', b.dataset.vue===v ? 'page':'false'));
   placerIndic(onglets.findIndex(b=>b.dataset.vue===v), v==='ia');
-  vPrescri.vu = null;
+  vPrescri.vu = null; animerProgression.prec = null;
   ({accueil:vAccueil, prescri:vPrescri, scan:vScan, code:vCode, ia:vIA})[v]();
   window.scrollTo(0,0);
 }
@@ -633,14 +641,31 @@ function optHTML(o, e, rep){
   const on = e.type==='multi' ? (rep||[]).includes(o.v) : rep===o.v;
   return `<button class="opt ${e.type==='multi'?'multi':''}" data-v="${o.v}" aria-pressed="${on}"><span class="coche"></span><span><b>${o.t}</b>${o.d?`<small>${o.d}</small>`:''}</span></button>`;
 }
+const ICO_COCHE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>';
+const fracProgression = (n, i) => n>1 ? Math.min(1, i/(n-1)) : 1;
+function progressionHTML(n, i){
+  return `<div class="progression" role="progressbar" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${Math.min(i,n)}" aria-label="Question ${Math.min(i+1,n)} sur ${n}">
+    <div class="prog-rail"><div class="prog-plein" style="transform:scaleX(${fracProgression(n,i)})"></div></div>
+    <ol class="prog-etapes">${Array.from({length:n},(_,k)=>`<li class="${k<i?'fait':k===i?'cours':''}">${k<i?ICO_COCHE:k+1}</li>`).join('')}</ol></div>`;
+}
+function animerProgression(n, i){
+  const prec = animerProgression.prec;
+  animerProgression.prec = i;
+  if(prec==null || prec===i) return;
+  anime($('.prog-plein',app), {scaleX:[fracProgression(n,prec), fracProgression(n,i)]}, {duration:.55, ease:[.22,1,.36,1]});
+  if(i>prec){
+    const li = app.querySelectorAll('.prog-etapes li')[i-1];
+    anime(li, {scale:[.5,1]}, {type:'spring', bounce:.55, visualDuration:.35});
+    anime($('.prog-etapes li.cours',app), {scale:[.85,1]}, {type:'spring', bounce:.4, visualDuration:.4});
+  }
+}
 let sortieQ = null;
 function vPrescri(){
   sortieQ = null;
   const L = etapes();
-  if(P.i >= L.length){ vPrescri.vu = null; return vOrdo(); }
+  if(P.i >= L.length){ vPrescri.vu = null; vOrdo(); animerProgression(L.length, L.length); return; }
   const e = L[P.i], rep = P.rep[e.id];
-  const total=14, allumees=Math.round(total*P.i/L.length);
-  const arcade = Array.from({length:total},(_,k)=>`<svg viewBox="0 0 18 22" class="${k<allumees?'on':''}" aria-hidden="true">${ICO.dent}</svg>`).join('');
+  const progression = progressionHTML(L.length, P.i);
   const avecRecherche = ['motif','allergies','atcd','ttt'].includes(e.id);
   const tous = e.groupes ? e.groupes.flatMap(g=>g.items) : e.options;
   const epingle = e.aucun ? tous.find(o=>o.v===e.aucun) : null;   // « Aucune allergie », « Aucun antécédent »… en haut
@@ -659,7 +684,7 @@ function vPrescri(){
       ${P.i>0 ? `<button class="retour" id="prec">${ICO.retour}Retour</button>` : `<div class="logo">${logo}Prescri'Dent</div>`}
       <button class="retour" id="raz" style="padding-left:12px">Recommencer</button>
     </header>
-    <div class="arcade" role="progressbar" aria-valuemin="0" aria-valuemax="${L.length}" aria-valuenow="${P.i}">${arcade}</div>
+    ${progression}
     <p class="etape-n">Question ${P.i+1} sur ${L.length}</p>
     <section class="question">
       ${P.i===0?bandeauFavoris():''}
@@ -672,6 +697,7 @@ function vPrescri(){
   </div>
   <div class="barre-action"><div class="in"><button class="btn" id="suiv" ${etapeValide(e)?'':'disabled'}>${P.i===L.length-1?'Voir la conduite à tenir':'Continuer'}</button></div></div>`;
 
+  animerProgression(L.length, P.i);
   if(vPrescri.vu !== e.id) anime($('.question',app), {opacity:[0,1], x:[P.sens>0?28:-28, 0]}, RESSORT);
   vPrescri.vu = e.id;
   const vs=$('#versScan'); if(vs) vs.onclick=()=>{ SC=nouveauSC(); SC.depuisPrescri=true; aller('scan'); };
@@ -739,7 +765,6 @@ function vOrdo(){
   const ajoutsL = P.ajouts.map(a=>({id:a.id, cat:'Ajout', med:a.titre, pos:a.pos, qsp:'', ajout:true, ordre:a.ordre, classe:a.classe, alertes:a.alertes, source:a.source}));
   const toutes = trierLignes([...O.lignes, ...ajoutsL]);
   const actives = () => toutes.filter(l=>!P.lignesOff.has(l.id));
-  const total=14;
   const icone = n => n==='info'?ICO.info:ICO.alerte;
   const NIV = {CI:['forte','Contre-indiqué'], ASDEC:['forte','Déconseillé'], PE:['moy','Précaution'], APEC:['info','À prendre en compte']};
   const carteLigne = l => l.ajout ? `
@@ -760,7 +785,7 @@ function vOrdo(){
         </button>`;
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="prec">${ICO.retour}Retour</button><button class="retour" id="raz" style="padding-left:12px">Nouveau patient</button></header>
-    <div class="arcade" aria-hidden="true">${Array.from({length:total},()=>`<svg viewBox="0 0 18 22" class="on">${ICO.dent}</svg>`).join('')}</div>
+    ${progressionHTML(etapes().length, etapes().length)}
     <section class="question" style="padding-bottom:120px">
       <p class="sous">${M.t||''}</p>
       <h2>Conduite à tenir</h2>
@@ -1321,12 +1346,12 @@ function codeAvulsion(n, qual){
 function resultatCompteur(k){
   return k==='nAv' ? resultat(codeAvulsion(C.nAv, C.avQual), 'Base CCAM en cours de chargement…') : resultat(RADIOS[C.nRx], '');
 }
-function brancherAjout(racine){
+function brancherAjoutCode(racine){
   racine.querySelectorAll('[data-ajout]').forEach(b=>b.onclick=()=>{ if(!C.panier.some(p=>p.c===b.dataset.ajout)) basculer(b.dataset.ajout); else toast('Déjà dans la sélection'); });
 }
 function majCompteur(k){
   const r=$('#res-'+k); if(!r) return;
-  r.innerHTML = resultatCompteur(k); brancherAjout(r);
+  r.innerHTML = resultatCompteur(k); brancherAjoutCode(r);
 }
 function brancherOutils(){
   app.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{const k=b.dataset.step; C[k]=Math.min(MAX_COMPTEUR[k](),Math.max(1,C[k]+Number(b.dataset.d))); vCode();});
@@ -1347,7 +1372,7 @@ function brancherOutils(){
     inp.onchange=inp.onblur=()=>{ const n=parseInt(inp.value,10), avant=C[k], affiche=inp.value; C[k]=Math.min(MAX_COMPTEUR[k](), Math.max(1, isNaN(n)?1:n)); inp.value=String(C[k]); precedent=inp.value; if(C[k]!==avant || affiche!==inp.value) majCompteur(k); };
     inp.onkeydown=e=>{ if(e.key==='Enter') inp.blur(); };
   });
-  brancherAjout(app);
+  brancherAjoutCode(app);
 }
 function basculer(c){
   const i=C.panier.findIndex(p=>p.c===c);
@@ -2009,7 +2034,7 @@ const DIAPOS = [
   },
   { court:'Prescri’Dent', decor:'d-lagon', titre:'Prescri’Dent',
     chapo:'L’ordonnance adaptée à ton patient, en 5 questions.',
-    scene:()=>`<div style="display:grid;justify-items:center;width:100%"><div class="m-arcade">${Array.from({length:7},()=>`<svg viewBox="0 0 18 22"><path class="b" d="${DENT_D}"/><path class="l" d="${DENT_D}"/></svg>`).join('')}</div>
+    scene:()=>`<div style="display:grid;justify-items:center;width:100%"><div class="m-prog"><div class="r"><i></i></div><ol>${[0,1,2,3,4].map(k=>`<li class="${k<2?'fait':k===2?'cours':''}">${k<2?ICO_COCHE:k===2?`<span class="m-fait">${ICO_COCHE}</span>`:''}</li>`).join('')}</ol></div>
       <div class="m-carte"><p class="m-petit">Question 3 sur 5</p><p class="m-titre">Allergies connues ?</p>
       <div class="m-opt"><span class="m-sel"></span><span class="m-boite"><span class="m-ok"></span></span><span>Pénicillines</span><span class="m-doigt" style="left:22px;top:50%"></span></div></div></div>`,
     etapes:['Réponds à 5 questions : l’acte, le patient, ses allergies, ses antécédents, ses traitements.','Lis la conduite à tenir : antibiotique ou non, alertes et précautions.','Recopie l’ordonnance proposée. Touche une ligne pour la retirer, ou ajoute un médicament.'],
@@ -2131,7 +2156,8 @@ function activer(i){
       boucle(q('.m-sel'), {opacity:fin([0,0,1,1,0])}, T1);
       boucle(q('.m-ok'), {opacity:fin([0,0,1,1,0]), scale:fin([.4,.4,1,1,.4])}, T1);
       boucle(q('.m-doigt'), {opacity:[0,1,1,0,0], scale:[1.4,1,.8,1,1]}, {duration:3.4, times:[0,.12,.3,.4,1]});
-      q('.m-arcade .l').forEach((l,k)=>boucle(l, {opacity:fin([0,0,1,1,0])}, {duration:3.4, times:[0,.36+k*.05,.4+k*.05,.88,1]}));
+      boucle(q('.m-prog .m-fait'), {opacity:fin([0,0,1,1,0]), scale:fin([.5,.5,1,1,.5])}, {duration:3.4, times:[0,.38,.45,.88,1]});
+      boucle(q('.m-prog .r i'), {scaleX:fin([.5,.5,.75,.75,.5])}, {duration:3.4, times:[0,.4,.5,.88,1]});
       break; }
     case 2:
       boucle(q('.m-doigt'), {opacity:[0,1,1,0,0], scale:[1.4,1,.8,1,1]}, {duration:3, times:[0,.15,.3,.42,1]});
