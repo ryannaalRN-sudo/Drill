@@ -27,7 +27,7 @@ fs.mkdirSync(path.join(dir, 'sortie'), { recursive: true });
     }
   } else {
     const fps = Number(a1), sortie = a2, sous = Number(a3 || 1);
-    const n = Math.round(15 * fps * sous);
+    const n = Math.round(30 * fps * sous);
     const vf = sous > 1 ? ['-vf', `tmix=frames=${sous}:weights=${Array(sous).fill(1).join(' ')},framestep=${sous}`] : [];
     const ff = spawn('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'image2pipe', '-framerate', String(fps * sous), '-c:v', 'mjpeg', '-i', '-',
       ...vf, '-r', String(fps), '-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-pix_fmt', 'yuv420p',

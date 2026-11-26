@@ -2,428 +2,398 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Drill — pub 15 s</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=block">
+<title>Drill — pub 30 s</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Caveat:wght@600&display=block">
 <style>
 :root{
-  --email:#F5F8F8; --carte:#FFFFFF; --encre:#0F2A33; --encre-2:#4A6470; --trait:#DCE6E8;
-  --lagon:#0E9384; --lagon-pale:#E1F4F1; --lagon-vif:#2BD0B0; --lueur:#7FF5DD;
-  --gencive:#E8546B; --gencive-pale:#FDECEF; --ambre:#C77A0A; --ambre-pale:#FDF3E2;
-  --ia:#5B4FD9; --ia-pale:#EEECFC;
+  --email:#F5F8F8; --encre:#0F2A33; --encre-2:#4A6470; --trait:#DCE6E8;
+  --lagon:#0E9384; --lagon-pale:#E1F4F1; --lagon-vif:#2BD0B0; --lueur:#7FF5DD; --menthe:#7FE3D3;
+  --gencive:#E8546B; --gencive-pale:#FDECEF; --ambre:#C77A0A; --ambre-vif:#F2A93B; --ambre-pale:#FDF3E2;
+  --ia:#5B4FD9; --ia-vif:#8F86FF; --ia-pale:#EEECFC; --cyan:#4FD8F0;
   --display:"Bricolage Grotesque", system-ui, sans-serif;
   --texte:"Atkinson Hyperlegible", system-ui, sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:1080px;height:1920px;overflow:hidden;background:#06161D}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#02080B}
 body{font-family:var(--texte);color:#fff;-webkit-font-smoothing:antialiased}
-.abs{position:absolute}
-#cam{position:absolute;inset:0;overflow:hidden;transform-origin:50% 45%}
+em,i{font-style:normal}
+#cam{position:absolute;inset:0;overflow:hidden;transform-origin:50% 48%}
 
-/* ---------- fonds ---------- */
+/* ---------------- fonds et lumière ---------------- */
 .fond{position:absolute;inset:0}
-#f-nuit{background:radial-gradient(80% 50% at 30% 35%,#0C3442 0%,#071C26 55%,#040F15 100%)}
-#f-lagon,#f-fin{background:radial-gradient(70% 40% at 25% 22%,rgba(127,245,221,.32),transparent 70%),linear-gradient(170deg,#22C3A6 0%,#0E9384 42%,#0A3556 100%)}
-#f-scan{background:radial-gradient(70% 45% at 70% 20%,rgba(43,208,176,.22),transparent 70%),linear-gradient(170deg,#0D4A6E 0%,#0A3556 45%,#04182A 100%)}
-#f-code{background:radial-gradient(70% 45% at 25% 18%,rgba(127,227,211,.16),transparent 70%),linear-gradient(170deg,#1A3B47 0%,#0F2A33 45%,#071419 100%)}
-#f-ia{background:radial-gradient(70% 45% at 72% 18%,rgba(190,182,255,.38),transparent 70%),linear-gradient(170deg,#7A6FF0 0%,#5B4FD9 42%,#2A1F86 100%)}
-.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
-#blob1{width:760px;height:760px;left:-200px;top:180px;background:#14A58F}
-#blob2{width:640px;height:640px;left:520px;top:1100px;background:#0B5E7A}
+#f1{background:radial-gradient(70% 45% at 30% 40%,#0B2B35 0%,#05161C 55%,#02080B 100%)}
+#f2{background:radial-gradient(60% 38% at 50% 36%,#0E5E57 0%,#05262A 50%,#020B0D 100%)}
+#f3{background:radial-gradient(80% 50% at 15% 10%,#0B4A45 0%,#04201F 50%,#020B0C 100%)}
+#f4{background:radial-gradient(80% 50% at 85% 12%,#0C3D66 0%,#041833 50%,#020814 100%)}
+#f5{background:radial-gradient(80% 50% at 20% 12%,#123E3F 0%,#071A1F 50%,#020709 100%)}
+#f6{background:radial-gradient(80% 50% at 80% 10%,#3A2C9E 0%,#130B45 50%,#05031A 100%)}
+#f7{background:radial-gradient(70% 40% at 30% 22%,rgba(127,245,221,.35),transparent 70%),linear-gradient(170deg,#1FBEA2 0%,#0E9384 40%,#0A3556 100%)}
+.lum{position:absolute;border-radius:50%;filter:blur(110px);mix-blend-mode:screen}
+#lum1{width:820px;height:820px;left:-260px;top:-120px;background:#0E9384;opacity:.35}
+#lum2{width:760px;height:760px;left:560px;top:1200px;background:#0A5E7A;opacity:.3}
+.rayon{position:absolute;top:-400px;width:180px;height:2800px;background:linear-gradient(90deg,transparent,rgba(170,255,240,.07),transparent);filter:blur(16px);transform:rotate(18deg);mix-blend-mode:screen}
+#poussiere{position:absolute;inset:0}
+#poussiere i{position:absolute;left:0;top:0;border-radius:50%;background:#CFFFF6}
 
-/* ---------- accroche ---------- */
-#accroche{position:absolute;inset:0}
-.cas{position:absolute;left:90px;top:200px;display:grid;gap:18px}
-.puce{display:inline-flex;align-items:center;gap:16px;justify-self:start;padding:14px 26px 14px 18px;border-radius:999px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);font-weight:700;font-size:40px;color:#E9F6F4}
-.puce i{width:18px;height:18px;border-radius:50%;flex:none}
-.grand{position:absolute;left:90px;right:40px;top:700px;font-family:var(--display);font-weight:800;font-size:124px;line-height:.98;letter-spacing:-.035em}
-.grand .m{display:inline-block;white-space:pre}
-.grand em{font-style:normal;color:var(--lueur)}
-#q4{font-size:172px;top:640px}
-#q4 .qm{display:inline-block;color:var(--lueur);transform-origin:50% 80%}
-#ecg{position:absolute;left:0;top:1440px;width:1080px;height:200px}
+/* ---------------- monde 3D ---------------- */
+#monde{position:absolute;inset:0;perspective:1700px;perspective-origin:50% 45%;transform-style:preserve-3d}
+.scene{position:absolute;inset:0;transform-style:preserve-3d}
+.ln{display:block;overflow:hidden;padding:0 14px 14px;margin:0 -14px -14px}
+.ln>.in{display:inline-block}
+.c{display:inline-block;white-space:pre;transform-origin:50% 100%}
+
+/* en-têtes des fonctionnalités */
+.num{position:absolute;right:46px;top:30px;font-family:var(--display);font-weight:800;font-size:250px;line-height:1;letter-spacing:-.05em;color:transparent;-webkit-text-stroke:2.5px rgba(255,255,255,.11)}
+.titre-f{position:absolute;left:70px;top:170px;font-family:var(--display);font-weight:800;font-size:116px;line-height:1;letter-spacing:-.04em}
+.sous-f{position:absolute;left:74px;top:318px;font-family:var(--display);font-weight:700;font-size:54px;letter-spacing:-.02em}
+.sous-f .m{display:inline-block;white-space:pre}
+#s3 .sous-f{color:var(--lueur)} #s4 .sous-f{color:var(--cyan)} #s5 .sous-f{color:var(--menthe)} #s6 .sous-f{color:#C9C3FF}
+
+/* ---------------- 1. accroche ---------------- */
+.phrase{position:absolute;left:80px;top:770px;font-family:var(--display);font-weight:800;font-size:108px;line-height:1.02;letter-spacing:-.04em;transform-style:preserve-3d}
+.phrase em{color:var(--lueur)}
+#p4{font-size:150px;top:700px}
+#ecg{position:absolute;left:0;top:1080px;width:1080px;height:200px}
 #ecg svg{width:1080px;height:200px;overflow:visible}
-#ecg path{fill:none;stroke:var(--lagon-vif);stroke-width:5;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 10px rgba(43,208,176,.9))}
-.legende{position:absolute;left:90px;top:1660px;font-size:30px;font-weight:700;color:rgba(233,246,244,.45);letter-spacing:.14em;text-transform:uppercase}
+#ecg path{fill:none;stroke:var(--lagon-vif);stroke-width:5;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 12px rgba(43,208,176,.95))}
+#tete-ecg{position:absolute;left:0;top:0;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:#fff;box-shadow:0 0 24px 10px rgba(127,245,221,.8),0 0 70px 30px rgba(43,208,176,.35)}
+#legende{position:absolute;left:80px;top:1650px;font-size:30px;font-weight:700;letter-spacing:.16em;color:rgba(220,255,248,.45);text-transform:uppercase}
+#legende b{color:var(--gencive);letter-spacing:0}
 
-/* ---------- logo ---------- */
-#logo{position:absolute;inset:0}
-#icone{position:absolute;left:370px;top:560px;width:340px;height:340px}
-#icone img{box-shadow:0 40px 90px rgba(4,36,58,.55)}
-#icone-in,#icone img{width:100%;height:100%;border-radius:78px;display:block}
-.onde{position:absolute;left:390px;top:580px;width:300px;height:300px;border-radius:50%;border:6px solid rgba(255,255,255,.85)}
-.part{position:absolute;left:540px;top:730px;width:0;height:0}
-.part b{position:absolute;left:-14px;top:-14px;width:28px;height:28px;display:grid;place-items:center;color:#fff}
-.part b.rond{border-radius:50%;background:rgba(255,255,255,.9);width:18px;height:18px;left:-9px;top:-9px}
-.part b.anneau{border-radius:50%;border:4px solid var(--lueur);width:26px;height:26px;left:-13px;top:-13px}
-#mot{position:absolute;left:0;right:0;top:950px;text-align:center;font-family:var(--display);font-weight:800;font-size:250px;line-height:1;letter-spacing:-.04em}
-#mot span{display:inline-block}
-#signature{position:absolute;left:0;right:0;top:1250px;text-align:center;font-size:48px;line-height:1.25;color:rgba(255,255,255,.92)}
-#signature span{display:inline-block;white-space:pre}
+/* ---------------- 2. logo ---------------- */
+#logo-g{position:absolute;inset:0;transform-origin:540px 660px}
+#ic{position:absolute;left:380px;top:500px;width:320px;height:320px}
+#ic-fond{position:absolute;inset:0;border-radius:74px;background:linear-gradient(135deg,#2BD0B0 0%,#0E9384 42%,#0A3556 100%);box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 120px rgba(43,208,176,.35)}
+#ic-img{position:absolute;inset:0;width:320px;height:320px;border-radius:74px}
+#ic-trace{position:absolute;inset:0;width:320px;height:320px;overflow:visible}
+#ic-trace path{fill:none;stroke:#fff;stroke-width:.32;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 1.2px #7FF5DD)}
+.anneau{position:absolute;left:390px;top:510px;width:300px;height:300px;border-radius:50%;border:5px solid rgba(190,255,242,.9)}
+.part{position:absolute;left:540px;top:660px;width:0;height:0}
+.part b{position:absolute;left:-14px;top:-14px;width:28px;height:28px;display:grid;place-items:center}
+.part b.rond{border-radius:50%;background:#E6FFFA;width:16px;height:16px;left:-8px;top:-8px;box-shadow:0 0 14px #7FF5DD}
+.part b.anneau2{border-radius:50%;border:4px solid var(--lueur);width:26px;height:26px;left:-13px;top:-13px}
+#mot{position:absolute;left:0;right:0;top:880px;text-align:center;font-family:var(--display);font-weight:800;font-size:250px;line-height:1;letter-spacing:-.045em}
+#mot .ln{display:inline-block}
+.brille{position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.95) 50%,transparent 65%);mix-blend-mode:overlay}
+#signature{position:absolute;left:0;right:0;top:1180px;text-align:center;font-size:48px;line-height:1.3;color:rgba(255,255,255,.9)}
+#signature .m{display:inline-block;white-space:pre}
 
-/* ---------- en-tête des fonctionnalités ---------- */
-#tete{position:absolute;left:0;right:0;top:92px;display:flex;justify-content:center;align-items:center;gap:18px;font-family:var(--display);font-weight:800;font-size:58px;letter-spacing:-.02em}
-#tete img{width:74px;height:74px;border-radius:18px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
-.etiq{position:absolute;left:0;right:0;top:220px;text-align:center}
-.etiq span{display:inline-block;padding:10px 24px;border-radius:999px;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.22);font-weight:700;font-size:30px;letter-spacing:.06em}
-.titre{position:absolute;left:40px;right:40px;top:300px;text-align:center;font-family:var(--display);font-weight:800;font-size:86px;line-height:1.02;letter-spacing:-.03em}
-.ln{display:block;overflow:hidden;padding:0 10px 10px;margin-bottom:-10px}
-.ln>span{display:inline-block}
-.titre em{font-style:normal;color:var(--lueur)}
-#t-ia em{color:#E4E0FF}
+#marque{position:absolute;left:66px;top:56px;display:flex;align-items:center;gap:16px;font-family:var(--display);font-weight:800;font-size:46px;letter-spacing:-.02em;z-index:40}
+#marque img{width:62px;height:62px;border-radius:15px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
 
-/* ---------- téléphone ---------- */
-#scene3d{position:absolute;left:0;top:0;width:1080px;height:1920px;perspective:2200px;perspective-origin:50% 60%}
-#tel-flot{position:absolute;left:220px;top:600px;width:640px;height:1300px;transform-style:preserve-3d}
-#tel-whip{position:relative;width:640px;height:1300px;transform-style:preserve-3d}
-#tel{position:relative;width:640px;height:1300px;border-radius:96px;background:linear-gradient(145deg,#26363D,#0A1317 40%,#05090B);padding:16px;box-shadow:0 70px 140px rgba(0,0,0,.5),0 0 0 2px rgba(255,255,255,.08) inset;transform-style:preserve-3d}
-#ecran{position:relative;width:608px;height:1268px;border-radius:80px;overflow:hidden;background:var(--email)}
-#ui{position:absolute;left:0;top:0;width:390px;height:813px;transform:scale(1.5590);transform-origin:0 0;color:var(--encre);font-size:16px;line-height:1.5;font-family:var(--texte)}
-.ilot{position:absolute;left:135px;top:11px;width:120px;height:34px;border-radius:20px;background:#000;z-index:9}
-.statut{position:absolute;left:0;right:0;top:0;height:52px;display:flex;justify-content:space-between;align-items:center;padding:6px 30px 0 34px;font-weight:700;font-size:15px;z-index:8}
-.statut .ic{display:flex;gap:6px;align-items:center}
-.scr{position:absolute;left:0;top:52px;width:390px;height:689px;padding:0 18px;overflow:hidden;background:var(--email)}
-.scr.sombre{background:#0A1C24;padding:0}
-.tabbar{position:absolute;left:0;right:0;bottom:0;height:72px;background:rgba(255,255,255,.96);border-top:1px solid var(--trait);padding:8px 8px 0;z-index:7}
-.tabbar .in{position:relative;display:grid;grid-template-columns:repeat(5,1fr)}
-.tab{position:relative;z-index:1;display:grid;justify-items:center;gap:2px;padding:5px 0;font-size:11.5px;font-weight:700;color:var(--encre-2)}
-.tab svg{width:24px;height:24px}
-.indic{position:absolute;left:0;top:1px;width:20%;height:32px;display:flex;justify-content:center}
-.indic i{width:56px;height:32px;border-radius:999px;background:var(--lagon-pale)}
-.indic i.v{position:absolute;background:var(--ia-pale);opacity:0}
-.tab.on{color:var(--lagon)}
-.tab .c2{position:absolute;inset:0;display:grid;justify-items:center;gap:2px;padding:5px 0;color:var(--lagon);opacity:0}
-.tab.ia .c2{color:var(--ia)}
+/* ---------------- 3. Prescri'Dent ---------------- */
+#arcade{position:absolute;left:0;right:0;top:540px;display:flex;justify-content:center;gap:8px}
+#arcade svg{width:46px;height:56px;overflow:visible}
+#arcade .base{fill:rgba(255,255,255,.14)}
+#arcade .lum-d{fill:var(--lagon-vif);filter:drop-shadow(0 0 6px rgba(43,208,176,.9))}
+#cartes{position:absolute;left:110px;top:780px;width:860px;height:560px;transform-style:preserve-3d}
+.carte{position:absolute;inset:0;border-radius:44px;background:#fff;color:var(--encre);padding:52px 56px;box-shadow:0 60px 120px rgba(0,0,0,.5)}
+.q-n{font-size:30px;color:var(--encre-2);font-weight:700}
+.q-t{font-family:var(--display);font-weight:700;font-size:68px;line-height:1.05;letter-spacing:-.025em;margin-top:10px}
+.q-opt{position:relative;display:flex;gap:30px;align-items:center;margin-top:42px;padding:32px 34px;border-radius:30px;border:3px solid var(--trait)}
+.q-opt .sel{position:absolute;inset:-3px;border-radius:30px;border:3px solid var(--lagon);background:var(--lagon-pale);opacity:0}
+.q-opt .boite{position:relative;flex:none;width:62px;height:62px;border-radius:18px;border:4px solid var(--trait)}
+.q-opt .boite .ok{position:absolute;inset:-4px;border-radius:18px;background:var(--lagon);opacity:0}
+.q-opt .boite svg{position:absolute;inset:-4px;width:62px;height:62px}
+.q-opt .boite svg path{fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+.q-opt .txt{position:relative}
+.q-opt b{display:block;font-size:44px;line-height:1.1}
+.q-opt small{display:block;font-size:31px;color:var(--encre-2);line-height:1.3;margin-top:6px}
 
-/* ---------- UI de l'appli (reprise du style de Drill) ---------- */
-#ui h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
-.top{display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px}
-.retour{display:inline-flex;align-items:center;gap:6px;padding:8px 12px 8px 8px;border-radius:999px;background:var(--carte);border:1px solid var(--trait);font-weight:700;font-size:14.4px}
-.retour svg{width:18px;height:18px}
-.logo-ui{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:20px}
-.logo-ui svg{width:28px;height:28px}
-.arcade{display:flex;justify-content:center;gap:3px;margin:12px 0 4px}
-.arcade svg{width:22px;height:26px}
-.arcade path{fill:var(--trait)}
-.arcade .on path{fill:var(--lagon)}
-.arcade .tard path{fill:var(--lagon)}
-.etape-n{text-align:center;font-size:13.6px;color:var(--encre-2)}
-.sous{color:var(--encre-2)}
-.opt{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border-radius:14px;background:var(--carte);border:1.5px solid var(--trait);margin-top:10px}
-.opt .coche{position:relative;flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--trait)}
-.opt b{display:block}
-.opt small{display:block;color:var(--encre-2);font-size:13.6px;line-height:1.35}
-.opt.aucun{border-style:dashed}
-.opt .sel{position:absolute;inset:-1.5px;border-radius:14px;border:1.5px solid var(--lagon);background:var(--lagon-pale);opacity:0}
-.opt .txt{position:relative}
-.opt .coche .ok{position:absolute;inset:-2px;border-radius:7px;background:var(--lagon);display:grid;place-items:center;opacity:0}
-.coche .ok::after,.ligne-ok::after{content:"";width:10px;height:6px;border:2.5px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
-.btn-ui{display:block;width:100%;padding:15px;border-radius:999px;font-weight:700;text-align:center;background:var(--lagon);color:#fff}
-.barre{position:absolute;left:18px;right:18px;bottom:14px}
-.touche{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(15,42,51,.35);box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:20;opacity:0}
-.vague{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid var(--lagon);z-index:19;opacity:0}
+#couche-feuille{position:absolute;inset:0;transform-style:preserve-3d}
+#feuille{position:absolute;left:100px;top:560px;width:880px;height:1060px;transform-style:preserve-3d}
+.face{position:absolute;inset:0;border-radius:30px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.recto{background:#fff;color:var(--encre);padding:58px 60px;box-shadow:0 70px 140px rgba(0,0,0,.55)}
+.verso{background:#FBF9F2;color:#24343A;transform:rotateY(180deg);padding:64px 70px;box-shadow:0 70px 140px rgba(0,0,0,.55);transform-style:preserve-3d}
+.r-sur{font-size:28px;color:var(--encre-2);font-weight:700;letter-spacing:.02em}
+.r-titre{font-family:var(--display);font-weight:800;font-size:62px;letter-spacing:-.03em;margin-top:6px}
+.r-trait{height:3px;background:var(--trait);margin:26px 0 8px}
+.ol{position:relative;padding:22px 0 20px;border-bottom:2px dashed #E3ECEE}
+.ol b{display:block;font-size:43px;line-height:1.15}
+.ol b i{color:var(--lagon);font-family:var(--display);font-weight:800}
+.ol span{display:block;font-size:30px;color:var(--encre-2);margin-top:6px;line-height:1.3}
+.ol.barre b,.ol.barre span{color:#A9B6BA}
+.rature{position:absolute;left:-8px;top:46px;height:7px;width:470px;border-radius:4px;background:var(--gencive);transform-origin:0 50%;box-shadow:0 0 10px rgba(232,84,107,.6)}
+.ecarte{position:absolute;right:0;top:20px;padding:10px 18px;border-radius:999px;background:var(--gencive-pale);color:#8E1F31;font-weight:700;font-size:27px}
+.r-pied{position:absolute;left:60px;right:60px;bottom:44px;font-size:24px;color:#8CA0A6}
+#tampon{position:absolute;right:-34px;top:-46px;padding:16px 28px;border:7px solid var(--gencive);border-radius:18px;color:var(--gencive);font-family:var(--display);font-weight:800;font-size:46px;letter-spacing:.02em;transform:rotate(-9deg);background:rgba(255,255,255,.86)}
+#rappel{position:absolute;left:46px;top:1480px;width:720px;display:flex;gap:22px;align-items:flex-start;padding:30px 34px;border-radius:30px;background:var(--ambre-pale);color:#6E4204;box-shadow:0 40px 90px rgba(0,0,0,.45);z-index:5}
+#rappel svg{flex:none;width:52px;height:52px}
+#rappel b{display:block;font-size:40px;line-height:1.15}
+#rappel span{display:block;font-size:30px;margin-top:6px}
+.puce-src{position:absolute;display:flex;align-items:center;gap:14px;padding:16px 28px 16px 16px;border-radius:999px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);backdrop-filter:blur(8px);font-weight:700;font-size:32px;white-space:nowrap;z-index:6}
+.puce-src i{width:44px;height:44px;border-radius:50%;background:var(--lagon-vif);display:grid;place-items:center}
+.puce-src i::after{content:"";width:18px;height:10px;border:4.5px solid #04201F;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-2px)}
 
-.verdict{margin-top:12px;padding:14px;border-radius:14px;border:1.5px solid var(--trait);background:var(--carte)}
-.verdict b{display:block;font-family:var(--display);font-size:18.4px;margin-bottom:2px;color:#8E1F31}
-.verdict p{font-size:14px;color:var(--encre)}
-.src{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;background:rgba(15,42,51,.08);color:var(--encre-2);font-size:11.5px;font-weight:700;vertical-align:1px}
-.alerte{display:flex;gap:10px;padding:12px 14px;border-radius:14px;margin-top:10px;font-size:14px;line-height:1.4}
-.alerte svg{flex:none;width:20px;height:20px;margin-top:1px}
-.alerte b{display:block}
-.alerte.moy{background:var(--ambre-pale);color:#7A4A05}
-.alerte.forte{background:var(--gencive-pale);color:#8E1F31}
-.alerte.info{background:var(--lagon-pale);color:#065E54}
-.ordo{margin-top:12px;padding:14px 16px;border-radius:14px;background:#fff;border:1.5px dashed var(--lagon);font-size:14px;line-height:1.4;display:grid;gap:9px}
-.ordo .ol b{display:block}
-.ordo .ol span{display:block;color:var(--encre-2);font-size:13px}
-.ordo h4{font-family:var(--display);font-size:15px;color:var(--lagon)}
+/* verso : ordonnance manuscrite */
+.v-dr{font-family:var(--texte);font-weight:700;font-size:30px;color:#5B6B70;border-bottom:3px solid #D9DCD5;padding-bottom:16px}
+.v-dr small{display:block;font-weight:400;font-size:26px}
+.v-rx{font-family:var(--display);font-weight:800;font-size:56px;color:#6B7A7E;margin:30px 0 4px}
+.hw{position:relative;font-family:'Caveat',cursive;font-weight:600;font-size:76px;line-height:1.05;color:#1E3A8A;margin:26px 0 0}
+.hw small{display:block;font-size:52px;color:#2B4A9A;margin-left:40px}
+.hw .boite-hw{position:absolute;left:-18px;top:-6px;width:680px;height:96px;border:5px solid var(--cyan);border-radius:14px;background:rgba(79,216,240,.12);box-shadow:0 0 30px rgba(79,216,240,.6);opacity:0}
+.gribouille{height:10px;border-radius:6px;background:#C9CFD0;margin:34px 0 0}
+.signature{position:absolute;right:80px;bottom:90px;width:260px;height:110px}
+.signature path{fill:none;stroke:#1E3A8A;stroke-width:5;stroke-linecap:round}
+#laser{position:absolute;left:-30px;right:-30px;top:0;height:8px;border-radius:4px;background:#E9FDFF;box-shadow:0 0 30px 10px rgba(79,216,240,.9),0 0 100px 40px rgba(79,216,240,.35)}
+#laser::before{content:"";position:absolute;left:30px;right:30px;bottom:8px;height:220px;background:linear-gradient(transparent,rgba(79,216,240,.28))}
+.coins{position:absolute;inset:-40px}
+.coins i{position:absolute;width:90px;height:90px;border:9px solid var(--cyan);filter:drop-shadow(0 0 10px rgba(79,216,240,.8))}
+.coins i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:30px 0 0 0}
+.coins i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 30px 0 0}
+.coins i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 30px}
+.coins i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 30px 0}
 
-/* scanner */
-.viseur{position:absolute;inset:0;background:radial-gradient(90% 60% at 50% 45%,#23343B,#0A1418)}
-.papier{position:absolute;left:58px;top:90px;width:274px;height:380px;background:#FBFAF6;border-radius:6px;box-shadow:0 20px 40px rgba(0,0,0,.5);transform:rotate(-3deg);padding:22px 20px;color:#253238;font-family:"Bradley Hand","Segoe Script",cursive}
-.papier .dr{font-family:var(--texte);font-weight:700;font-size:12px;color:#5b6b70;border-bottom:1px solid #d7dcdc;padding-bottom:8px;margin-bottom:14px}
-.papier .dr small{display:block;font-weight:400}
-.papier .rx{font-family:var(--display);font-weight:800;font-size:20px;color:#5b6b70;margin-bottom:8px}
-.papier .main{position:relative;font-family:var(--texte);font-style:italic;font-weight:700;font-size:16px;margin:6px 0 2px;letter-spacing:.01em;transform:skewX(-8deg)}
-.papier .gri{height:7px;border-radius:4px;background:#C9CFD0;margin:6px 0 12px}
-.papier .gri.c{width:60%}
-.papier .boite{position:absolute;left:-6px;right:auto;top:-4px;bottom:-4px;border:2.5px solid var(--lagon-vif);border-radius:6px;background:rgba(43,208,176,.14);opacity:0}
-.coins{position:absolute;left:38px;top:72px;width:314px;height:420px}
-.coins i{position:absolute;width:46px;height:46px;border:4px solid #fff}
-.coins i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
-.coins i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 14px 0 0}
-.coins i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 14px}
-.coins i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 14px 0}
-.balai{position:absolute;left:44px;top:80px;width:302px;height:4px;border-radius:2px;background:var(--lagon-vif);box-shadow:0 0 18px 6px rgba(43,208,176,.65)}
-.cam-legende{position:absolute;left:0;right:0;top:520px;text-align:center;color:#fff;font-weight:700;font-size:15px}
-.cam-legende small{display:block;font-weight:400;color:#9FB6BD}
-.bouton-cam{position:absolute;left:163px;top:590px;width:64px;height:64px;border-radius:50%;border:4px solid #fff;padding:4px}
-.bouton-cam i{display:block;width:100%;height:100%;border-radius:50%;background:#fff}
-.med{display:flex;gap:12px;align-items:center;padding:11px 12px;border-radius:14px;background:var(--carte);border:1.5px solid var(--trait);margin-top:9px}
-.med .pas{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:16px}
-.med b{display:block;font-size:15px}
-.med small{display:block;font-size:12.5px;color:var(--encre-2);line-height:1.3}
-.bloc{margin:16px 2px 2px;font-family:var(--display);font-weight:700;font-size:15px;color:var(--encre-2)}
-.rx-l{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:var(--carte);border:1.5px solid var(--trait);margin-top:7px;font-weight:700;font-size:14.4px}
-.etat{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
-.etat.ok{background:var(--lagon-pale);color:#065E54}
-.etat.pe{background:var(--ambre-pale);color:#7A4A05}
+/* ---------------- 4. Scanner ---------------- */
+.envol{position:absolute;left:0;top:0;padding:16px 30px;border-radius:999px;background:#fff;color:var(--encre);font-weight:700;font-size:46px;white-space:nowrap;box-shadow:0 0 40px rgba(79,216,240,.7);z-index:8}
+.med{position:absolute;left:70px;right:70px;height:142px;display:flex;gap:28px;align-items:center;padding:0 34px;border-radius:32px;background:#fff;color:var(--encre);box-shadow:0 30px 70px rgba(0,0,0,.4)}
+.med .pas{flex:none;width:92px;height:92px;border-radius:24px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:32px}
+.med b{display:block;font-size:46px;line-height:1.1}
+.med small{display:block;font-size:29px;color:var(--encre-2)}
+.etiq-bloc{position:absolute;left:74px;font-family:var(--display);font-weight:700;font-size:36px;color:rgba(255,255,255,.62)}
+.rx-l{position:absolute;left:70px;right:70px;height:108px;display:flex;justify-content:space-between;align-items:center;padding:0 30px 0 36px;border-radius:28px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.14);font-weight:700;font-size:40px}
+.etat{padding:10px 22px;border-radius:999px;font-size:30px;font-weight:700}
+.etat.ok{background:rgba(43,208,176,.18);color:#8FF3DE;border:2px solid rgba(43,208,176,.5)}
+.etat.pe{background:rgba(242,169,59,.2);color:#FFD08A;border:2px solid rgba(242,169,59,.6)}
+.avant{position:absolute;left:70px;right:70px;height:150px;display:flex;gap:24px;align-items:center;padding:0 34px;border-radius:30px;background:#fff;color:var(--encre);overflow:hidden}
+.avant::before{content:"";position:absolute;left:0;top:0;bottom:0;width:14px;background:var(--c)}
+.avant b{display:block;font-size:40px;line-height:1.15}
+.avant span{display:block;font-size:28px;color:var(--encre-2);margin-top:4px}
+.avant .src{display:inline-block;margin-left:8px;padding:2px 12px;border-radius:999px;background:rgba(15,42,51,.08);font-size:24px;color:var(--encre-2)}
 
-/* codage */
-.recherche{position:relative;margin:12px 0 4px;padding:13px 16px 13px 46px;border-radius:999px;border:1.5px solid var(--lagon);background:var(--carte);font-size:16px;height:52px}
-.recherche svg{position:absolute;left:16px;top:15px;width:20px;height:20px;color:var(--encre-2)}
-.caret{display:inline-block;width:2px;height:19px;background:var(--lagon);vertical-align:-3px;margin-left:1px}
-.acte{position:relative;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--carte);border:1.5px solid var(--trait);margin-top:9px}
-.acte .code{font-family:var(--display);font-weight:700;letter-spacing:.02em;color:var(--lagon)}
-.acte .prix{margin-left:8px;font-weight:700;font-size:13.6px;color:var(--encre-2)}
-.acte .lib{display:block;font-size:14px;line-height:1.35}
-.acte .plus{position:relative;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--lagon-pale);color:var(--lagon);font-size:22px;font-weight:700}
-.acte .plus .v{position:absolute;inset:0;border-radius:50%;background:var(--lagon);color:#fff;display:grid;place-items:center;font-size:18px;opacity:0}
-.acte .hl{position:absolute;inset:-1.5px;border-radius:14px;border:1.5px solid var(--lagon);opacity:0}
-.panier{position:absolute;left:12px;right:12px;bottom:10px;background:var(--encre);color:#fff;border-radius:22px;padding:13px 16px;box-shadow:0 10px 30px rgba(15,42,51,.3);overflow:hidden}
-.panier-tete{display:flex;justify-content:space-between;align-items:center}
-.panier-tete b{font-family:var(--display);font-size:16.8px}
-.badge{background:var(--lagon);border-radius:999px;padding:2px 10px;font-weight:700;margin-left:6px;font-size:14px}
-.total-tete{font-family:var(--display);font-weight:800;font-size:17.6px;color:#7FE3D3}
-.p-acte{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.07);font-size:13.6px;margin-top:12px}
-.p-acte .code{font-family:var(--display);font-weight:700}
-.p-acte span span{color:#B9CDD3}
-.total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
-.total small{display:block;color:#9FB6BD;font-size:12px}
-.total b{font-family:var(--display);font-size:26px;font-weight:800;color:#7FE3D3}
-.copier{margin-top:12px;padding:13px;border-radius:999px;background:#fff;color:var(--encre);text-align:center;font-weight:700}
-.toast{position:absolute;left:0;right:0;top:10px;text-align:center;z-index:12}
-.toast span{display:inline-block;background:var(--encre);color:#fff;padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;white-space:nowrap;box-shadow:0 8px 20px rgba(15,42,51,.25)}
+/* ---------------- 5. Codage ---------------- */
+#rech{position:absolute;left:70px;top:470px;width:940px;height:126px;border-radius:63px;background:#fff;color:var(--encre);display:flex;align-items:center;padding:0 40px 0 100px;font-size:56px;box-shadow:0 0 0 4px rgba(127,227,211,.6),0 30px 80px rgba(0,0,0,.45)}
+#rech svg{position:absolute;left:34px;top:37px;width:52px;height:52px;color:var(--encre-2)}
+.caret{display:inline-block;width:5px;height:58px;background:var(--lagon);margin-left:3px;vertical-align:-8px}
+#morphe{position:absolute;left:70px;top:530px;width:940px;height:8px;border-radius:63px;background:#E9FFFB;box-shadow:0 0 40px 10px rgba(127,227,211,.8)}
+#resultats{position:absolute;left:70px;top:640px;width:940px;transform-style:preserve-3d}
+.res{position:absolute;left:0;width:940px;height:158px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:20px;padding:0 34px 0 38px;border-radius:30px;background:#fff;color:var(--encre);box-shadow:0 30px 70px rgba(0,0,0,.35);transform-origin:50% 0}
+.res .code{font-family:var(--display);font-weight:800;font-size:46px;letter-spacing:.02em;color:var(--lagon)}
+.res .prix{margin-left:14px;font-weight:700;font-size:32px;color:var(--encre-2)}
+.res .lib{display:block;font-size:29px;line-height:1.25;color:#2D4650}
+.res .plus{position:relative;width:76px;height:76px;border-radius:50%;background:var(--lagon-pale);color:var(--lagon);display:grid;place-items:center;font-size:46px;font-weight:800}
+.res .plus .v{position:absolute;inset:0;border-radius:50%;background:var(--lagon);color:#fff;display:grid;place-items:center;font-size:38px;opacity:0}
+.res .hl{position:absolute;inset:-4px;border-radius:32px;border:5px solid var(--menthe);box-shadow:0 0 40px rgba(127,227,211,.7);opacity:0}
+.tap{position:absolute;left:0;top:0;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:6px solid #fff;opacity:0;z-index:9}
+#revel{position:absolute;inset:0;transform-style:preserve-3d}
+#gros-code{position:absolute;left:0;right:0;top:700px;text-align:center;font-family:var(--display);font-weight:800;font-size:200px;line-height:1;letter-spacing:.01em;color:var(--menthe);text-shadow:0 0 60px rgba(127,227,211,.45)}
+#gros-code .c{display:inline-block;width:.62em;text-align:center}
+#souligne{position:absolute;left:150px;width:780px;top:930px;height:8px;border-radius:4px;background:var(--menthe);box-shadow:0 0 30px rgba(127,227,211,.9);transform-origin:0 50%}
+#odo{position:absolute;left:0;right:0;top:990px;display:flex;justify-content:center;font-family:var(--display);font-weight:800;font-size:160px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+#odo .col{display:inline-block;height:1em;overflow:hidden}
+#odo .col span{display:block}
+#odo .fixe{display:inline-block}
+#lib-code{position:absolute;left:110px;right:110px;top:1210px;text-align:center;font-size:40px;line-height:1.35;color:rgba(230,250,247,.82)}
+#lib-code .m{display:inline-block;white-space:pre}
+#seance{position:absolute;left:0;right:0;top:1400px;text-align:center}
+#seance span{display:inline-flex;gap:26px;align-items:center;padding:22px 36px;border-radius:999px;background:#fff;color:var(--encre);font-weight:700;font-size:36px;box-shadow:0 30px 70px rgba(0,0,0,.4)}
+#seance b{font-family:var(--display);font-weight:800;color:var(--lagon);font-size:42px}
 
-/* assistant */
-.fil{display:grid;gap:11px;margin-top:12px}
-.bulle{padding:12px 14px;border-radius:14px;max-width:92%;font-size:14.4px;line-height:1.42}
-.bulle.moi{justify-self:end;background:var(--encre);color:#fff;border-bottom-right-radius:4px}
-.bulle.lui{background:var(--carte);border:1px solid #D6D2F7;border-bottom-left-radius:4px}
-.bulle.ia{background:var(--ia-pale);border:0}
-.bulle .code{font-family:var(--display);font-weight:800;color:var(--lagon);font-size:20px;letter-spacing:.02em}
-.bulle .pt{display:flex;gap:5px;padding:4px 2px}
-.bulle .pt i{width:8px;height:8px;border-radius:50%;background:var(--ia);opacity:.5}
-.btn-ia{margin-top:10px;padding:11px;border-radius:999px;background:var(--ia);color:#fff;font-weight:700;text-align:center;font-size:14px}
-.saisie{position:absolute;left:14px;right:14px;bottom:12px;display:flex;gap:8px}
-.saisie .ch{flex:1;padding:13px 16px;border-radius:999px;border:1.5px solid var(--ia);background:var(--carte);font-size:15px;white-space:nowrap;overflow:hidden;height:50px}
-.saisie .env{flex:none;width:50px;height:50px;border-radius:50%;background:var(--ia);color:#fff;display:grid;place-items:center}
-.saisie .caret{background:var(--ia)}
+/* ---------------- 6. Assistant ---------------- */
+#saisie{position:absolute;left:70px;top:1560px;width:940px;height:126px;border-radius:63px;background:#fff;color:var(--encre);display:flex;align-items:center;padding:0 140px 0 44px;font-size:46px;white-space:nowrap;overflow:hidden;box-shadow:0 0 0 5px rgba(143,134,255,.7),0 0 60px rgba(91,79,217,.6)}
+#saisie .caret{background:var(--ia);height:50px}
+#envoyer{position:absolute;left:898px;top:1573px;width:100px;height:100px;border-radius:50%;background:var(--ia);display:grid;place-items:center;z-index:3}
+#envoyer svg{width:46px;height:46px}
+#bmoi{position:absolute;right:70px;top:520px;max-width:860px;padding:36px 44px;border-radius:48px 48px 12px 48px;background:#0F2A33;font-size:48px;line-height:1.2;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+#avatar{position:absolute;left:70px;top:720px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#A79FFF,#5B4FD9 60%,#3A2FA8);display:grid;place-items:center;box-shadow:0 0 60px rgba(143,134,255,.7)}
+#avatar svg{width:58px;height:58px}
+.orb{position:absolute;left:0;top:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#E4E0FF;box-shadow:0 0 18px 6px rgba(143,134,255,.9)}
+#brep{position:absolute;left:70px;top:870px;width:940px;padding:44px 48px 48px;border-radius:12px 48px 48px 48px;background:#fff;color:var(--encre);box-shadow:0 40px 90px rgba(0,0,0,.5)}
+#brep .intro{font-size:36px;color:var(--encre-2)}
+#brep .ligne-code{display:flex;align-items:baseline;gap:24px;margin-top:12px}
+#brep .code{font-family:var(--display);font-weight:800;font-size:124px;line-height:1;letter-spacing:.01em;color:var(--lagon)}
+#brep .code .c{display:inline-block;width:.62em;text-align:center}
+#brep .prix{font-family:var(--display);font-weight:800;font-size:58px;color:var(--encre)}
+#brep .lib{font-size:33px;color:var(--encre-2);margin-top:14px;line-height:1.3}
+#brep .btn{margin-top:30px;padding:26px;border-radius:999px;background:var(--ia);color:#fff;text-align:center;font-weight:700;font-size:40px}
+.etincelle{position:absolute;left:0;top:0;width:0;height:0}
+.etincelle i{position:absolute;left:-3px;top:-22px;width:6px;height:44px;border-radius:3px;background:#fff;box-shadow:0 0 12px #C9C3FF}
+.etincelle i:nth-child(2){transform:rotate(90deg)}
+#toast{position:absolute;left:0;right:0;top:1440px;text-align:center}
+#toast span{display:inline-flex;gap:16px;align-items:center;padding:20px 34px;border-radius:999px;background:#0F2A33;font-weight:700;font-size:34px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
 
-/* ---------- badges sources ---------- */
-.source{position:absolute;display:flex;align-items:center;gap:14px;padding:16px 26px 16px 18px;border-radius:999px;background:#fff;color:var(--encre);font-weight:700;font-size:32px;box-shadow:0 24px 50px rgba(0,0,0,.28);z-index:30;white-space:nowrap}
-.source i{width:40px;height:40px;border-radius:50%;background:var(--lagon);display:grid;place-items:center;flex:none}
-.source i::after{content:"";width:16px;height:9px;border:4px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-2px)}
-.source.v i{background:var(--ia)}
-
-/* ---------- fin ---------- */
-#fin{position:absolute;inset:0}
-#fin-icone{position:absolute;left:400px;top:470px;width:280px;height:280px;border-radius:64px;box-shadow:0 36px 80px rgba(4,36,58,.55)}
-#fin-icone img{width:100%;height:100%;border-radius:64px;display:block}
-#fin-mot{position:absolute;left:0;right:0;top:780px;text-align:center;font-family:var(--display);font-weight:800;font-size:210px;line-height:1;letter-spacing:-.04em}
-#fin-mot span{display:inline-block}
-#fin-slogan{position:absolute;left:0;right:0;top:1040px;text-align:center;font-family:var(--display);font-weight:700;font-size:76px;line-height:1.05;letter-spacing:-.025em}
-#fin-slogan em{font-style:normal;color:var(--lueur)}
+/* ---------------- 7. fin ---------------- */
+.orbe{position:absolute;left:0;top:0;width:70px;height:70px;margin:-35px 0 0 -35px;border-radius:50%;filter:blur(2px)}
+#fin-ic{position:absolute;left:400px;top:430px;width:280px;height:280px}
+#fin-ic img{width:280px;height:280px;border-radius:64px;box-shadow:0 36px 90px rgba(4,36,58,.6)}
+#fin-mot{position:absolute;left:0;right:0;top:760px;text-align:center;font-family:var(--display);font-weight:800;font-size:230px;line-height:1;letter-spacing:-.045em}
+#fin-mot .ln{display:inline-block}
+#fin-slogan{position:absolute;left:0;right:0;top:1030px;text-align:center;font-family:var(--display);font-weight:800;font-size:84px;line-height:1.04;letter-spacing:-.03em}
+#fin-slogan em{color:var(--lueur)}
 #fin-cta{position:absolute;left:0;right:0;top:1290px;text-align:center}
-#fin-cta span{display:inline-block;padding:24px 44px;border-radius:999px;background:#fff;color:var(--lagon);font-family:var(--display);font-weight:800;font-size:44px;box-shadow:0 24px 50px rgba(0,0,0,.25)}
-#fin-plus{position:absolute;left:0;right:0;top:1440px;text-align:center;font-size:34px;font-weight:700;color:rgba(255,255,255,.88)}
-#fin-src{position:absolute;left:60px;right:60px;top:1700px;text-align:center;font-size:26px;line-height:1.5;color:rgba(255,255,255,.62)}
+#fin-cta span{display:inline-block;padding:26px 46px;border-radius:999px;background:#fff;color:var(--lagon);font-family:var(--display);font-weight:800;font-size:44px;box-shadow:0 30px 70px rgba(0,0,0,.3)}
+#fin-plus{position:absolute;left:0;right:0;top:1440px;text-align:center;font-size:34px;font-weight:700;color:rgba(255,255,255,.9)}
+#fin-src{position:absolute;left:60px;right:60px;top:1700px;text-align:center;font-size:27px;line-height:1.5;color:rgba(255,255,255,.66)}
 
-/* ---------- surcouches ---------- */
-#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
-#noir{position:absolute;inset:0;background:#030A0E;opacity:0}
-#vignette{position:absolute;inset:0;background:radial-gradient(120% 75% at 50% 45%,transparent 55%,rgba(0,0,0,.42) 100%);pointer-events:none}
-#grain{position:absolute;inset:-128px;opacity:.05;mix-blend-mode:overlay;pointer-events:none}
+/* ---------------- surcouches ---------------- */
+#flare{position:absolute;left:-300px;top:660px;width:1680px;height:10px;border-radius:50%;background:radial-gradient(closest-side,#fff,rgba(160,255,240,.6) 40%,transparent);filter:blur(1px);mix-blend-mode:screen}
+#flash{position:absolute;inset:0;background:#fff}
+#noir{position:absolute;inset:0;background:#000}
+#vignette{position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%)}
+#grain{position:absolute;inset:-128px;opacity:.05;mix-blend-mode:overlay}
 </style>
 </head>
 <body>
 <div id="cam">
-  <div class="fond" id="f-nuit"></div>
-  <div class="blob" id="blob1"></div><div class="blob" id="blob2"></div>
-  <div class="fond" id="f-lagon"></div>
-  <div class="fond" id="f-scan"></div>
-  <div class="fond" id="f-code"></div>
-  <div class="fond" id="f-ia"></div>
-  <div class="fond" id="f-fin"></div>
+  <div class="fond" id="f1"></div><div class="fond" id="f2"></div><div class="fond" id="f3"></div><div class="fond" id="f4"></div>
+  <div class="fond" id="f5"></div><div class="fond" id="f6"></div><div class="fond" id="f7"></div>
+  <div class="lum" id="lum1"></div><div class="lum" id="lum2"></div>
+  <div class="rayon" id="ray1" style="left:120px"></div><div class="rayon" id="ray2" style="left:520px;width:260px"></div><div class="rayon" id="ray3" style="left:860px"></div>
+  <div id="poussiere"></div>
 
-  <!-- 1. Accroche -->
-  <div id="accroche">
-    <div id="ecg"><svg viewBox="0 0 1080 200"><path id="ecg-path"/></svg></div>
-    <div class="cas">
-      <span class="puce" id="p1"><i style="background:var(--lagon-vif)"></i>Dent de sagesse incluse</span>
-      <span class="puce" id="p2"><i style="background:var(--gencive)"></i>Allergie à la pénicilline</span>
-      <span class="puce" id="p3"><i style="background:#F2A93B"></i>Sous Kardégic</span>
+  <div id="monde">
+    <!-- 1. ACCROCHE -->
+    <section class="scene" id="s1">
+      <div id="ecg"><svg viewBox="0 0 1080 200"><path id="ecg-path" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1"/></svg><div id="tete-ecg"></div></div>
+      <div class="phrase" id="p1"><span class="ln"><span class="in sc">Dent de sagesse</span></span><span class="ln"><span class="in sc"><em>incluse.</em></span></span></div>
+      <div class="phrase" id="p2"><span class="ln"><span class="in sc">Allergique à la</span></span><span class="ln"><span class="in sc"><em>pénicilline.</em></span></span></div>
+      <div class="phrase" id="p3"><span class="ln"><span class="in sc">Et sous</span></span><span class="ln"><span class="in sc"><em>Kardégic.</em></span></span></div>
+      <div class="phrase" id="p4"><span class="ln"><span class="in sc">Tu prescris</span></span><span class="ln"><span class="in sc"><em>quoi ?</em></span></span></div>
+      <div id="legende"><b>●</b> Patient au fauteuil · 9 h 02</div>
+    </section>
+
+    <!-- 2. LOGO -->
+    <section class="scene" id="s2">
+      <div class="anneau" id="an1"></div><div class="anneau" id="an2"></div><div class="anneau" id="an3"></div>
+      <div id="parts"></div>
+      <div id="logo-g">
+        <div id="ic"><div id="ic-fond"></div><img id="ic-img" src="../icons/icon.svg" alt="">
+          <svg id="ic-trace" viewBox="0 0 512 512"><g transform="translate(120 84) scale(15.2)"><path id="trace-path" pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M7 2.5c-2.6 0-4.3 2-4.3 4.8 0 2.4 1 3.8 1.6 6 .6 2.3.8 7.8 2.6 7.8 1.6 0 1.6-5.2 3.1-5.2s1.5 5.2 3.1 5.2c1.8 0 2-5.5 2.6-7.8.6-2.2 1.6-3.6 1.6-6 0-2.8-1.7-4.8-4.3-4.8-1.4 0-2 .8-3 .8s-1.6-.8-3-.8z"/></g></svg>
+        </div>
+        <div id="mot"><span class="ln" style="position:relative"><span class="in sc">Drill</span><span class="brille" id="brille1"></span></span></div>
+        <div id="signature"><span class="sm">L’outil clinique des étudiants</span><br><span class="sm">en chirurgie dentaire</span></div>
+      </div>
+    </section>
+
+    <!-- 3. PRESCRI'DENT -->
+    <section class="scene" id="s3">
+      <div class="num">01</div>
+      <div class="titre-f"><span class="ln"><span class="in sc">Prescri’Dent</span></span></div>
+      <div class="sous-f"><span class="sm">L’ordonnance en 5 questions.</span></div>
+      <div id="arcade"></div>
+      <div id="cartes">
+        <div class="carte" id="c3"><p class="q-n">Question 5 sur 5</p><p class="q-t">Traitements en cours ?</p>
+          <div class="q-opt"><span class="sel"></span><span class="boite"><span class="ok"></span><svg viewBox="0 0 62 62"><path pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M17 32l10 10 19-21"/></svg></span><span class="txt"><b>Un antiplaquettaire</b><small>Kardégic, aspirine, Plavix…</small></span></div></div>
+        <div class="carte" id="c2"><p class="q-n">Question 3 sur 5</p><p class="q-t">Allergies connues ?</p>
+          <div class="q-opt"><span class="sel"></span><span class="boite"><span class="ok"></span><svg viewBox="0 0 62 62"><path pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M17 32l10 10 19-21"/></svg></span><span class="txt"><b>Pénicillines (amoxicilline)</b><small>Allergie avérée ou anaphylaxie probable</small></span></div></div>
+        <div class="carte" id="c1"><p class="q-n">Question 1 sur 5</p><p class="q-t">Pour quel acte ?</p>
+          <div class="q-opt"><span class="sel"></span><span class="boite"><span class="ok"></span><svg viewBox="0 0 62 62"><path pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M17 32l10 10 19-21"/></svg></span><span class="txt"><b>Avulsion de dent incluse</b><small>Dont dent de sagesse incluse</small></span></div></div>
+      </div>
+      <div id="rappel"><svg viewBox="0 0 24 24" fill="none" stroke="#C77A0A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4m0 3h.01"/></svg><span><b>Kardégic : ne pas l’arrêter</b><span>Hémostase locale systématique · SFCO 2015</span></span></div>
+      <div class="puce-src" id="src-has" style="left:620px;top:1660px"><i></i>HAS 2026</div>
+    </section>
+
+    <!-- la feuille : ordonnance au recto, ordonnance du patient au verso -->
+    <div id="couche-feuille">
+      <div id="feuille">
+        <div class="face recto">
+          <p class="r-sur">PRESCRI’DENT · AVULSION DE DENT INCLUSE</p>
+          <p class="r-titre">Ordonnance proposée</p>
+          <div class="r-trait"></div>
+          <div class="ol" id="ol1"><b><i>1/</i> Clarithromycine 500 mg</b><span>1 comprimé, 30 à 60 min avant l’acte</span></div>
+          <div class="ol" id="ol2"><b><i>2/</i> Paracétamol 1 g</b><span>Si douleur, 3 g par jour au maximum, 5 jours</span></div>
+          <div class="ol" id="ol3"><b><i>3/</i> Chlorhexidine 0,12 %</b><span>Bain de bouche 2 fois par jour, 7 jours</span></div>
+          <div class="ol barre" id="ol4"><b>Ibuprofène 400 mg</b><span>Anti-inflammatoire</span><span class="rature" id="rature"></span><span class="ecarte" id="ecarte">Écarté : antithrombotique</span></div>
+          <p class="r-pied">Sources : HAS 2026 · SFCO 2015 · RCP — outil d’aide à la décision</p>
+          <div id="tampon">ANTIBIOTIQUE : OUI</div>
+        </div>
+        <div class="face verso">
+          <div class="v-dr">Dr C. Moreau — Médecine générale<small>Le 12 novembre</small></div>
+          <p class="v-rx">Rx</p>
+          <p class="hw" id="hw1"><span class="boite-hw"></span>Kardégic 75 mg<small>1 sachet par jour</small></p>
+          <p class="hw" id="hw2"><span class="boite-hw"></span>Metformine 1000 mg<small>matin et soir</small></p>
+          <div class="gribouille" style="width:62%"></div><div class="gribouille" style="width:40%"></div>
+          <svg class="signature" viewBox="0 0 260 110"><path d="M10 80c30-60 40-60 50-20s20 20 35-15 15 10 30 20 30-40 45-30 20 30 80 10"/></svg>
+          <div id="laser"></div>
+          <div class="coins" id="coins"><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
     </div>
-    <div class="grand" id="q1"><span class="m">Dent </span><span class="m">de</span><br><span class="m">sagesse</span><br><em class="m">incluse.</em></div>
-    <div class="grand" id="q2"><span class="m">Allergique</span><br><span class="m">à </span><span class="m">la</span><br><em class="m">pénicilline.</em></div>
-    <div class="grand" id="q3"><span class="m">Et </span><span class="m">sous</span><br><em class="m">Kardégic.</em></div>
-    <div class="grand" id="q4"><span class="m">Tu</span><br><span class="m">prescris</span><br><em class="m">quoi </em><span class="qm">?</span></div>
-    <div class="legende" id="leg">Patient au fauteuil · 9 h 02</div>
+
+    <!-- 4. SCANNER -->
+    <section class="scene" id="s4">
+      <div class="num">02</div>
+      <div class="titre-f"><span class="ln"><span class="in sc">Scanner</span></span></div>
+      <div class="sous-f"><span class="sm">Son traitement, décodé.</span></div>
+      <div class="envol" id="lev1">Kardégic</div>
+      <div class="envol" id="lev2">Metformine</div>
+      <div class="med" id="med1" style="top:470px"><span class="pas" style="background:var(--ambre-pale);color:var(--ambre)">AAP</span><span><b>Kardégic</b><small>acide acétylsalicylique · Antiagrégant plaquettaire</small></span></div>
+      <div class="med" id="med2" style="top:630px"><span class="pas" style="background:var(--lagon-pale);color:var(--lagon)">ADO</span><span><b>Metformine</b><small>metformine · Antidiabétique (biguanide)</small></span></div>
+      <p class="etiq-bloc" id="eb1" style="top:812px">Si tu prescris</p>
+      <div class="rx-l" id="rx1" style="top:874px">Ibuprofène (AINS)<span class="etat pe">Précaution</span></div>
+      <div class="rx-l" id="rx2" style="top:998px">Paracétamol<span class="etat ok">Compatible</span></div>
+      <div class="rx-l" id="rx3" style="top:1122px">Amoxicilline<span class="etat ok">Compatible</span></div>
+      <p class="etiq-bloc" id="eb2" style="top:1272px">Avant un geste</p>
+      <div class="avant" id="av1" style="top:1334px;--c:var(--ambre-vif)"><span><b>Antiplaquettaire : ne pas l’arrêter</b><span>Hémostase locale systématique <i class="src">SFCO 2015</i></span></span></div>
+      <div class="avant" id="av2" style="top:1504px;--c:var(--lagon-vif)"><span><b>Diabète : demander l’HbA1c</b><span>9 % ou plus : risque infectieux augmenté <i class="src">HAS 2026</i></span></span></div>
+      <div class="puce-src" id="src-ansm" style="left:650px;top:1700px"><i></i>Base ANSM</div>
+    </section>
+
+    <!-- 5. CODAGE -->
+    <section class="scene" id="s5">
+      <div class="num">03</div>
+      <div class="titre-f"><span class="ln"><span class="in sc">Codage express</span></span></div>
+      <div class="sous-f"><span class="sm">Le bon code CCAM, sans chercher.</span></div>
+      <div id="morphe"></div>
+      <div id="rech"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span id="tape-rech"></span><span class="caret" id="caret-rech"></span></div>
+      <div id="resultats">
+        <div class="res" style="top:0"><span><span class="code">HBGD018</span><span class="prix">96,14 €</span><span class="lib">Avulsion d’1 troisième molaire maxillaire retenue</span></span><span class="plus">+</span></div>
+        <div class="res" id="r004" style="top:180px"><span class="hl"></span><span><span class="code">HBGD004</span><span class="prix">96,14 €</span><span class="lib">Avulsion d’1 troisième molaire mandibulaire retenue</span></span><span class="plus">+<span class="v">✓</span></span></div>
+        <div class="res" style="top:360px"><span><span class="code">HBGD025</span><span class="prix">144,21 €</span><span class="lib">Avulsion de 2 troisièmes molaires retenues</span></span><span class="plus">+</span></div>
+        <div class="res" style="top:540px"><span><span class="code">HBGD021</span><span class="prix">192,28 €</span><span class="lib">Avulsion de 3 troisièmes molaires retenues</span></span><span class="plus">+</span></div>
+      </div>
+      <div class="tap" id="tap5"></div>
+      <div id="revel">
+        <div id="gros-code"></div>
+        <div id="souligne"></div>
+        <div id="odo"></div>
+        <div id="lib-code"><span class="sm">Avulsion d’1 troisième molaire mandibulaire retenue ou à l’état de germe</span></div>
+        <div id="seance"><span>Total de la séance <b>96,14 €</b></span></div>
+        <div class="puce-src" id="src-ccam" style="left:70px;top:1660px"><i></i>Base CCAM V84</div>
+      </div>
+    </section>
+
+    <!-- 6. ASSISTANT -->
+    <section class="scene" id="s6">
+      <div class="num">04</div>
+      <div class="titre-f"><span class="ln"><span class="in sc">Assistant</span></span></div>
+      <div class="sous-f"><span class="sm">Décris l’acte. Il trouve le code.</span></div>
+      <div id="bmoi">Dent de sagesse du bas, incluse</div>
+      <div id="avatar"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <div id="orbs"></div>
+      <div id="brep">
+        <p class="intro cr">Pour une 3<sup>e</sup> molaire mandibulaire incluse :</p>
+        <div class="ligne-code cr"><span class="code" id="code-ia"></span><span class="prix">96,14 €</span></div>
+        <p class="lib cr">Avulsion d’1 troisième molaire mandibulaire retenue ou à l’état de germe</p>
+        <div class="btn cr" id="btn-ajout">Ajouter au codage</div>
+      </div>
+      <div id="etincelles"></div>
+      <div class="tap" id="tap6"></div>
+      <div id="toast"><span>✓ Ajouté à la séance</span></div>
+      <div id="saisie"><span id="tape-ia"></span><span class="caret" id="caret-ia"></span></div>
+      <div id="envoyer"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></div>
+    </section>
+
+    <!-- 7. FIN -->
+    <section class="scene" id="s7">
+      <div class="anneau" id="an4" style="left:415px;top:445px;width:250px;height:250px"></div>
+      <div id="fin-ic"><img src="../icons/icon.svg" alt=""></div>
+      <div id="fin-mot"><span class="ln" style="position:relative"><span class="in sc">Drill</span><span class="brille" id="brille2"></span></span></div>
+      <div id="fin-slogan"><span class="ln"><span class="in">Prescrire et coder,</span></span><span class="ln"><span class="in"><em>sans chercher.</em></span></span></div>
+      <div id="fin-cta"><span>ryannaalrn-sudo.github.io/Drill</span></div>
+      <div id="fin-plus">Sans compte · aucune donnée patient enregistrée</div>
+      <div id="fin-src">Recommandations HAS 2026 · SFCO 2015 · CCAM V84 · base ANSM<br>Outil d’aide à la décision</div>
+    </section>
   </div>
 
-  <!-- 2. Logo -->
-  <div id="logo">
-    <div class="onde" id="onde1"></div><div class="onde" id="onde2"></div>
-    <div id="parts"></div>
-    <div id="icone"><div id="icone-in"><img id="icone-img" src="../icons/icon.svg" alt=""></div></div>
-    <div id="mot"><span>D</span><span>r</span><span>i</span><span>l</span><span>l</span></div>
-    <div id="signature"><span>L’outil </span><span>clinique </span><span>des </span><span>étudiants</span><br><span>en </span><span>chirurgie </span><span>dentaire</span></div>
-  </div>
-
-  <!-- 3. Fonctionnalités -->
-  <div id="tete"><img src="../icons/icon.svg" alt="">Drill</div>
-  <div class="etiq" id="e1"><span>01 · PRESCRI’DENT</span></div>
-  <div class="etiq" id="e2"><span>02 · SCANNER</span></div>
-  <div class="etiq" id="e3"><span>03 · CODAGE EXPRESS</span></div>
-  <div class="etiq" id="e4"><span>04 · ASSISTANT</span></div>
-  <div class="titre" id="t-pres"><span class="ln"><span>L’ordonnance</span></span><span class="ln"><span>en <em>5 questions.</em></span></span></div>
-  <div class="titre" id="t-scan"><span class="ln"><span>Son traitement,</span></span><span class="ln"><span><em>décodé.</em></span></span></div>
-  <div class="titre" id="t-code"><span class="ln"><span>Le bon code CCAM,</span></span><span class="ln"><span><em>sans chercher.</em></span></span></div>
-  <div class="titre" id="t-ia"><span class="ln"><span>Décris l’acte.</span></span><span class="ln"><span><em>Il trouve le code.</em></span></span></div>
-
-  <div id="scene3d">
-    <div id="tel-flot"><div id="tel-whip"><div id="tel"><div id="ecran"><div id="ui">
-      <div class="ilot"></div>
-      <div class="statut"><span>9:41</span><span class="ic">
-        <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5" width="3" height="7" rx="1" fill="currentColor"/><rect x="10" y="2.5" width="3" height="9.5" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg>
-        <svg width="26" height="13" viewBox="0 0 26 13"><rect x=".5" y=".5" width="22" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".45"/><rect x="2.5" y="2.5" width="16" height="8" rx="2" fill="currentColor"/><rect x="23.5" y="4" width="2" height="5" rx="1" fill="currentColor" opacity=".45"/></svg>
-      </span></div>
-
-      <!-- Prescri : question -->
-      <div class="scr" id="s-q">
-        <div class="top"><span class="retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>Retour</span><span class="retour" style="padding-left:12px">Recommencer</span></div>
-        <div class="arcade" id="arcade"></div>
-        <p class="etape-n">Question 5 sur 5</p>
-        <h2 style="margin-top:14px">Traitements en cours ?</h2>
-        <p class="sous" style="font-size:14.5px;margin-top:4px">Antithrombotiques et médicaments qui interagissent.</p>
-        <div class="opt aucun"><span class="coche"></span><span class="txt"><b>Aucun de ces traitements</b></span></div>
-        <div class="opt" id="opt-aap"><span class="sel"></span><span class="coche"><span class="ok"></span></span><span class="txt"><b>Un antiplaquettaire</b><small>Kardégic, aspirine, Plavix (clopidogrel), Brilique, Efient</small></span></div>
-        <div class="opt"><span class="coche"></span><span class="txt"><b>Deux antiplaquettaires</b><small>Par exemple aspirine + clopidogrel</small></span></div>
-        <div class="opt"><span class="coche"></span><span class="txt"><b>Antivitamine K</b><small>Coumadine (warfarine), Préviscan, Sintrom</small></span></div>
-        <div class="barre"><div class="btn-ui" id="voir">Voir la conduite à tenir</div></div>
-      </div>
-
-      <!-- Prescri : conduite à tenir -->
-      <div class="scr" id="s-ordo">
-        <p class="sous" style="font-size:13.5px;margin-top:14px">Avulsion de dent incluse</p>
-        <h2>Conduite à tenir</h2>
-        <div class="verdict c-o"><b>Antibiotique : oui</b><p>Antibioprophylaxie recommandée pour cet acte (grade A). <span class="src">HAS 2026</span></p></div>
-        <div class="alerte moy c-o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4m0 3h.01"/></svg><span><b>Antiplaquettaire seul : ne pas l’arrêter</b>Hémostase locale systématique. <span class="src">SFCO 2015</span></span></div>
-        <div class="alerte forte c-o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4m0 3h.01"/></svg><span><b>Ibuprofène écarté</b>Antithrombotique : risque hémorragique majoré.</span></div>
-        <div class="ordo c-o">
-          <h4>À recopier sur l’ordonnance</h4>
-          <div class="ol c-l"><b>1/ Clarithromycine 500 mg</b><span>1 comprimé 30 à 60 min avant l’acte</span></div>
-          <div class="ol c-l"><b>2/ Paracétamol 1 g</b><span>Si douleur, sans dépasser 3 g par jour, 5 jours</span></div>
-          <div class="ol c-l"><b>3/ Chlorhexidine 0,12 %</b><span>Bain de bouche 2 fois par jour, 7 jours</span></div>
-        </div>
-      </div>
-
-      <!-- Scanner : caméra -->
-      <div class="scr sombre" id="s-cam">
-        <div class="viseur"></div>
-        <div class="papier" id="papier">
-          <div class="dr">Dr C. Moreau<small>Médecine générale</small></div>
-          <div class="rx">Rx</div>
-          <div class="main" id="l-kard"><span class="boite" style="right:-8px"></span>Kardégic 75 mg</div>
-          <div class="gri"></div>
-          <div class="main" id="l-metf"><span class="boite" style="right:-8px"></span>Metformine 1000 mg</div>
-          <div class="gri c"></div>
-          <div class="main" id="l-rami"><span class="boite" style="right:-8px"></span>Atorvastatine 20 mg</div>
-          <div class="gri"></div><div class="gri c"></div>
-        </div>
-        <div class="coins" id="coins"><i></i><i></i><i></i><i></i></div>
-        <div class="balai" id="balai"></div>
-        <div class="cam-legende">Cadre l’ordonnance du patient<small>Lecture des médicaments en cours</small></div>
-        <div class="bouton-cam"><i></i></div>
-      </div>
-
-      <!-- Scanner : résultat -->
-      <div class="scr" id="s-res">
-        <h2 style="margin-top:14px">Ce que ce traitement change pour toi</h2>
-        <div class="bloc">Ses médicaments</div>
-        <div class="med c-r"><span class="pas" style="background:var(--ambre-pale);color:var(--ambre)">AAP</span><span><b>Kardégic</b><small>acide acétylsalicylique · Antiagrégant plaquettaire</small></span></div>
-        <div class="med c-r"><span class="pas" style="background:var(--lagon-pale);color:var(--lagon)">ADO</span><span><b>Metformine</b><small>metformine · Antidiabétique (biguanide)</small></span></div>
-        <div class="med c-r"><span class="pas" style="background:var(--ia-pale);color:var(--ia)">HMG</span><span><b>Atorvastatine</b><small>atorvastatine · Hypocholestérolémiant (statine)</small></span></div>
-        <div class="bloc c-r">Si tu prescris</div>
-        <div class="rx-l c-r">Ibuprofène (AINS)<span class="etat pe">Précaution</span></div>
-        <div class="rx-l c-r">Paracétamol<span class="etat ok">Compatible</span></div>
-        <div class="rx-l c-r">Amoxicilline<span class="etat ok">Compatible</span></div>
-        <div class="alerte info c-r" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><span><b>Diabète : demander l’HbA1c</b>9 % ou plus : risque infectieux augmenté. <span class="src">HAS 2026</span></span></div>
-      </div>
-
-      <!-- Codage -->
-      <div class="scr" id="s-code">
-        <div class="top"><div class="logo-ui"><svg viewBox="0 0 24 26"><g transform="translate(2.5 1.5)" fill="#0E9384"><path d="M7 2.5c-2.6 0-4.3 2-4.3 4.8 0 2.4 1 3.8 1.6 6 .6 2.3.8 7.8 2.6 7.8 1.6 0 1.6-5.2 3.1-5.2s1.5 5.2 3.1 5.2c1.8 0 2-5.5 2.6-7.8.6-2.2 1.6-3.6 1.6-6 0-2.8-1.7-4.8-4.3-4.8-1.4 0-2 .8-3 .8s-1.6-.8-3-.8z"/></g></svg>Codage express</div></div>
-        <div class="recherche"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span id="tape-code"></span><span class="caret" id="caret-code"></span></div>
-        <div id="liste">
-          <div class="acte c-a"><span><span class="code">HBGD018</span><span class="prix">96,14 €</span><span class="lib">Avulsion d’1 troisième molaire maxillaire retenue ou à l’état de germe</span></span><span class="plus">+</span></div>
-          <div class="acte c-a" id="a-004"><span class="hl"></span><span><span class="code">HBGD004</span><span class="prix">96,14 €</span><span class="lib">Avulsion d’1 troisième molaire mandibulaire retenue ou à l’état de germe</span></span><span class="plus">+<span class="v">✓</span></span></div>
-          <div class="acte c-a"><span><span class="code">HBGD025</span><span class="prix">144,21 €</span><span class="lib">Avulsion de 2 troisièmes molaires retenues ou à l’état de germe</span></span><span class="plus">+</span></div>
-          <div class="acte c-a"><span><span class="code">HBGD021</span><span class="prix">192,28 €</span><span class="lib">Avulsion de 3 troisièmes molaires retenues ou à l’état de germe</span></span><span class="plus">+</span></div>
-        </div>
-        <div class="panier" id="panier">
-          <div class="panier-tete"><b>Sélection<span class="badge">1</span></b><span class="total-tete">96,14 €</span></div>
-          <div class="p-acte"><span><span class="code">HBGD004</span><br><span>Avulsion d’1 troisième molaire mandibulaire</span></span><b>96,14 €</b></div>
-          <div class="total"><span>Total de la séance<small>Base de remboursement CCAM V84</small></span><b id="total">0,00 €</b></div>
-          <div class="copier" id="copier">Copier</div>
-        </div>
-        <div class="toast" id="toast1"><span>HBGD004 ajouté</span></div>
-        
-      </div>
-
-      <!-- Assistant -->
-      <div class="scr" id="s-ia">
-        <div class="top"><div class="logo-ui" style="color:var(--ia)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg><span style="color:var(--encre)">Assistant</span></div></div>
-        <div class="fil">
-          <div class="bulle lui ia">Décris l’acte avec tes mots, je cherche le code CCAM.</div>
-          <div class="bulle moi" id="b-moi">Dent de sagesse du bas, incluse</div>
-          <div style="position:relative"><div class="bulle lui" id="b-pts" style="position:absolute;left:0;top:0"><div class="pt"><i></i><i></i><i></i></div></div>
-          <div class="bulle lui" id="b-rep" style="max-width:100%">
-            <span class="c-i" style="display:block">Pour une 3<sup>e</sup> molaire mandibulaire incluse :</span>
-            <span class="code c-i" style="display:block;margin-top:6px">HBGD004 <span style="font-family:var(--texte);font-weight:700;font-size:14px;color:var(--encre-2)">· 96,14 €</span></span>
-            <span class="c-i" style="display:block;font-size:13.6px;color:var(--encre-2)">Avulsion d’1 troisième molaire mandibulaire retenue ou à l’état de germe</span>
-            <div class="btn-ia c-i">Ajouter au codage</div>
-          </div></div>
-        </div>
-        <div class="saisie"><div class="ch"><span id="tape-ia"></span><span class="caret" id="caret-ia"></span></div><div class="env"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></div></div>
-      </div>
-
-      <div class="touche" id="doigt"></div>
-      <div class="vague" id="vague"></div><div class="vague" id="vague2"></div>
-
-      <div class="tabbar"><div class="in">
-        <span class="indic" id="indic"><i></i><i class="v" id="indic-v"></i></span>
-        <span class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</span>
-        <span class="tab" data-t="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg>Prescrire</span>
-        <span class="tab" data-t="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 9h6M9 12h6M9 15h3"/></svg>Scanner</span>
-        <span class="tab" data-t="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>Coder</span>
-        <span class="tab ia" data-t="4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg>Assistant</span>
-      </div></div>
-    </div></div></div></div></div>
-  </div>
-
-  <div class="source" id="src1" style="left:60px;top:1130px"><i></i>HAS 2026</div>
-  <div class="source" id="src2" style="left:690px;top:1400px"><i></i>SFCO 2015</div>
-  <div class="source" id="src3" style="left:640px;top:1180px"><i></i>Base ANSM</div>
-  <div class="source" id="src4" style="left:60px;top:1500px"><i></i>CCAM V84</div>
-  <div class="source v" id="src5" style="left:620px;top:1560px"><i></i>Code + tarif</div>
-
-  <!-- 4. Fin -->
-  <div id="fin">
-    <div class="onde" id="onde3" style="left:415px;top:485px;width:250px;height:250px"></div>
-    <div id="fin-icone"><img src="../icons/icon.svg" alt=""></div>
-    <div id="fin-mot"><span>D</span><span>r</span><span>i</span><span>l</span><span>l</span></div>
-    <div id="fin-slogan"><span class="ln"><span>Prescrire et coder,</span></span><span class="ln"><span><em>sans chercher.</em></span></span></div>
-    <div id="fin-cta"><span>ryannaalrn-sudo.github.io/Drill</span></div>
-    <div id="fin-plus">Sans compte · aucune donnée patient enregistrée</div>
-    <div id="fin-src">Recommandations HAS 2026 · SFCO 2015 · CCAM V84 · base ANSM<br>Outil d’aide à la décision</div>
-  </div>
-
+  <div id="orbes"></div>
+  <div id="marque"><img src="../icons/icon.svg" alt="">Drill</div>
+  <div id="flare"></div>
   <div id="noir"></div>
   <div id="flash"></div>
   <div id="vignette"></div>
   <div id="grain"></div>
 </div>
-
 <script src="../vendor/motion.js"></script>
 <script src="timeline.js"></script>
 </body>
