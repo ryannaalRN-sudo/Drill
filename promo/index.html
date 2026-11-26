@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Drill — pub 15 s</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=block">
+<style>
+:root{
+  --email:#F5F8F8; --carte:#FFFFFF; --encre:#0F2A33; --encre-2:#4A6470; --trait:#DCE6E8;
+  --lagon:#0E9384; --lagon-pale:#E1F4F1; --lagon-vif:#2BD0B0; --lueur:#7FF5DD;
+  --gencive:#E8546B; --gencive-pale:#FDECEF; --ambre:#C77A0A; --ambre-pale:#FDF3E2;
+  --ia:#5B4FD9; --ia-pale:#EEECFC;
+  --display:"Bricolage Grotesque", system-ui, sans-serif;
+  --texte:"Atkinson Hyperlegible", system-ui, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#06161D}
+body{font-family:var(--texte);color:#fff;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}
+#cam{position:absolute;inset:0;overflow:hidden;transform-origin:50% 45%}
+
+/* ---------- fonds ---------- */
+.fond{position:absolute;inset:0}
+#f-nuit{background:radial-gradient(80% 50% at 30% 35%,#0C3442 0%,#071C26 55%,#040F15 100%)}
+#f-lagon,#f-fin{background:radial-gradient(70% 40% at 25% 22%,rgba(127,245,221,.32),transparent 70%),linear-gradient(170deg,#22C3A6 0%,#0E9384 42%,#0A3556 100%)}
+#f-scan{background:radial-gradient(70% 45% at 70% 20%,rgba(43,208,176,.22),transparent 70%),linear-gradient(170deg,#0D4A6E 0%,#0A3556 45%,#04182A 100%)}
+#f-code{background:radial-gradient(70% 45% at 25% 18%,rgba(127,227,211,.16),transparent 70%),linear-gradient(170deg,#1A3B47 0%,#0F2A33 45%,#071419 100%)}
+#f-ia{background:radial-gradient(70% 45% at 72% 18%,rgba(190,182,255,.38),transparent 70%),linear-gradient(170deg,#7A6FF0 0%,#5B4FD9 42%,#2A1F86 100%)}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+#blob1{width:760px;height:760px;left:-200px;top:180px;background:#14A58F}
+#blob2{width:640px;height:640px;left:520px;top:1100px;background:#0B5E7A}
+
+/* ---------- accroche ---------- */
+#accroche{position:absolute;inset:0}
+.cas{position:absolute;left:90px;top:200px;display:grid;gap:18px}
+.puce{display:inline-flex;align-items:center;gap:16px;justify-self:start;padding:14px 26px 14px 18px;border-radius:999px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);font-weight:700;font-size:40px;color:#E9F6F4}
+.puce i{width:18px;height:18px;border-radius:50%;flex:none}
+.grand{position:absolute;left:90px;right:40px;top:700px;font-family:var(--display);font-weight:800;font-size:124px;line-height:.98;letter-spacing:-.035em}
+.grand .m{display:inline-block;white-space:pre}
+.grand em{font-style:normal;color:var(--lueur)}
+#q4{font-size:172px;top:640px}
+#q4 .qm{display:inline-block;color:var(--lueur);transform-origin:50% 80%}
+#ecg{position:absolute;left:0;top:1440px;width:1080px;height:200px}
+#ecg svg{width:1080px;height:200px;overflow:visible}
+#ecg path{fill:none;stroke:var(--lagon-vif);stroke-width:5;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 0 10px rgba(43,208,176,.9))}
+.legende{position:absolute;left:90px;top:1660px;font-size:30px;font-weight:700;color:rgba(233,246,244,.45);letter-spacing:.14em;text-transform:uppercase}
+
+/* ---------- logo ---------- */
+#logo{position:absolute;inset:0}
+#icone{position:absolute;left:370px;top:560px;width:340px;height:340px}
+#icone img{box-shadow:0 40px 90px rgba(4,36,58,.55)}
+#icone-in,#icone img{width:100%;height:100%;border-radius:78px;display:block}
+.onde{position:absolute;left:390px;top:580px;width:300px;height:300px;border-radius:50%;border:6px solid rgba(255,255,255,.85)}
+.part{position:absolute;left:540px;top:730px;width:0;height:0}
+.part b{position:absolute;left:-14px;top:-14px;width:28px;height:28px;display:grid;place-items:center;color:#fff}
+.part b.rond{border-radius:50%;background:rgba(255,255,255,.9);width:18px;height:18px;left:-9px;top:-9px}
+.part b.anneau{border-radius:50%;border:4px solid var(--lueur);width:26px;height:26px;left:-13px;top:-13px}
+#mot{position:absolute;left:0;right:0;top:950px;text-align:center;font-family:var(--display);font-weight:800;font-size:250px;line-height:1;letter-spacing:-.04em}
+#mot span{display:inline-block}
+#signature{position:absolute;left:0;right:0;top:1250px;text-align:center;font-size:48px;line-height:1.25;color:rgba(255,255,255,.92)}
+#signature span{display:inline-block;white-space:pre}
+
+/* ---------- en-tête des fonctionnalités ---------- */
+#tete{position:absolute;left:0;right:0;top:92px;display:flex;justify-content:center;align-items:center;gap:18px;font-family:var(--display);font-weight:800;font-size:58px;letter-spacing:-.02em}
+#tete img{width:74px;height:74px;border-radius:18px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.etiq{position:absolute;left:0;right:0;top:220px;text-align:center}
+.etiq span{display:inline-block;padding:10px 24px;border-radius:999px;background:rgba(255,255,255,.16);border:1.5px solid rgba(255,255,255,.22);font-weight:700;font-size:30px;letter-spacing:.06em}
+.titre{position:absolute;left:40px;right:40px;top:300px;text-align:center;font-family:var(--display);font-weight:800;font-size:86px;line-height:1.02;letter-spacing:-.03em}
+.ln{display:block;overflow:hidden;padding:0 10px 10px;margin-bottom:-10px}
+.ln>span{display:inline-block}
+.titre em{font-style:normal;color:var(--lueur)}
+#t-ia em{color:#E4E0FF}
+
+/* ---------- téléphone ---------- */
+#scene3d{position:absolute;left:0;top:0;width:1080px;height:1920px;perspective:2200px;perspective-origin:50% 60%}
+#tel-flot{position:absolute;left:220px;top:600px;width:640px;height:1300px;transform-style:preserve-3d}
+#tel-whip{position:relative;width:640px;height:1300px;transform-style:preserve-3d}
+#tel{position:relative;width:640px;height:1300px;border-radius:96px;background:linear-gradient(145deg,#26363D,#0A1317 40%,#05090B);padding:16px;box-shadow:0 70px 140px rgba(0,0,0,.5),0 0 0 2px rgba(255,255,255,.08) inset;transform-style:preserve-3d}
+#ecran{position:relative;width:608px;height:1268px;border-radius:80px;overflow:hidden;background:var(--email)}
+#ui{position:absolute;left:0;top:0;width:390px;height:813px;transform:scale(1.5590);transform-origin:0 0;color:var(--encre);font-size:16px;line-height:1.5;font-family:var(--texte)}
+.ilot{position:absolute;left:135px;top:11px;width:120px;height:34px;border-radius:20px;background:#000;z-index:9}
+.statut{position:absolute;left:0;right:0;top:0;height:52px;display:flex;justify-content:space-between;align-items:center;padding:6px 30px 0 34px;font-weight:700;font-size:15px;z-index:8}
+.statut .ic{display:flex;gap:6px;align-items:center}
+.scr{position:absolute;left:0;top:52px;width:390px;height:689px;padding:0 18px;overflow:hidden;background:var(--email)}
+.scr.sombre{background:#0A1C24;padding:0}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:72px;background:rgba(255,255,255,.96);border-top:1px solid var(--trait);padding:8px 8px 0;z-index:7}
+.tabbar .in{position:relative;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{position:relative;z-index:1;display:grid;justify-items:center;gap:2px;padding:5px 0;font-size:11.5px;font-weight:700;color:var(--encre-2)}
+.tab svg{width:24px;height:24px}
+.indic{position:absolute;left:0;top:1px;width:20%;height:32px;display:flex;justify-content:center}
+.indic i{width:56px;height:32px;border-radius:999px;background:var(--lagon-pale)}
+.indic i.v{position:absolute;background:var(--ia-pale);opacity:0}
+.tab.on{color:var(--lagon)}
+.tab .c2{position:absolute;inset:0;display:grid;justify-items:center;gap:2px;padding:5px 0;color:var(--lagon);opacity:0}
+.tab.ia .c2{color:var(--ia)}
+
+/* ---------- UI de l'appli (reprise du style de Drill) ---------- */
+#ui h2{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.top{display:flex;align-items:center;justify-content:space-between;padding:12px 0 4px}
+.retour{display:inline-flex;align-items:center;gap:6px;padding:8px 12px 8px 8px;border-radius:999px;background:var(--carte);border:1px solid var(--trait);font-weight:700;font-size:14.4px}
+.retour svg{width:18px;height:18px}
+.logo-ui{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:20px}
+.logo-ui svg{width:28px;height:28px}
+.arcade{display:flex;justify-content:center;gap:3px;margin:12px 0 4px}
+.arcade svg{width:22px;height:26px}
+.arcade path{fill:var(--trait)}
+.arcade .on path{fill:var(--lagon)}
+.arcade .tard path{fill:var(--lagon)}
+.etape-n{text-align:center;font-size:13.6px;color:var(--encre-2)}
+.sous{color:var(--encre-2)}
+.opt{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border-radius:14px;background:var(--carte);border:1.5px solid var(--trait);margin-top:10px}
+.opt .coche{position:relative;flex:none;width:24px;height:24px;border-radius:7px;border:2px solid var(--trait)}
+.opt b{display:block}
+.opt small{display:block;color:var(--encre-2);font-size:13.6px;line-height:1.35}
+.opt.aucun{border-style:dashed}
+.opt .sel{position:absolute;inset:-1.5px;border-radius:14px;border:1.5px solid var(--lagon);background:var(--lagon-pale);opacity:0}
+.opt .txt{position:relative}
+.opt .coche .ok{position:absolute;inset:-2px;border-radius:7px;background:var(--lagon);display:grid;place-items:center;opacity:0}
+.coche .ok::after,.ligne-ok::after{content:"";width:10px;height:6px;border:2.5px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.btn-ui{display:block;width:100%;padding:15px;border-radius:999px;font-weight:700;text-align:center;background:var(--lagon);color:#fff}
+.barre{position:absolute;left:18px;right:18px;bottom:14px}
+.touche{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(15,42,51,.35);box-shadow:0 4px 14px rgba(0,0,0,.25);z-index:20;opacity:0}
+.vague{position:absolute;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid var(--lagon);z-index:19;opacity:0}
+
+.verdict{margin-top:12px;padding:14px;border-radius:14px;border:1.5px solid var(--trait);background:var(--carte)}
+.verdict b{display:block;font-family:var(--display);font-size:18.4px;margin-bottom:2px;color:#8E1F31}
+.verdict p{font-size:14px;color:var(--encre)}
+.src{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;background:rgba(15,42,51,.08);color:var(--encre-2);font-size:11.5px;font-weight:700;vertical-align:1px}
+.alerte{display:flex;gap:10px;padding:12px 14px;border-radius:14px;margin-top:10px;font-size:14px;line-height:1.4}
+.alerte svg{flex:none;width:20px;height:20px;margin-top:1px}
+.alerte b{display:block}
+.alerte.moy{background:var(--ambre-pale);color:#7A4A05}
+.alerte.forte{background:var(--gencive-pale);color:#8E1F31}
+.alerte.info{background:var(--lagon-pale);color:#065E54}
+.ordo{margin-top:12px;padding:14px 16px;border-radius:14px;background:#fff;border:1.5px dashed var(--lagon);font-size:14px;line-height:1.4;display:grid;gap:9px}
+.ordo .ol b{display:block}
+.ordo .ol span{display:block;color:var(--encre-2);font-size:13px}
+.ordo h4{font-family:var(--display);font-size:15px;color:var(--lagon)}
+
+/* scanner */
+.viseur{position:absolute;inset:0;background:radial-gradient(90% 60% at 50% 45%,#23343B,#0A1418)}
+.papier{position:absolute;left:58px;top:90px;width:274px;height:380px;background:#FBFAF6;border-radius:6px;box-shadow:0 20px 40px rgba(0,0,0,.5);transform:rotate(-3deg);padding:22px 20px;color:#253238;font-family:"Bradley Hand","Segoe Script",cursive}
+.papier .dr{font-family:var(--texte);font-weight:700;font-size:12px;color:#5b6b70;border-bottom:1px solid #d7dcdc;padding-bottom:8px;margin-bottom:14px}
+.papier .dr small{display:block;font-weight:400}
+.papier .rx{font-family:var(--display);font-weight:800;font-size:20px;color:#5b6b70;margin-bottom:8px}
+.papier .main{position:relative;font-family:var(--texte);font-style:italic;font-weight:700;font-size:16px;margin:6px 0 2px;letter-spacing:.01em;transform:skewX(-8deg)}
+.papier .gri{height:7px;border-radius:4px;background:#C9CFD0;margin:6px 0 12px}
+.papier .gri.c{width:60%}
+.papier .boite{position:absolute;left:-6px;right:auto;top:-4px;bottom:-4px;border:2.5px solid var(--lagon-vif);border-radius:6px;background:rgba(43,208,176,.14);opacity:0}
+.coins{position:absolute;left:38px;top:72px;width:314px;height:420px}
+.coins i{position:absolute;width:46px;height:46px;border:4px solid #fff}
+.coins i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
+.coins i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0;border-radius:0 14px 0 0}
+.coins i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0;border-radius:0 0 0 14px}
+.coins i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0;border-radius:0 0 14px 0}
+.balai{position:absolute;left:44px;top:80px;width:302px;height:4px;border-radius:2px;background:var(--lagon-vif);box-shadow:0 0 18px 6px rgba(43,208,176,.65)}
+.cam-legende{position:absolute;left:0;right:0;top:520px;text-align:center;color:#fff;font-weight:700;font-size:15px}
+.cam-legende small{display:block;font-weight:400;color:#9FB6BD}
+.bouton-cam{position:absolute;left:163px;top:590px;width:64px;height:64px;border-radius:50%;border:4px solid #fff;padding:4px}
+.bouton-cam i{display:block;width:100%;height:100%;border-radius:50%;background:#fff}
+.med{display:flex;gap:12px;align-items:center;padding:11px 12px;border-radius:14px;background:var(--carte);border:1.5px solid var(--trait);margin-top:9px}
+.med .pas{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:16px}
+.med b{display:block;font-size:15px}
+.med small{display:block;font-size:12.5px;color:var(--encre-2);line-height:1.3}
+.bloc{margin:16px 2px 2px;font-family:var(--display);font-weight:700;font-size:15px;color:var(--encre-2)}
+.rx-l{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;background:var(--carte);border:1.5px solid var(--trait);margin-top:7px;font-weight:700;font-size:14.4px}
+.etat{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.etat.ok{background:var(--lagon-pale);color:#065E54}
+.etat.pe{background:var(--ambre-pale);color:#7A4A05}
+
+/* codage */
+.recherche{position:relative;margin:12px 0 4px;padding:13px 16px 13px 46px;border-radius:999px;border:1.5px solid var(--lagon);background:var(--carte);font-size:16px;height:52px}
+.recherche svg{position:absolute;left:16px;top:15px;width:20px;height:20px;color:var(--encre-2)}
+.caret{display:inline-block;width:2px;height:19px;background:var(--lagon);vertical-align:-3px;margin-left:1px}
+.acte{position:relative;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--carte);border:1.5px solid var(--trait);margin-top:9px}
+.acte .code{font-family:var(--display);font-weight:700;letter-spacing:.02em;color:var(--lagon)}
+.acte .prix{margin-left:8px;font-weight:700;font-size:13.6px;color:var(--encre-2)}
+.acte .lib{display:block;font-size:14px;line-height:1.35}
+.acte .plus{position:relative;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--lagon-pale);color:var(--lagon);font-size:22px;font-weight:700}
+.acte .plus .v{position:absolute;inset:0;border-radius:50%;background:var(--lagon);color:#fff;display:grid;place-items:center;font-size:18px;opacity:0}
+.acte .hl{position:absolute;inset:-1.5px;border-radius:14px;border:1.5px solid var(--lagon);opacity:0}
+.panier{position:absolute;left:12px;right:12px;bottom:10px;background:var(--encre);color:#fff;border-radius:22px;padding:13px 16px;box-shadow:0 10px 30px rgba(15,42,51,.3);overflow:hidden}
+.panier-tete{display:flex;justify-content:space-between;align-items:center}
+.panier-tete b{font-family:var(--display);font-size:16.8px}
+.badge{background:var(--lagon);border-radius:999px;padding:2px 10px;font-weight:700;margin-left:6px;font-size:14px}
+.total-tete{font-family:var(--display);font-weight:800;font-size:17.6px;color:#7FE3D3}
+.p-acte{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.07);font-size:13.6px;margin-top:12px}
+.p-acte .code{font-family:var(--display);font-weight:700}
+.p-acte span span{color:#B9CDD3}
+.total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
+.total small{display:block;color:#9FB6BD;font-size:12px}
+.total b{font-family:var(--display);font-size:26px;font-weight:800;color:#7FE3D3}
+.copier{margin-top:12px;padding:13px;border-radius:999px;background:#fff;color:var(--encre);text-align:center;font-weight:700}
+.toast{position:absolute;left:0;right:0;top:10px;text-align:center;z-index:12}
+.toast span{display:inline-block;background:var(--encre);color:#fff;padding:10px 16px;border-radius:999px;font-weight:700;font-size:14px;white-space:nowrap;box-shadow:0 8px 20px rgba(15,42,51,.25)}
+
+/* assistant */
+.fil{display:grid;gap:11px;margin-top:12px}
+.bulle{padding:12px 14px;border-radius:14px;max-width:92%;font-size:14.4px;line-height:1.42}
+.bulle.moi{justify-self:end;background:var(--encre);color:#fff;border-bottom-right-radius:4px}
+.bulle.lui{background:var(--carte);border:1px solid #D6D2F7;border-bottom-left-radius:4px}
+.bulle.ia{background:var(--ia-pale);border:0}
+.bulle .code{font-family:var(--display);font-weight:800;color:var(--lagon);font-size:20px;letter-spacing:.02em}
+.bulle .pt{display:flex;gap:5px;padding:4px 2px}
+.bulle .pt i{width:8px;height:8px;border-radius:50%;background:var(--ia);opacity:.5}
+.btn-ia{margin-top:10px;padding:11px;border-radius:999px;background:var(--ia);color:#fff;font-weight:700;text-align:center;font-size:14px}
+.saisie{position:absolute;left:14px;right:14px;bottom:12px;display:flex;gap:8px}
+.saisie .ch{flex:1;padding:13px 16px;border-radius:999px;border:1.5px solid var(--ia);background:var(--carte);font-size:15px;white-space:nowrap;overflow:hidden;height:50px}
+.saisie .env{flex:none;width:50px;height:50px;border-radius:50%;background:var(--ia);color:#fff;display:grid;place-items:center}
+.saisie .caret{background:var(--ia)}
+
+/* ---------- badges sources ---------- */
+.source{position:absolute;display:flex;align-items:center;gap:14px;padding:16px 26px 16px 18px;border-radius:999px;background:#fff;color:var(--encre);font-weight:700;font-size:32px;box-shadow:0 24px 50px rgba(0,0,0,.28);z-index:30;white-space:nowrap}
+.source i{width:40px;height:40px;border-radius:50%;background:var(--lagon);display:grid;place-items:center;flex:none}
+.source i::after{content:"";width:16px;height:9px;border:4px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-2px)}
+.source.v i{background:var(--ia)}
+
+/* ---------- fin ---------- */
+#fin{position:absolute;inset:0}
+#fin-icone{position:absolute;left:400px;top:470px;width:280px;height:280px;border-radius:64px;box-shadow:0 36px 80px rgba(4,36,58,.55)}
+#fin-icone img{width:100%;height:100%;border-radius:64px;display:block}
+#fin-mot{position:absolute;left:0;right:0;top:780px;text-align:center;font-family:var(--display);font-weight:800;font-size:210px;line-height:1;letter-spacing:-.04em}
+#fin-mot span{display:inline-block}
+#fin-slogan{position:absolute;left:0;right:0;top:1040px;text-align:center;font-family:var(--display);font-weight:700;font-size:76px;line-height:1.05;letter-spacing:-.025em}
+#fin-slogan em{font-style:normal;color:var(--lueur)}
+#fin-cta{position:absolute;left:0;right:0;top:1290px;text-align:center}
+#fin-cta span{display:inline-block;padding:24px 44px;border-radius:999px;background:#fff;color:var(--lagon);font-family:var(--display);font-weight:800;font-size:44px;box-shadow:0 24px 50px rgba(0,0,0,.25)}
+#fin-plus{position:absolute;left:0;right:0;top:1440px;text-align:center;font-size:34px;font-weight:700;color:rgba(255,255,255,.88)}
+#fin-src{position:absolute;left:60px;right:60px;top:1700px;text-align:center;font-size:26px;line-height:1.5;color:rgba(255,255,255,.62)}
+
+/* ---------- surcouches ---------- */
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#noir{position:absolute;inset:0;background:#030A0E;opacity:0}
+#vignette{position:absolute;inset:0;background:radial-gradient(120% 75% at 50% 45%,transparent 55%,rgba(0,0,0,.42) 100%);pointer-events:none}
+#grain{position:absolute;inset:-128px;opacity:.05;mix-blend-mode:overlay;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="cam">
+  <div class="fond" id="f-nuit"></div>
+  <div class="blob" id="blob1"></div><div class="blob" id="blob2"></div>
+  <div class="fond" id="f-lagon"></div>
+  <div class="fond" id="f-scan"></div>
+  <div class="fond" id="f-code"></div>
+  <div class="fond" id="f-ia"></div>
+  <div class="fond" id="f-fin"></div>
+
+  <!-- 1. Accroche -->
+  <div id="accroche">
+    <div id="ecg"><svg viewBox="0 0 1080 200"><path id="ecg-path"/></svg></div>
+    <div class="cas">
+      <span class="puce" id="p1"><i style="background:var(--lagon-vif)"></i>Dent de sagesse incluse</span>
+      <span class="puce" id="p2"><i style="background:var(--gencive)"></i>Allergie à la pénicilline</span>
+      <span class="puce" id="p3"><i style="background:#F2A93B"></i>Sous Kardégic</span>
+    </div>
+    <div class="grand" id="q1"><span class="m">Dent </span><span class="m">de</span><br><span class="m">sagesse</span><br><em class="m">incluse.</em></div>
+    <div class="grand" id="q2"><span class="m">Allergique</span><br><span class="m">à </span><span class="m">la</span><br><em class="m">pénicilline.</em></div>
+    <div class="grand" id="q3"><span class="m">Et </span><span class="m">sous</span><br><em class="m">Kardégic.</em></div>
+    <div class="grand" id="q4"><span class="m">Tu</span><br><span class="m">prescris</span><br><em class="m">quoi </em><span class="qm">?</span></div>
+    <div class="legende" id="leg">Patient au fauteuil · 9 h 02</div>
+  </div>
+
+  <!-- 2. Logo -->
+  <div id="logo">
+    <div class="onde" id="onde1"></div><div class="onde" id="onde2"></div>
+    <div id="parts"></div>
+    <div id="icone"><div id="icone-in"><img id="icone-img" src="../icons/icon.svg" alt=""></div></div>
+    <div id="mot"><span>D</span><span>r</span><span>i</span><span>l</span><span>l</span></div>
+    <div id="signature"><span>L’outil </span><span>clinique </span><span>des </span><span>étudiants</span><br><span>en </span><span>chirurgie </span><span>dentaire</span></div>
+  </div>
+
+  <!-- 3. Fonctionnalités -->
+  <div id="tete"><img src="../icons/icon.svg" alt="">Drill</div>
+  <div class="etiq" id="e1"><span>01 · PRESCRI’DENT</span></div>
+  <div class="etiq" id="e2"><span>02 · SCANNER</span></div>
+  <div class="etiq" id="e3"><span>03 · CODAGE EXPRESS</span></div>
+  <div class="etiq" id="e4"><span>04 · ASSISTANT</span></div>
+  <div class="titre" id="t-pres"><span class="ln"><span>L’ordonnance</span></span><span class="ln"><span>en <em>5 questions.</em></span></span></div>
+  <div class="titre" id="t-scan"><span class="ln"><span>Son traitement,</span></span><span class="ln"><span><em>décodé.</em></span></span></div>
+  <div class="titre" id="t-code"><span class="ln"><span>Le bon code CCAM,</span></span><span class="ln"><span><em>sans chercher.</em></span></span></div>
+  <div class="titre" id="t-ia"><span class="ln"><span>Décris l’acte.</span></span><span class="ln"><span><em>Il trouve le code.</em></span></span></div>
+
+  <div id="scene3d">
+    <div id="tel-flot"><div id="tel-whip"><div id="tel"><div id="ecran"><div id="ui">
+      <div class="ilot"></div>
+      <div class="statut"><span>9:41</span><span class="ic">
+        <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="5" y="5" width="3" height="7" rx="1" fill="currentColor"/><rect x="10" y="2.5" width="3" height="9.5" rx="1" fill="currentColor"/><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x=".5" y=".5" width="22" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".45"/><rect x="2.5" y="2.5" width="16" height="8" rx="2" fill="currentColor"/><rect x="23.5" y="4" width="2" height="5" rx="1" fill="currentColor" opacity=".45"/></svg>
+      </span></div>
+
+      <!-- Prescri : question -->
+      <div class="scr" id="s-q">
+        <div class="top"><span class="retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>Retour</span><span class="retour" style="padding-left:12px">Recommencer</span></div>
+        <div class="arcade" id="arcade"></div>
+        <p class="etape-n">Question 5 sur 5</p>
+        <h2 style="margin-top:14px">Traitements en cours ?</h2>
+        <p class="sous" style="font-size:14.5px;margin-top:4px">Antithrombotiques et médicaments qui interagissent.</p>
+        <div class="opt aucun"><span class="coche"></span><span class="txt"><b>Aucun de ces traitements</b></span></div>
+        <div class="opt" id="opt-aap"><span class="sel"></span><span class="coche"><span class="ok"></span></span><span class="txt"><b>Un antiplaquettaire</b><small>Kardégic, aspirine, Plavix (clopidogrel), Brilique, Efient</small></span></div>
+        <div class="opt"><span class="coche"></span><span class="txt"><b>Deux antiplaquettaires</b><small>Par exemple aspirine + clopidogrel</small></span></div>
+        <div class="opt"><span class="coche"></span><span class="txt"><b>Antivitamine K</b><small>Coumadine (warfarine), Préviscan, Sintrom</small></span></div>
+        <div class="barre"><div class="btn-ui" id="voir">Voir la conduite à tenir</div></div>
+      </div>
+
+      <!-- Prescri : conduite à tenir -->
+      <div class="scr" id="s-ordo">
+        <p class="sous" style="font-size:13.5px;margin-top:14px">Avulsion de dent incluse</p>
+        <h2>Conduite à tenir</h2>
+        <div class="verdict c-o"><b>Antibiotique : oui</b><p>Antibioprophylaxie recommandée pour cet acte (grade A). <span class="src">HAS 2026</span></p></div>
+        <div class="alerte moy c-o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4m0 3h.01"/></svg><span><b>Antiplaquettaire seul : ne pas l’arrêter</b>Hémostase locale systématique. <span class="src">SFCO 2015</span></span></div>
+        <div class="alerte forte c-o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 10v4m0 3h.01"/></svg><span><b>Ibuprofène écarté</b>Antithrombotique : risque hémorragique majoré.</span></div>
+        <div class="ordo c-o">
+          <h4>À recopier sur l’ordonnance</h4>
+          <div class="ol c-l"><b>1/ Clarithromycine 500 mg</b><span>1 comprimé 30 à 60 min avant l’acte</span></div>
+          <div class="ol c-l"><b>2/ Paracétamol 1 g</b><span>Si douleur, sans dépasser 3 g par jour, 5 jours</span></div>
+          <div class="ol c-l"><b>3/ Chlorhexidine 0,12 %</b><span>Bain de bouche 2 fois par jour, 7 jours</span></div>
+        </div>
+      </div>
+
+      <!-- Scanner : caméra -->
+      <div class="scr sombre" id="s-cam">
+        <div class="viseur"></div>
+        <div class="papier" id="papier">
+          <div class="dr">Dr C. Moreau<small>Médecine générale</small></div>
+          <div class="rx">Rx</div>
+          <div class="main" id="l-kard"><span class="boite" style="right:-8px"></span>Kardégic 75 mg</div>
+          <div class="gri"></div>
+          <div class="main" id="l-metf"><span class="boite" style="right:-8px"></span>Metformine 1000 mg</div>
+          <div class="gri c"></div>
+          <div class="main" id="l-rami"><span class="boite" style="right:-8px"></span>Atorvastatine 20 mg</div>
+          <div class="gri"></div><div class="gri c"></div>
+        </div>
+        <div class="coins" id="coins"><i></i><i></i><i></i><i></i></div>
+        <div class="balai" id="balai"></div>
+        <div class="cam-legende">Cadre l’ordonnance du patient<small>Lecture des médicaments en cours</small></div>
+        <div class="bouton-cam"><i></i></div>
+      </div>
+
+      <!-- Scanner : résultat -->
+      <div class="scr" id="s-res">
+        <h2 style="margin-top:14px">Ce que ce traitement change pour toi</h2>
+        <div class="bloc">Ses médicaments</div>
+        <div class="med c-r"><span class="pas" style="background:var(--ambre-pale);color:var(--ambre)">AAP</span><span><b>Kardégic</b><small>acide acétylsalicylique · Antiagrégant plaquettaire</small></span></div>
+        <div class="med c-r"><span class="pas" style="background:var(--lagon-pale);color:var(--lagon)">ADO</span><span><b>Metformine</b><small>metformine · Antidiabétique (biguanide)</small></span></div>
+        <div class="med c-r"><span class="pas" style="background:var(--ia-pale);color:var(--ia)">HMG</span><span><b>Atorvastatine</b><small>atorvastatine · Hypocholestérolémiant (statine)</small></span></div>
+        <div class="bloc c-r">Si tu prescris</div>
+        <div class="rx-l c-r">Ibuprofène (AINS)<span class="etat pe">Précaution</span></div>
+        <div class="rx-l c-r">Paracétamol<span class="etat ok">Compatible</span></div>
+        <div class="rx-l c-r">Amoxicilline<span class="etat ok">Compatible</span></div>
+        <div class="alerte info c-r" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg><span><b>Diabète : demander l’HbA1c</b>9 % ou plus : risque infectieux augmenté. <span class="src">HAS 2026</span></span></div>
+      </div>
+
+      <!-- Codage -->
+      <div class="scr" id="s-code">
+        <div class="top"><div class="logo-ui"><svg viewBox="0 0 24 26"><g transform="translate(2.5 1.5)" fill="#0E9384"><path d="M7 2.5c-2.6 0-4.3 2-4.3 4.8 0 2.4 1 3.8 1.6 6 .6 2.3.8 7.8 2.6 7.8 1.6 0 1.6-5.2 3.1-5.2s1.5 5.2 3.1 5.2c1.8 0 2-5.5 2.6-7.8.6-2.2 1.6-3.6 1.6-6 0-2.8-1.7-4.8-4.3-4.8-1.4 0-2 .8-3 .8s-1.6-.8-3-.8z"/></g></svg>Codage express</div></div>
+        <div class="recherche"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span id="tape-code"></span><span class="caret" id="caret-code"></span></div>
+        <div id="liste">
+          <div class="acte c-a"><span><span class="code">HBGD018</span><span class="prix">96,14 €</span><span class="lib">Avulsion d’1 troisième molaire maxillaire retenue ou à l’état de germe</span></span><span class="plus">+</span></div>
+          <div class="acte c-a" id="a-004"><span class="hl"></span><span><span class="code">HBGD004</span><span class="prix">96,14 €</span><span class="lib">Avulsion d’1 troisième molaire mandibulaire retenue ou à l’état de germe</span></span><span class="plus">+<span class="v">✓</span></span></div>
+          <div class="acte c-a"><span><span class="code">HBGD025</span><span class="prix">144,21 €</span><span class="lib">Avulsion de 2 troisièmes molaires retenues ou à l’état de germe</span></span><span class="plus">+</span></div>
+          <div class="acte c-a"><span><span class="code">HBGD021</span><span class="prix">192,28 €</span><span class="lib">Avulsion de 3 troisièmes molaires retenues ou à l’état de germe</span></span><span class="plus">+</span></div>
+        </div>
+        <div class="panier" id="panier">
+          <div class="panier-tete"><b>Sélection<span class="badge">1</span></b><span class="total-tete">96,14 €</span></div>
+          <div class="p-acte"><span><span class="code">HBGD004</span><br><span>Avulsion d’1 troisième molaire mandibulaire</span></span><b>96,14 €</b></div>
+          <div class="total"><span>Total de la séance<small>Base de remboursement CCAM V84</small></span><b id="total">0,00 €</b></div>
+          <div class="copier" id="copier">Copier</div>
+        </div>
+        <div class="toast" id="toast1"><span>HBGD004 ajouté</span></div>
+        
+      </div>
+
+      <!-- Assistant -->
+      <div class="scr" id="s-ia">
+        <div class="top"><div class="logo-ui" style="color:var(--ia)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg><span style="color:var(--encre)">Assistant</span></div></div>
+        <div class="fil">
+          <div class="bulle lui ia">Décris l’acte avec tes mots, je cherche le code CCAM.</div>
+          <div class="bulle moi" id="b-moi">Dent de sagesse du bas, incluse</div>
+          <div style="position:relative"><div class="bulle lui" id="b-pts" style="position:absolute;left:0;top:0"><div class="pt"><i></i><i></i><i></i></div></div>
+          <div class="bulle lui" id="b-rep" style="max-width:100%">
+            <span class="c-i" style="display:block">Pour une 3<sup>e</sup> molaire mandibulaire incluse :</span>
+            <span class="code c-i" style="display:block;margin-top:6px">HBGD004 <span style="font-family:var(--texte);font-weight:700;font-size:14px;color:var(--encre-2)">· 96,14 €</span></span>
+            <span class="c-i" style="display:block;font-size:13.6px;color:var(--encre-2)">Avulsion d’1 troisième molaire mandibulaire retenue ou à l’état de germe</span>
+            <div class="btn-ia c-i">Ajouter au codage</div>
+          </div></div>
+        </div>
+        <div class="saisie"><div class="ch"><span id="tape-ia"></span><span class="caret" id="caret-ia"></span></div><div class="env"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></div></div>
+      </div>
+
+      <div class="touche" id="doigt"></div>
+      <div class="vague" id="vague"></div><div class="vague" id="vague2"></div>
+
+      <div class="tabbar"><div class="in">
+        <span class="indic" id="indic"><i></i><i class="v" id="indic-v"></i></span>
+        <span class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</span>
+        <span class="tab" data-t="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg>Prescrire</span>
+        <span class="tab" data-t="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 9h6M9 12h6M9 15h3"/></svg>Scanner</span>
+        <span class="tab" data-t="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>Coder</span>
+        <span class="tab ia" data-t="4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg>Assistant</span>
+      </div></div>
+    </div></div></div></div></div>
+  </div>
+
+  <div class="source" id="src1" style="left:60px;top:1130px"><i></i>HAS 2026</div>
+  <div class="source" id="src2" style="left:690px;top:1400px"><i></i>SFCO 2015</div>
+  <div class="source" id="src3" style="left:640px;top:1180px"><i></i>Base ANSM</div>
+  <div class="source" id="src4" style="left:60px;top:1500px"><i></i>CCAM V84</div>
+  <div class="source v" id="src5" style="left:620px;top:1560px"><i></i>Code + tarif</div>
+
+  <!-- 4. Fin -->
+  <div id="fin">
+    <div class="onde" id="onde3" style="left:415px;top:485px;width:250px;height:250px"></div>
+    <div id="fin-icone"><img src="../icons/icon.svg" alt=""></div>
+    <div id="fin-mot"><span>D</span><span>r</span><span>i</span><span>l</span><span>l</span></div>
+    <div id="fin-slogan"><span class="ln"><span>Prescrire et coder,</span></span><span class="ln"><span><em>sans chercher.</em></span></span></div>
+    <div id="fin-cta"><span>ryannaalrn-sudo.github.io/Drill</span></div>
+    <div id="fin-plus">Sans compte · aucune donnée patient enregistrée</div>
+    <div id="fin-src">Recommandations HAS 2026 · SFCO 2015 · CCAM V84 · base ANSM<br>Outil d’aide à la décision</div>
+  </div>
+
+  <div id="noir"></div>
+  <div id="flash"></div>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+</div>
+
+<script src="../vendor/motion.js"></script>
+<script src="timeline.js"></script>
+</body>
+</html>
