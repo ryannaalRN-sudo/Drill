@@ -252,7 +252,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 @media print{
   @page{size:A4;margin:16mm}
   body{background:#fff}
-  .app,.onglets,.barre-action,.panier,.saisie,.toast{display:none!important}
+  .app,.onglets,.barre-action,.panier,.saisie,.toast,.guide{display:none!important}
   #ordo{display:block;font-family:var(--texte);color:#000;font-size:11.5pt}
   #ordo .entete{display:flex;justify-content:space-between;border-bottom:1.5pt solid #000;padding-bottom:8mm}
   #ordo .bloc-patient{margin:10mm 0 8mm}
@@ -363,6 +363,107 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .fe-actions button{width:32px;height:30px;border-radius:8px;background:var(--email);font-weight:800;color:var(--encre-2)}
 .fe-actions button:disabled{opacity:.3}
 .ordo-texte .intitule{font-family:var(--display);font-size:1.05rem;text-decoration:underline}
+
+/* ---------- guide de l'appli ---------- */
+.guide-carte{position:relative;display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:14px;width:100%;text-align:left;margin-bottom:18px;padding:18px;border-radius:var(--r-l);color:#fff;overflow:hidden;background:radial-gradient(120% 140% at 0% 0%,#2BD0B0 0%,#0E9384 45%,#0A3556 100%);box-shadow:0 10px 26px rgba(14,147,132,.28)}
+.guide-carte::after{content:"";position:absolute;right:-30px;top:-40px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.12)}
+.guide-carte .ico{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:rgba(255,255,255,.18)}
+.guide-carte .ico svg{width:28px;height:28px}
+.guide-carte h3{color:#fff}
+.guide-carte p{font-size:.9rem;color:rgba(255,255,255,.88)}
+.guide-carte .fl{position:relative;z-index:1}
+.guide-carte .nouveau{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#fff;color:var(--lagon);font-size:.7rem;font-weight:700;vertical-align:2px}
+.guide-carte:active{transform:scale(.985)}
+
+.guide{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;background:var(--email);overscroll-behavior:contain}
+.guide-haut{display:flex;align-items:center;gap:14px;max-width:560px;width:100%;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 18px 6px}
+.guide-prog{flex:1;display:flex;gap:5px}
+.guide-prog i{position:relative;flex:1;height:5px;border-radius:3px;background:var(--trait);overflow:hidden}
+.guide-prog i b{position:absolute;inset:0;border-radius:3px;background:var(--lagon);transform-origin:0 50%;transform:scaleX(0);transition:transform .35s ease}
+.guide-prog i.fait b{transform:scaleX(1)}
+.guide-passer{padding:10px 4px 10px 12px;font-weight:700;font-size:.9rem;color:var(--encre-2);min-height:44px}
+.guide-piste{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.guide-piste::-webkit-scrollbar{display:none}
+.diapo{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;overflow-y:auto}
+.diapo .in{max-width:560px;margin:0 auto;padding:8px 20px 20px}
+.decor{position:relative;height:min(31vh,250px);border-radius:28px;overflow:hidden;display:grid;place-items:center;color:#fff}
+.decor.d-lagon{background:radial-gradient(90% 90% at 20% 10%,#2BD0B0 0%,#0E9384 50%,#0A3556 100%)}
+.decor.d-ambre{background:radial-gradient(90% 90% at 20% 10%,#F6C15D 0%,#D98A10 50%,#7A4A05 100%)}
+.decor.d-nuit{background:radial-gradient(90% 90% at 80% 10%,#1E7FB8 0%,#0A3556 55%,#04182A 100%)}
+.decor.d-encre{background:radial-gradient(90% 90% at 20% 10%,#1F5A5C 0%,#0F2A33 55%,#071419 100%)}
+.decor.d-ia{background:radial-gradient(90% 90% at 80% 10%,#8F86FF 0%,#5B4FD9 50%,#2A1F86 100%)}
+.diapo h2{margin-top:16px;font-size:1.6rem}
+.diapo .chapo{margin-top:6px;color:var(--encre-2)}
+.etapes{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px}
+.etapes li{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:.97rem;line-height:1.45}
+.etapes li>b{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--lagon-pale);color:var(--lagon);font-family:var(--display);font-weight:800}
+.diapo.ia .etapes li>b{background:var(--ia-pale);color:var(--ia)}
+.diapo.ambre .etapes li>b{background:var(--ambre-pale);color:var(--ambre)}
+.guide-note{display:flex;gap:10px;align-items:flex-start;margin-top:16px;padding:12px 14px;border-radius:var(--r-m);background:var(--carte);border:1px solid var(--trait);font-size:.86rem;color:var(--encre-2)}
+.guide-note svg{flex:none;width:20px;height:20px;color:var(--lagon);margin-top:1px}
+.essayer{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:12px 18px;border-radius:999px;background:var(--lagon-pale);color:#065E54;font-weight:700}
+.diapo.ia .essayer{background:var(--ia-pale);color:var(--ia)}
+.diapo.ambre .essayer{background:var(--ambre-pale);color:#7A4A05}
+.guide-bas{display:flex;align-items:center;gap:12px;max-width:560px;width:100%;margin:0 auto;padding:10px 18px calc(14px + env(safe-area-inset-bottom))}
+.guide-prec{flex:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--carte);border:1.5px solid var(--trait)}
+.guide-prec[disabled]{visibility:hidden}
+.guide-points{flex:1;display:flex;justify-content:center;gap:4px}
+.guide-points button{width:22px;height:44px;display:grid;place-items:center}
+.guide-points button i{width:8px;height:8px;border-radius:999px;background:var(--trait);transition:width .25s ease,background .25s ease}
+.guide-points button[aria-current="true"] i{width:22px;background:var(--lagon)}
+.guide-suiv{flex:none;min-width:132px;height:52px;padding:0 22px;border-radius:999px;background:var(--lagon);color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+
+/* mini-démos animées */
+.m-carte{width:78%;max-width:300px;padding:16px;border-radius:20px;background:#fff;color:var(--encre);box-shadow:0 18px 40px rgba(0,0,0,.25)}
+.m-petit{font-size:.72rem;color:var(--encre-2);font-weight:700}
+.m-titre{font-family:var(--display);font-weight:700;font-size:1.05rem;margin-top:2px}
+.m-opt{position:relative;display:flex;gap:10px;align-items:center;margin-top:10px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--trait);font-weight:700;font-size:.85rem}
+.m-opt .m-sel{position:absolute;inset:-1.5px;border-radius:12px;border:1.5px solid var(--lagon);background:var(--lagon-pale);opacity:0}
+.m-opt .m-boite{position:relative;flex:none;width:20px;height:20px;border-radius:6px;border:2px solid var(--trait)}
+.m-opt .m-ok{position:absolute;inset:-2px;border-radius:6px;background:var(--lagon);display:grid;place-items:center;opacity:0}
+.m-opt .m-ok::after{content:"";width:8px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.m-opt span{position:relative}
+.m-opt .m-doigt{position:absolute}
+.m-arcade{display:flex;justify-content:center;gap:3px;margin-bottom:14px}
+.m-arcade svg{width:18px;height:22px}
+.m-arcade .b{fill:rgba(255,255,255,.25)}
+.m-arcade .l{fill:#fff;opacity:0}
+.m-doigt{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(255,255,255,.6);border:2px solid rgba(15,42,51,.3);box-shadow:0 4px 12px rgba(0,0,0,.2);opacity:0;pointer-events:none}
+.m-orbite{position:absolute;width:190px;height:190px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.35)}
+.m-orbite span{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:14px;display:grid;place-items:center;background:#fff;color:var(--lagon);box-shadow:0 8px 18px rgba(0,0,0,.2)}
+.m-orbite span svg{width:22px;height:22px}
+.m-logo{position:relative;width:96px;height:96px;border-radius:24px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.m-main{position:absolute;right:16px;bottom:14px;display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:rgba(255,255,255,.9)}
+.m-main svg{width:26px;height:26px}
+.m-fav{position:relative;display:flex;align-items:center;gap:10px;width:78%;max-width:300px;margin:6px 0;padding:12px 14px;border-radius:14px;background:#fff;color:var(--encre);font-weight:700;font-size:.85rem;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.m-fav svg{flex:none;width:18px;height:18px;color:var(--ambre)}
+.m-fav small{display:block;font-weight:400;color:var(--encre-2);font-size:.72rem}
+.m-toast{position:absolute;top:16px;left:50%;transform:translateX(-50%);padding:7px 14px;border-radius:999px;background:var(--encre);color:#fff;font-weight:700;font-size:.78rem;white-space:nowrap}
+.m-papier{position:relative;width:62%;max-width:230px;padding:16px 16px 22px;border-radius:10px;background:#FBF9F2;color:#1E3A8A;box-shadow:0 18px 40px rgba(0,0,0,.35);transform:rotate(-3deg)}
+.m-papier p{font-family:Georgia,serif;font-style:italic;font-size:.9rem;margin:6px 0}
+.m-papier .g{height:6px;border-radius:3px;background:#D5D8D2;margin:10px 0}
+.m-laser{position:absolute;left:-8px;right:-8px;top:0;height:4px;border-radius:2px;background:#E9FDFF;box-shadow:0 0 14px 5px rgba(79,216,240,.85);opacity:0}
+.m-puces{position:absolute;right:12px;bottom:14px;display:grid;gap:6px;justify-items:end}
+.m-puce{padding:6px 12px;border-radius:999px;background:#fff;color:var(--encre);font-weight:700;font-size:.75rem;box-shadow:0 6px 14px rgba(0,0,0,.25);opacity:0}
+.m-puce i{font-style:normal;color:var(--ambre)}
+.m-acte{display:flex;align-items:center;justify-content:space-between;gap:10px;width:80%;max-width:300px;margin:5px 0;padding:10px 12px;border-radius:12px;background:#fff;color:var(--encre);font-size:.78rem}
+.m-acte b{display:block;font-family:var(--display);color:var(--lagon);font-size:.9rem}
+.m-plus{position:relative;flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--lagon-pale);color:var(--lagon);font-weight:800}
+.m-plus i{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;background:var(--lagon);color:#fff;font-style:normal;opacity:0}
+.m-panier{display:flex;justify-content:space-between;align-items:center;width:80%;max-width:300px;margin-top:8px;padding:10px 14px;border-radius:14px;background:var(--encre);color:#fff;font-weight:700;font-size:.8rem;opacity:0}
+.m-panier b{font-family:var(--display);color:#7FE3D3}
+.m-fil{width:82%;max-width:310px;display:grid;gap:8px}
+.m-bulle{padding:9px 12px;border-radius:14px;font-size:.8rem;line-height:1.35;opacity:0}
+.m-bulle.moi{justify-self:end;background:var(--encre);color:#fff;border-bottom-right-radius:4px}
+.m-bulle.lui{background:#fff;color:var(--encre);border-bottom-left-radius:4px}
+.m-bulle.lui b{display:block;font-family:var(--display);font-size:1.15rem;color:var(--lagon)}
+.m-pts{display:flex;gap:4px;padding:10px 12px;border-radius:14px;background:#fff;justify-self:start;opacity:0}
+.m-pts i{width:6px;height:6px;border-radius:50%;background:var(--ia)}
+.m-bravo{position:relative;width:110px;height:110px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 18px 40px rgba(0,0,0,.25)}
+.m-bravo svg{width:58px;height:58px}
+.m-bravo path{fill:none;stroke:var(--lagon);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.m-confetti{position:absolute;left:50%;top:50%;width:0;height:0}
+.m-confetti i{position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:3px;opacity:0}
 </style>
 </head>
 <body>
@@ -452,6 +553,7 @@ function vAccueil(){
       <h1>${salut}. On prépare quel patient ?</h1>
       <p class="sous" style="margin-top:8px">Ordonnance en quelques questions, codes CCAM sans chercher.</p>
     </section>
+    <button class="guide-carte" id="goGuide"><span class="ico">${ICO_GUIDE}</span><span><h3>Découvre Drill${guideVu()?'':'<span class="nouveau">Nouveau</span>'}</h3><p>Chaque outil expliqué en 1 minute</p></span><span class="fl">${ICO.fleche}</span></button>
     <div class="outils">
       <button class="outil" data-go="prescri">
         <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg></span>
@@ -483,6 +585,7 @@ function vAccueil(){
   </div>`;
   app.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>aller(b.dataset.go));
   $('#goFav').onclick=()=>{ aller('prescri'); vFavoris(); };
+  $('#goGuide').onclick=()=>ouvrirGuide();
 }
 
 /* ---------------------------------------------------------
@@ -1823,6 +1926,198 @@ function vScanResultat(){
     }catch(e){ html=`<p>Assistant indisponible (${esc(e.name==='AbortError'?'pas de réponse au bout d’une minute':e.message||'réseau')}). L’analyse ci-dessus reste valable.</p><button class="btn sec" id="reIA" style="margin-top:10px;width:100%">Réessayer</button>`; }
     SC.iaAttente=false; SC.ia=html; if(vue==='scan' && SC.etape==='resultat') vScanResultat();
   };
+}
+
+/* ---------------------------------------------------------
+   Guide de l'appli : didacticiel à faire glisser
+--------------------------------------------------------- */
+const GUIDE_CLE = 'drill-guide-vu';
+function guideVu(){ try{ return localStorage.getItem(GUIDE_CLE)==='1'; }catch(e){ return false; } }
+function marquerGuideVu(){ try{ localStorage.setItem(GUIDE_CLE,'1'); }catch(e){} }
+const ICO_GUIDE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/></svg>';
+const ICO_BOUCLIER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>';
+const G_ICO = {
+  prescri:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg>',
+  code:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>',
+  ia:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg>',
+  main:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-4.6-2.2L4 15.5a1.5 1.5 0 0 1 2.3-1.9L9 16"/></svg>'
+};
+
+const DIAPOS = [
+  { court:'Bienvenue', decor:'d-lagon', titre:'Bienvenue dans Drill',
+    chapo:'Ton copilote au fauteuil : prescrire, vérifier un traitement, coder un acte. Voici comment marche chaque outil.',
+    scene:()=>{
+      const icos=[G_ICO.prescri, ICO_ETOILE.replace('width="18" height="18"',''), ICO_SCAN, G_ICO.code, G_ICO.ia];
+      return `<div class="m-orbite">${icos.map((s,k)=>{ const a=k*2*Math.PI/5-Math.PI/2; return `<span style="left:${95+95*Math.cos(a)}px;top:${95+95*Math.sin(a)}px">${s}</span>`; }).join('')}</div>
+        <img class="m-logo" src="icons/icon-192.png" alt=""><div class="m-main">${G_ICO.main}Glisse</div>`;
+    },
+    etapes:['Fais glisser l’écran vers la gauche, ou touche « Suivant ».','Chaque écran présente un outil, avec un bouton pour l’essayer tout de suite.','Tu peux quitter à tout moment avec « Passer ».'] },
+  { court:'Prescri’Dent', decor:'d-lagon', titre:'Prescri’Dent',
+    chapo:'L’ordonnance adaptée à ton patient, en 5 questions.',
+    scene:()=>`<div style="display:grid;justify-items:center;width:100%"><div class="m-arcade">${Array.from({length:7},()=>`<svg viewBox="0 0 18 22"><path class="b" d="${DENT_D}"/><path class="l" d="${DENT_D}"/></svg>`).join('')}</div>
+      <div class="m-carte"><p class="m-petit">Question 3 sur 5</p><p class="m-titre">Allergies connues ?</p>
+      <div class="m-opt"><span class="m-sel"></span><span class="m-boite"><span class="m-ok"></span></span><span>Pénicillines</span><span class="m-doigt" style="left:22px;top:50%"></span></div></div></div>`,
+    etapes:['Réponds à 5 questions : l’acte, le patient, ses allergies, ses antécédents, ses traitements.','Lis la conduite à tenir : antibiotique ou non, alertes et précautions.','Recopie l’ordonnance proposée. Touche une ligne pour la retirer, ou ajoute un médicament.'],
+    note:'Fondé sur les recommandations officielles : HAS 2026, SFCO 2015 et RCP de l’ANSM.',
+    cta:'Essayer Prescri’Dent', go:()=>aller('prescri') },
+  { court:'Ordonnances types', decor:'d-ambre', classe:'ambre', titre:'Ordonnances types',
+    chapo:'Tes ordonnances habituelles, prêtes à copier.',
+    scene:()=>`<span class="m-toast">Ordonnance copiée</span>
+      <div style="display:grid;justify-items:center;width:100%"><div class="m-fav" id="gFav1">${ICO_ETOILE}<span>Avulsion simple<small>2 médicaments</small></span><span class="m-doigt" style="right:22px;top:50%"></span></div>
+      <div class="m-fav">${ICO_ETOILE}<span>Détartrage<small>1 médicament</small></span></div></div>`,
+    etapes:['Sur une ordonnance proposée, touche l’étoile pour l’enregistrer. Ou crée la tienne.','Retrouve-les depuis l’accueil et dès la première question de Prescri’Dent.','Copie-la en un geste, ou insère-la dans l’ordonnance du patient.'],
+    note:'Elles restent sur ton téléphone : rien n’est envoyé.',
+    cta:'Voir mes ordonnances types', go:()=>{ aller('prescri'); vFavoris(); } },
+  { court:'Scanner', decor:'d-nuit', titre:'Scanner',
+    chapo:'Le traitement du patient, décrypté avant ton geste.',
+    scene:()=>`<div class="m-papier"><p>Kardégic 75 mg</p><div class="g" style="width:70%"></div><p>Metformine 1000 mg</p><div class="g" style="width:50%"></div><span class="m-laser"></span></div>
+      <div class="m-puces"><span class="m-puce">Kardégic · antiagrégant</span><span class="m-puce">Metformine · antidiabétique</span></div>`,
+    etapes:['Prends l’ordonnance du patient en photo, ou saisis ses médicaments.','Cadre uniquement les médicaments, puis vérifie la liste lue.','Découvre ce que ça change : précautions avant le geste, ce que tu peux prescrire, effets en bouche.'],
+    note:'Données officielles de l’ANSM. Rien n’est enregistré : cadre les médicaments, pas le nom du patient.',
+    cta:'Essayer le scanner', go:()=>aller('scan') },
+  { court:'Codage express', decor:'d-encre', titre:'Codage express',
+    chapo:'Les bons codes CCAM et le total de la séance.',
+    scene:()=>`<div style="display:grid;justify-items:center;width:100%">
+      <div class="m-acte"><span><b>HBGD036 · 39,00 €</b>Avulsion d’1 dent permanente</span><span class="m-plus">+<i>✓</i></span></div>
+      <div class="m-acte"><span><b>HBGD004 · 96,14 €</b>3<sup>e</sup> molaire mandibulaire</span><span class="m-plus">+<i>✓</i></span></div>
+      <div class="m-panier"><span>Sélection · 2 actes</span><b>135,14 €</b></div></div>`,
+    etapes:['Choisis une catégorie, ou cherche un acte par mot ou par code.','Touche + pour l’ajouter à ta sélection.','Saisis la date de naissance : les modificateurs d’âge s’appliquent seuls. Copie codes et total.'],
+    note:'Tarifs : base CCAM V84 de l’Assurance Maladie.',
+    cta:'Ouvrir le codage', go:()=>aller('code') },
+  { court:'Assistant', decor:'d-ia', classe:'ia', titre:'Assistant',
+    chapo:'Pose ta question comme à un collègue.',
+    scene:()=>`<div class="m-fil"><span class="m-bulle moi">Dent de sagesse du bas, incluse</span><span class="m-pts"><i></i><i></i><i></i></span>
+      <span class="m-bulle lui"><b>HBGD004</b>Avulsion d’1 troisième molaire mandibulaire · 96,14 €</span></div>`,
+    etapes:['Décris l’acte avec tes mots, ou pose une question de prescription.','Il répond avec le code CCAM et son tarif, ou la conduite à tenir.','Ajoute le code au codage, ou ouvre le cas dans Prescri’Dent.'],
+    note:'N’écris jamais le nom du patient.',
+    cta:'Parler à l’assistant', go:()=>aller('ia') },
+  { court:'C’est parti', decor:'d-lagon', titre:'Tu es prêt !',
+    chapo:'Le guide reste sur l’accueil si tu veux le revoir.',
+    scene:()=>`<div class="m-bravo"><svg viewBox="0 0 48 48"><path pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M13 25l7 7 15-16"/></svg></div>
+      <div class="m-confetti">${Array.from({length:22},(_,k)=>`<i style="background:${['#FFFFFF','#7FF5DD','#F2A93B','#C9C3FF'][k%4]}"></i>`).join('')}</div>`,
+    note:'Drill est un outil d’aide à la décision : ton jugement clinique et l’avis de ton senior priment.' }
+];
+const DENT_D = (ICO.dent.match(/d="([^"]+)"/)||[])[1] || '';
+
+let guide = null;
+function ouvrirGuide(){
+  if(guide) return;
+  const retourFocus = document.activeElement;
+  const g = document.createElement('div');
+  g.className = 'guide';
+  g.setAttribute('role','dialog'); g.setAttribute('aria-modal','true'); g.setAttribute('aria-label','Guide de Drill');
+  g.innerHTML = `<div class="guide-haut"><div class="guide-prog" aria-hidden="true">${DIAPOS.map(()=>'<i><b></b></i>').join('')}</div><button class="guide-passer" id="gPasser">Passer</button></div>
+    <div class="guide-piste" id="gPiste">${DIAPOS.map((d,i)=>`<section class="diapo ${d.classe||''}" aria-label="${i+1} sur ${DIAPOS.length} : ${d.court}"><div class="in">
+      <div class="decor ${d.decor}" aria-hidden="true">${d.scene()}</div>
+      <h2>${d.titre}</h2><p class="chapo">${d.chapo}</p>
+      ${d.etapes?`<ol class="etapes">${d.etapes.map((e,k)=>`<li><b>${k+1}</b><span>${e}</span></li>`).join('')}</ol>`:''}
+      ${d.note?`<p class="guide-note">${ICO_BOUCLIER}<span>${d.note}</span></p>`:''}
+      ${d.cta?`<button class="essayer" data-essai="${i}">${d.cta}${ICO.fleche}</button>`:''}
+    </div></section>`).join('')}</div>
+    <div class="guide-bas"><button class="guide-prec" id="gPrec" aria-label="Écran précédent">${ICO.retour}</button>
+      <div class="guide-points">${DIAPOS.map((d,i)=>`<button data-pt="${i}" aria-label="Aller à l’écran ${i+1} : ${d.court}"><i></i></button>`).join('')}</div>
+      <button class="guide-suiv" id="gSuiv">Suivant${ICO.fleche}</button></div>
+    <p id="gAnnonce" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></p>`;
+  document.body.appendChild(g);
+  const piste = $('#gPiste', g);
+  guide = { el:g, piste, i:-1, ctrls:[], retourFocus };
+
+  const vers = (i, doux=true) => { i=Math.max(0,Math.min(DIAPOS.length-1,i)); piste.scrollTo({left:i*piste.clientWidth, behavior:(doux && !sansMouvement.matches)?'smooth':'auto'}); };
+  let attente = 0;
+  piste.addEventListener('scroll', ()=>{ cancelAnimationFrame(attente); attente=requestAnimationFrame(()=>{ const i=Math.round(piste.scrollLeft/Math.max(1,piste.clientWidth)); if(i!==guide?.i) activer(i); }); }, {passive:true});
+  $('#gPasser', g).onclick = ()=>fermerGuide();
+  $('#gPrec', g).onclick = ()=>vers(guide.i-1);
+  $('#gSuiv', g).onclick = ()=>{ if(guide.i>=DIAPOS.length-1) fermerGuide(); else vers(guide.i+1); };
+  g.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>vers(+b.dataset.pt));
+  g.querySelectorAll('[data-essai]').forEach(b=>b.onclick=()=>{ const d=DIAPOS[+b.dataset.essai]; fermerGuide(); d.go(); });
+  guide.clavier = (e)=>{ if(e.key==='ArrowRight') vers(guide.i+1); else if(e.key==='ArrowLeft') vers(guide.i-1); else if(e.key==='Escape') fermerGuide(); };
+  document.addEventListener('keydown', guide.clavier);
+  guide.retour = ()=>fermerGuide(true);
+  try{ history.pushState({guide:true},''); }catch(e){}
+  window.addEventListener('popstate', guide.retour);
+  window.addEventListener('resize', guide.recale = ()=>vers(guide.i,false));
+
+  anime(g, {opacity:[0,1], y:[40,0]}, {type:'spring', visualDuration:.4, bounce:.15});
+  activer(0);
+  $('#gSuiv', g).focus({preventScroll:true});
+}
+
+function activer(i){
+  const g = guide; if(!g) return;
+  g.i = i;
+  g.ctrls.forEach(c=>c.stop && c.stop()); g.ctrls = [];
+  const el = g.el, d = g.el.querySelectorAll('.diapo')[i];
+  el.querySelectorAll('.guide-prog i').forEach((s,k)=>s.classList.toggle('fait', k<=i));
+  el.querySelectorAll('[data-pt]').forEach((b,k)=>b.setAttribute('aria-current', k===i));
+  $('#gPrec', el).disabled = i===0;
+  $('#gSuiv', el).innerHTML = i===DIAPOS.length-1 ? 'C’est parti' : 'Suivant'+ICO.fleche;
+  $('#gAnnonce', el).textContent = `Écran ${i+1} sur ${DIAPOS.length} : ${DIAPOS[i].court}`;
+  if(i===DIAPOS.length-1) marquerGuideVu();
+  if(!MOTION) return;
+  const fixe = sansMouvement.matches;
+  const q = s => [...d.querySelectorAll(s)];
+  const go = (cible, kf, o) => { if(!cible || (Array.isArray(cible) && !cible.length)) return; g.ctrls.push(MOTION.animate(cible, kf, fixe ? {duration:0} : o)); };
+  const boucle = (cible, kf, o) => go(cible, kf, {repeat:Infinity, ease:'easeInOut', ...o});
+  // le texte arrive en cascade
+  go(q('.in > h2, .in > .chapo, .etapes li, .guide-note, .essayer'), {opacity:[0,1], y:[16,0]}, {duration:.45, delay:MOTION.stagger(.06, {startDelay:.08}), ease:[.16,1,.3,1]});
+  // puis la mini-démo de l'écran
+  const fin = (kf) => fixe ? kf.map(()=>kf[kf.length-2]) : kf;
+  switch(i){
+    case 0:
+      boucle(q('.m-orbite'), {rotate:[0,360]}, {duration:18, ease:'linear'});
+      boucle(q('.m-orbite span'), {rotate:[0,-360]}, {duration:18, ease:'linear'});
+      boucle(q('.m-logo'), {scale:[1,1.07,1]}, {duration:2.4});
+      boucle(q('.m-main'), {x:[30,-30], opacity:[0,1,1,0]}, {duration:1.6, repeatDelay:.5});
+      break;
+    case 1: {
+      const T1 = {duration:3.4, times:[0,.3,.36,.88,1]};
+      boucle(q('.m-sel'), {opacity:fin([0,0,1,1,0])}, T1);
+      boucle(q('.m-ok'), {opacity:fin([0,0,1,1,0]), scale:fin([.4,.4,1,1,.4])}, T1);
+      boucle(q('.m-doigt'), {opacity:[0,1,1,0,0], scale:[1.4,1,.8,1,1]}, {duration:3.4, times:[0,.12,.3,.4,1]});
+      q('.m-arcade .l').forEach((l,k)=>boucle(l, {opacity:fin([0,0,1,1,0])}, {duration:3.4, times:[0,.36+k*.05,.4+k*.05,.88,1]}));
+      break; }
+    case 2:
+      boucle(q('.m-doigt'), {opacity:[0,1,1,0,0], scale:[1.4,1,.8,1,1]}, {duration:3, times:[0,.15,.3,.42,1]});
+      boucle(q('#gFav1'), {scale:[1,1,.96,1,1]}, {duration:3, times:[0,.24,.3,.38,1]});
+      boucle(q('.m-toast'), {opacity:fin([0,0,1,1,0]), x:['-50%','-50%','-50%','-50%','-50%'], y:fin([-12,-12,0,0,-12])}, {duration:3, times:[0,.32,.4,.86,1]});
+      break;
+    case 3: {
+      const h = (q('.m-papier')[0]?.offsetHeight || 140) - 6;
+      boucle(q('.m-laser'), {y:[0,h,h], opacity:fin([0,1,1,0,0])}, {duration:3, times:[0,.08,.55,.62,1], y:{duration:3, times:[0,.6,1]}});
+      q('.m-puce').forEach((p,k)=>boucle(p, {opacity:fin([0,0,1,1,0]), x:fin([24,24,0,0,0])}, {duration:3, times:[0,.4+k*.12,.5+k*.12,.9,1]}));
+      break; }
+    case 4:
+      q('.m-plus i').forEach((p,k)=>boucle(p, {opacity:fin([0,0,1,1,0]), scale:fin([.4,.4,1,1,.4])}, {duration:3.4, times:[0,.2+k*.22,.26+k*.22,.9,1]}));
+      boucle(q('.m-panier'), {opacity:fin([0,0,1,1,0]), y:fin([12,12,0,0,0])}, {duration:3.4, times:[0,.5,.58,.9,1]});
+      break;
+    case 5:
+      boucle(q('.m-bulle.moi'), {opacity:fin([0,1,1,0]), y:fin([12,0,0,0])}, {duration:4, times:[0,.08,.9,1]});
+      boucle(q('.m-pts'), {opacity:[0,0,1,1,0,0]}, {duration:4, times:[0,.16,.2,.4,.44,1]});
+      if(!fixe) boucle(q('.m-pts i'), {y:[0,-4,0]}, {duration:.6, delay:MOTION.stagger(.12)});
+      boucle(q('.m-bulle.lui'), {opacity:fin([0,0,1,1,0]), y:fin([12,12,0,0,0])}, {duration:4, times:[0,.42,.5,.9,1]});
+      break;
+    case 6:
+      go(q('.m-bravo'), {scale:[.4,1]}, {type:'spring', bounce:.5, visualDuration:.5});
+      go(q('.m-bravo path'), {strokeDashoffset:[1,0]}, {duration:.5, delay:.25, ease:[.16,1,.3,1]});
+      if(!fixe) q('.m-confetti i').forEach((c,k)=>{ const a=k/22*Math.PI*2, r=90+(k%4)*28;
+        go(c, {x:[0,Math.cos(a)*r], y:[0,Math.sin(a)*r+30], rotate:[0,(k%2?1:-1)*240], opacity:[0,1,1,0]}, {duration:1.4, delay:.3, ease:[.16,1,.3,1], opacity:{duration:1.4, delay:.3, times:[0,.1,.7,1]}}); });
+      break;
+  }
+}
+
+function fermerGuide(depuisHistorique){
+  const g = guide; if(!g || g.ferme) return;
+  g.ferme = true;
+  g.ctrls.forEach(c=>c.stop && c.stop());
+  document.removeEventListener('keydown', g.clavier);
+  window.removeEventListener('popstate', g.retour);
+  window.removeEventListener('resize', g.recale);
+  marquerGuideVu();
+  guide = null;
+  if(!depuisHistorique && history.state && history.state.guide){ try{ history.back(); }catch(e){} }
+  const fin = ()=>{ g.el.remove(); if(vue==='accueil'){ vAccueil(); $('#goGuide')?.focus({preventScroll:true}); } else if(g.retourFocus && g.retourFocus.isConnected) g.retourFocus.focus({preventScroll:true}); };
+  const a = anime(g.el, {opacity:[1,0], y:[0,30]}, {duration:.22, ease:'easeIn'});
+  if(a) a.finished.then(fin, fin); else fin();
 }
 
 aller('accueil');
