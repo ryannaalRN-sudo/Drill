@@ -419,8 +419,13 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .mx-rub{margin-top:8px}
 .mx-rub .rcp{font-size:.86rem;line-height:1.45}
 .roue.sombre{border-color:var(--trait);border-top-color:var(--lagon)}
-/* iOS : les barres fixes ne restent pas décalées après la fermeture du clavier */
-.onglets,.barre-action,.panier{-webkit-transform:translateZ(0);transform:translateZ(0)}
+/* iOS 26 : après la fermeture du clavier, la zone visible reste décalée (visualViewport.offsetTop ≠ 0)
+   et les barres fixes « flottent ». --derive, mesuré en JS, les ramène au bas de l'écran. */
+:root{--derive:0px}
+.onglets{bottom:calc(0px - var(--derive))}
+.barre-action,.panier,.saisie{bottom:calc(72px + env(safe-area-inset-bottom) - var(--derive))}
+.toast{top:calc(env(safe-area-inset-top) + 14px + var(--derive))}
+body .guide{top:var(--derive);bottom:calc(0px - var(--derive))}
 .poso-sugg{display:grid;gap:6px}
 .sug.choisie{border-color:var(--lagon);background:var(--lagon-pale)}
 .favs{margin:6px 0 16px;padding:12px;border-radius:var(--r-m);background:var(--ambre-pale)}
@@ -2463,11 +2468,35 @@ aller('accueil');
 </script>
 <script src="medicodex.js"></script>
 <script>
-/* iOS : après la fermeture du clavier, on recale la page pour que les barres fixes reviennent en bas */
+/* iOS 26 (bug WebKit) : quand le clavier se ferme, visualViewport.offsetTop ne revient pas à 0.
+   Les éléments fixes restent calés sur l'ancienne zone et remontent avec le défilement.
+   On mesure l'écart entre le bas de la zone visible et le bas de la page, et on redescend
+   les barres d'autant (variable --derive). Jamais pendant la saisie, jamais vers le haut. */
 (function(){
-  const recaler=()=>setTimeout(()=>{ if(!document.activeElement || !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) window.scrollTo(window.scrollX, window.scrollY); }, 120);
-  document.addEventListener('focusout', recaler);
-  if(window.visualViewport){ let h=visualViewport.height; visualViewport.addEventListener('resize', ()=>{ if(visualViewport.height>h+80) recaler(); h=visualViewport.height; }); }
+  const vv = window.visualViewport; if(!vv) return;
+  const racine = document.documentElement;
+  let derive = 0, prevu = 0;
+  const saisie = () => { const a = document.activeElement; return !!a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable); };
+  const mesurer = () => {
+    prevu = 0;
+    let d = 0;
+    if(!saisie()){
+      d = Math.round(vv.offsetTop + vv.height - racine.clientHeight);
+      if(d < 2 || d > 700) d = 0;
+    }
+    if(d !== derive){ derive = d; racine.style.setProperty('--derive', d + 'px'); }
+  };
+  const planifier = () => { if(!prevu) prevu = requestAnimationFrame(mesurer); };
+  vv.addEventListener('resize', planifier);
+  vv.addEventListener('scroll', planifier);
+  window.addEventListener('scroll', planifier, {passive:true});
+  window.addEventListener('resize', planifier);
+  window.addEventListener('pageshow', planifier);
+  document.addEventListener('visibilitychange', planifier);
+  document.addEventListener('focusin', planifier);
+  document.addEventListener('focusout', () => { planifier(); setTimeout(planifier, 350); setTimeout(planifier, 900); });
+  document.addEventListener('touchend', () => setTimeout(planifier, 60), {passive:true});
+  planifier();
 })();
 </script>
 </body>
