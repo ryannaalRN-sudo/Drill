@@ -271,6 +271,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .onglet.ia[aria-current="page"]{color:var(--ia)}
 
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,calc(-100% - 60px));background:var(--encre);color:#fff;padding:12px 18px;border-radius:999px;font-weight:700;font-size:.9rem;transition:transform .35s cubic-bezier(.3,1.4,.5,1);z-index:20}
+.toast:not(.vu){visibility:hidden;transition:transform .35s cubic-bezier(.3,1.4,.5,1),visibility 0s .35s}
 .toast.vu{transform:translate(-50%,0)}
 .vue{animation:entree .28s ease-out}
 @keyframes entree{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -424,7 +425,6 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 :root{--derive:0px}
 .onglets{bottom:calc(0px - var(--derive))}
 .barre-action,.panier,.saisie{bottom:calc(72px + env(safe-area-inset-bottom) - var(--derive))}
-.toast{top:calc(env(safe-area-inset-top) + 14px + var(--derive))}
 body .guide{top:var(--derive);bottom:calc(0px - var(--derive))}
 .poso-sugg{display:grid;gap:6px}
 .sug.choisie{border-color:var(--lagon);background:var(--lagon-pale)}
@@ -2475,27 +2475,33 @@ aller('accueil');
 (function(){
   const vv = window.visualViewport; if(!vv) return;
   const racine = document.documentElement;
-  let derive = 0, prevu = 0;
+  let derive = 0, prevu = 0, attente = 0, bouge = 0, doigt = false;
   const saisie = () => { const a = document.activeElement; return !!a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable); };
+  // rebond élastique en haut ou en bas de page : ce n'est pas le bug, on ne touche à rien
+  const rebond = () => { const max = Math.max(0, racine.scrollHeight - racine.clientHeight); return window.scrollY < -1 || window.scrollY > max + 1; };
+  const ecart = () => { if(saisie() || rebond()) return 0; const d = Math.round(vv.offsetTop + vv.height - racine.clientHeight); return d >= 2 && d <= 700 ? d : 0; };
+  const poser = d => { if(d !== derive){ derive = d; racine.style.setProperty('--derive', d + 'px'); } };
   const mesurer = () => {
     prevu = 0;
-    let d = 0;
-    if(!saisie()){
-      d = Math.round(vv.offsetTop + vv.height - racine.clientHeight);
-      if(d < 2 || d > 700) d = 0;
-    }
-    if(d !== derive){ derive = d; racine.style.setProperty('--derive', d + 'px'); }
+    const d = ecart();
+    if(d <= derive){ clearTimeout(attente); poser(d); return; }   // l'écart se résorbe : tout de suite
+    // l'écart apparaît : on ne corrige que s'il est encore là une fois l'écran immobile (doigt levé, défilement fini)
+    clearTimeout(attente);
+    attente = setTimeout(() => { if(doigt || Date.now() - bouge < 250){ planifier(); return; } const d2 = ecart(); if(d2 > derive) poser(d2); }, 300);
   };
   const planifier = () => { if(!prevu) prevu = requestAnimationFrame(mesurer); };
+  const mouvement = () => { bouge = Date.now(); planifier(); };
   vv.addEventListener('resize', planifier);
-  vv.addEventListener('scroll', planifier);
-  window.addEventListener('scroll', planifier, {passive:true});
+  vv.addEventListener('scroll', mouvement);
+  window.addEventListener('scroll', mouvement, {passive:true});
   window.addEventListener('resize', planifier);
   window.addEventListener('pageshow', planifier);
   document.addEventListener('visibilitychange', planifier);
   document.addEventListener('focusin', planifier);
   document.addEventListener('focusout', () => { planifier(); setTimeout(planifier, 350); setTimeout(planifier, 900); });
-  document.addEventListener('touchend', () => setTimeout(planifier, 60), {passive:true});
+  document.addEventListener('touchstart', () => { doigt = true; }, {passive:true});
+  document.addEventListener('touchend', () => { doigt = false; bouge = Date.now(); setTimeout(planifier, 60); }, {passive:true});
+  document.addEventListener('touchcancel', () => { doigt = false; }, {passive:true});
   planifier();
 })();
 </script>
