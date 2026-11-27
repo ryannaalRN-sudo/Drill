@@ -450,16 +450,14 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 /* iOS 26 : après la fermeture du clavier, la zone visible reste décalée (visualViewport.offsetTop ≠ 0)
    et les barres fixes « flottent ». --derive, mesuré en JS, les ramène au bas de l'écran. */
 :root{--derive:0px}
-/* Assistant : bulle en verre liquide violet, en bas à droite, au-dessus des barres d'action */
-.bulle-ia{position:fixed;right:16px;bottom:calc(var(--bulle-bas,96px) - var(--derive));z-index:6;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;color:#fff;overflow:hidden;
-  background:linear-gradient(150deg,rgba(139,125,255,.62),rgba(91,79,217,.5) 55%,rgba(70,58,200,.58));
-  -webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
-  border:1px solid rgba(255,255,255,.6);
-  box-shadow:inset 0 1.5px 1px rgba(255,255,255,.8),inset 0 -8px 14px rgba(55,40,170,.28),0 10px 26px rgba(91,79,217,.3),0 2px 6px rgba(15,42,51,.12);
+/* Assistant : même bouton que la flèche « envoyer » (rond violet plein), avec un reflet de verre */
+.bulle-ia{position:fixed;right:16px;bottom:calc(var(--bulle-bas,96px) - var(--derive));z-index:6;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;overflow:hidden;
+  background:var(--ia);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(255,255,255,.18),inset 0 -5px 9px rgba(40,28,150,.18),0 4px 12px rgba(91,79,217,.26);
   transition:transform .35s cubic-bezier(.3,1.4,.5,1),opacity .2s,bottom .25s ease,visibility 0s}
-.bulle-ia::before{content:"";position:absolute;left:9px;right:9px;top:3px;height:46%;border-radius:999px;background:linear-gradient(rgba(255,255,255,.6),rgba(255,255,255,0));pointer-events:none}
-.bulle-ia::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 70% 85%,rgba(190,180,255,.45),transparent 55%);pointer-events:none}
-.bulle-ia svg{position:relative;z-index:1;width:26px;height:26px;filter:drop-shadow(0 1px 1.5px rgba(40,28,130,.4))}
+.bulle-ia::before{content:"";position:absolute;left:7px;right:7px;top:3px;height:48%;border-radius:999px 999px 60% 60%/999px 999px 40% 40%;background:linear-gradient(rgba(255,255,255,.3),rgba(255,255,255,.05) 80%,rgba(255,255,255,0));pointer-events:none}
+.bulle-ia::after{content:"";position:absolute;right:9px;bottom:7px;width:12px;height:6px;border-radius:50%;background:rgba(255,255,255,.16);filter:blur(1.5px);transform:rotate(-35deg);pointer-events:none}
+.bulle-ia svg{position:relative;z-index:1;width:24px;height:24px}
 .bulle-ia:active{transform:scale(.9)}
 body[data-vue="prescri"] .bulle-ia,body[data-vue="ia"] .bulle-ia,body.en-saisie .bulle-ia,body.panier-ouvert .bulle-ia,body:not([data-vue]) .bulle-ia{opacity:0;transform:scale(.5);pointer-events:none;visibility:hidden;transition:transform .25s ease,opacity .2s,visibility 0s .25s}
 .onglets{bottom:calc(0px - var(--derive))}
