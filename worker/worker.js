@@ -124,11 +124,11 @@ function texteDe(html) {
   return html
     .replace(/<(script|style|noscript)[\s\S]*?<\/\1>/gi, ' ')
     .replace(/<br\s*\/?>|<\/(p|li|h\d|div|tr|td|th|ul|ol|section)>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
+    .replace(/<\/?[a-z!][^>]*>/gi, ' ')
     .replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
     .replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(+d))
     .replace(/&([a-z]+);/gi, (m, e) => ENTITES[e] ?? m)
-    .replace(/[ \t\u00a0]+/g, ' ')
+    .replace(/[ \t\r\u00a0]+/g, ' ')
     .replace(/ *\n[ \n]*/g, '\n')
     .trim();
 }
@@ -138,19 +138,132 @@ function section(t, debut, fin) {
   return meilleur.trim();
 }
 const couper = (s, n) => s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s;
+/* ---------- RCP en blocs (Médicodex) ----------
+   ['h', titre] · ['p', texte] · ['l', puce] · ['c', en-tête, corps] (ligne de tableau regroupée)
+   Le gras d'origine est gardé entre \u0002 et \u0003. */
+const GD = '\u0002', GF = '\u0003';
+const decoder = s => s
+  .replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+  .replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(+d))
+  .replace(/&([a-z]+);/gi, (m, e) => ENTITES[e] ?? m);
+function enLigne(html) {
+  let t = decoder(html
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<span[^>]*font-family:\s*(?:Symbol|Wingdings|&quot;Courier New|"Courier New)[^>]*>[\s\S]*?<\/span>\s*<\/span>/gi, ' ')
+    .replace(/<(b|strong|u)\b[^>]*>/gi, GD).replace(/<\/(b|strong|u)>/gi, GF)
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/?[a-z!][^>]*>/gi, ''))
+    .replace(/[\s\u00a0]+/g, ' ')
+    .replace(/³(?=\s*\d)/g, '≥').replace(/£(?=\s*\d)/g, '≤');   // police Symbol de Word
+  // gras vides, gras collés, gras emboîtés
+  for (let i = 0; i < 3; i++) t = t.replace(new RegExp(GD + '(\\s*)' + GF, 'g'), '$1').replace(new RegExp(GF + '(\\s*)' + GD, 'g'), '$1');
+  let n = 0; t = [...t].filter(ch => { if (ch === GD) return ++n === 1; if (ch === GF) { if (n === 0) return false; return --n === 0; } return true; }).join('');
+  if (n > 0) t += GF;
+  return t.replace(new RegExp('\\s+(' + GF + ')', 'g'), '$1').trim();
+}
+const sansGras = t => t.replace(/[\u0002\u0003]/g, '');
+const toutGras = t => { const g = (t.match(/\u0002([^\u0003]*)\u0003/g) || []).join('').length - 2 * (t.match(/\u0002/g) || []).length; return g > 0 && g >= 0.9 * sansGras(t).length; };
+function celluleRCP(html) { return html.split(/<\/p>|<br\s*\/?>|<\/li>/i).map(enLigne).filter(x => sansGras(x).trim()).join('\n'); }
+function tableRCP(h) {
+  const rows = [...h.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map(r => [...r[1].matchAll(/<t([dh])\b([^>]*)>([\s\S]*?)<\/t[dh]>/gi)].map(c => ({
+    span: +((c[2].match(/rowspan\s*=\s*["']?(\d+)/i) || [])[1] || 1),
+    col: +((c[2].match(/colspan\s*=\s*["']?(\d+)/i) || [])[1] || 1),
+    x: celluleRCP(c[3]), th: c[1].toLowerCase() === 'h' })));
+  // grille : une cellule fusionnée sur plusieurs lignes est le même objet sur chaque ligne
+  const grille = [], pend = [];
+  for (const r of rows) {
+    const ligne = []; let ci = 0, k = 0;
+    while (k < r.length || pend.slice(ci).some(p => p && p.reste > 0)) {
+      if (pend[ci] && pend[ci].reste > 0) { ligne.push(pend[ci].cell); pend[ci].reste--; ci++; continue; }
+      if (k >= r.length) { ligne.push(null); ci++; continue; }
+      const c = r[k++];
+      for (let j = 0; j < c.col; j++) { ligne.push(j ? null : c); if (c.span > 1) pend[ci] = { cell: c, reste: c.span - 1 }; ci++; }
+    }
+    if (ligne.some(c => c && sansGras(c.x).trim())) grille.push(ligne);
+  }
+  if (!grille.length) return [];
+  const nc = Math.max(...grille.map(l => l.length));
+  if (nc === 1) return grille.map(l => ['p', l[0] ? l[0].x : '']).filter(b => b[1]);
+  // ligne d'en-tête : cellules en gras, <th>, ou intitulés usuels
+  const l0 = grille[0].filter(Boolean);
+  const motEntete = c => /^(indications?|doses?|posologie|poids|[âa]ge|fr[ée]quence|classes?|syst[èe]me|effets?|m[ée]dicaments?|population|dur[ée]e|voie|clairance|dfg|crcl|adultes?|enfants?|patients?|tranche|type)\b/i.test(sansGras(c.x).trim());
+  const entete = grille.length > 1 && l0.length > 1 && (l0.every(c => c.th || !c.x || toutGras(c.x) || motEntete(c))
+    || (l0.some(motEntete) && !l0.some(c => /\d\s*(mg|g|ml|µg)\b/i.test(sansGras(c.x)))));
+  const hdr = entete ? grille.shift().map(c => c ? sansGras(c.x).replace(/\s*\*+$/, '').trim() : '') : [];
+  const cartes = []; let prec = null;
+  for (const l of grille) {
+    const c0 = l[0], autres = l.slice(1);
+    const lib = (c, j) => c && sansGras(c.x).trim() ? (nc > 2 && hdr[j + 1] ? hdr[j + 1] + ' : ' : '') + c.x : '';
+    if (prec && c0 && prec.l[0] === c0) {        // même première cellule (fusionnée) : nouvelle ligne de corps
+      prec.corps.push(autres.filter((c, j) => c !== prec.l[j + 1]).map((c, j) => lib(c, j)).filter(Boolean).join('\n'));
+      prec.l = l; continue;
+    }
+    if (prec && autres.length && autres.every((c, j) => c && c === prec.l[j + 1])) {   // même corps (fusionné) : on regroupe les en-têtes
+      if (c0 && sansGras(c0.x).trim()) prec.tetes.push(sansGras(c0.x).replace(/\n/g, ' '));
+      prec.l = l; continue;
+    }
+    const t0 = c0 && sansGras(c0.x).trim() ? sansGras(c0.x).replace(/\n/g, ' ') : '';
+    prec = { l, tetes: t0 ? [nc > 2 && hdr[0] && autres.some(Boolean) ? hdr[0] + ' : ' + t0 : t0] : [], corps: [autres.map((c, j) => lib(c, j)).filter(Boolean).join('\n')] };
+    cartes.push(prec);
+  }
+  return cartes.map(c => {
+    const tete = c.tetes.join(' · '), corps = c.corps.filter(Boolean).join('\n');
+    if (!corps) return tete.length > 90 || /^[*+#(†‡]/.test(tete) ? ['p', tete] : ['h', tete];   // ligne seule : intertitre ou note
+    return ['c', tete, corps];
+  }).filter(c => c[1] || c[2]);
+}
+function blocsRCP(html, max) {
+  const out = []; let n = 0;
+  const re = /<table[\s\S]*?<\/table>|<p\b([^>]*)>([\s\S]*?)<\/p>|<li\b[^>]*>([\s\S]*?)<\/li>|<h[3-6]\b[^>]*>([\s\S]*?)<\/h[3-6]>/gi;
+  for (const m of html.matchAll(re)) {
+    let b = [];
+    if (/^<table/i.test(m[0])) b = tableRCP(m[0]);
+    else {
+      const attrs = m[1] || '', brut = m[2] ?? m[3] ?? m[4] ?? '';
+      const puce = m[3] != null || /Puce|Liste|Bullet/i.test(attrs) || /font-family:\s*Symbol/i.test(brut);
+      let x = enLigne(brut); if (!sansGras(x).trim()) continue;
+      if (puce) x = x.replace(/^([\u0002]?)\s*[·•o§▪\-–—]\s+/, '$1');
+      const court = sansGras(x).length <= 160;
+      if (m[4] != null || /Titre/i.test(attrs)) b = [['h', sansGras(x)]];
+      else if (puce) b = [['l', x]];
+      else if (court && toutGras(x) && !/[.;]$/.test(sansGras(x).trim())) b = [['h', sansGras(x)]];
+      else b = [['p', x]];
+    }
+    for (const x of b) { n += (x[1] || '').length + (x[2] || '').length; if (n > max) { out.push(['p', '… (suite dans le RCP complet)']); return out; } out.push(x); }
+  }
+  return out;
+}
+/* Découpe le RCP par rubrique (titres « 4.x. … » de niveau 2) */
+function rubriquesRCP(html) {
+  const tit = [...html.matchAll(/<p\b[^>]*class=["']?AmmAnnexeTitre2[^>]*>([\s\S]*?)<\/p>/gi)];
+  const r = {};
+  tit.forEach((m, i) => {
+    const num = (sansGras(enLigne(m[1])).match(/^\s*(\d+(?:\.\d+)?)/) || [])[1];
+    if (!num) return;
+    const fin = i + 1 < tit.length ? tit[i + 1].index : html.length;
+    r[num] = html.slice(m.index + m[0].length, fin);
+  });
+  return r;
+}
 /* Monographie complète (Médicodex) : les rubriques du RCP officiel, un peu plus longues que la fiche courte */
 async function monographie(cis) {
-  const cle = new Request('https://drill-cache.local/mono1/' + cis);
+  const cle = new Request('https://drill-cache.local/mono3/' + cis);
   let cache = null; try { cache = caches.default; const deja = await cache.match(cle); if (deja) return await deja.json(); } catch { cache = null; }
   const f = { cis, url: BDPM(cis) };
   try {
     const r = await fetch(BDPM(cis), { headers: { 'User-Agent': 'Drill (outil clinique etudiant)', 'Accept-Language': 'fr' } });
     if (!r.ok) return { ...f, erreur: r.status };
-    const t = texteDe(await r.text());
+    const html = await r.text();
+    const t = texteDe(html);
     const cl = t.match(/Classe pharmacoth[ée]rapeutique\s*:?\s*([^\n]*?)\s*[,;.\-–]?\s*code ATC\s*:?\s*([A-Z]\d{2}[A-Z0-9]{0,4})/i)
             || t.match(/Classe pharmacoth[ée]rapeutique\s*:?\s*([^\n]{3,200})/i);
     f.classe = cl ? cl[1].replace(/[\s,;:–-]+$/, '').trim() : '';
     f.atc = cl && cl[2] ? cl[2] : (t.match(/code ATC\s*:?\s*([A-Z]\d{2}[A-Z0-9]{0,4})/i) || [])[1] || '';
+    // rubriques structurées (titres, puces, tableaux) quand la page suit le modèle ANSM
+    const rub = rubriquesRCP(html);
+    const B = { indications: ['4.1', 4000], posologie: ['4.2', 12000], contreIndications: ['4.3', 3500], precautions: ['4.4', 7000], interactions: ['4.5', 6000], grossesse: ['4.6', 4000], effets: ['4.8', 6000] };
+    f.blocs = {};
+    for (const [k, [num, max]] of Object.entries(B)) if (rub[num]) { const b = blocsRCP(rub[num], max); if (b.length) f.blocs[k] = b; }
     const R = (a, b, n) => couper(section(t, a, b), n);
     f.indications = R('4\\.1\\.?\\s*Indications th[ée]rapeutiques', '4\\.2\\.?\\s*Posologie', 3000);
     f.posologie = R('4\\.2\\.?\\s*Posologie et mode d.administration', '4\\.3\\.?\\s*Contre-?\\s?indications', 7000);
