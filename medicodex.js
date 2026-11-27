@@ -19,7 +19,7 @@ const majMX = s => s.charAt(0).toUpperCase() + s.slice(1);
 const normFormeMX = p => String(p || '').replace(/\s*\/\s*/g, '/').replace(/\s*,\s+/g, ', ').replace(/\s+/g, ' ').trim()
   .replace(/^(\d+(?:[.,]\d+)?\s*(?:%|mg|g|µg|mL)(?:\/\d*(?:[.,]\d+)?\s*(?:mL|g))?)\s+(?=[a-zà-ÿ])/i, '$1, ');   // « 5 % crème » = « 5 %, crème »
 let MXI = null, MXI_attente = null;
-let MX = { q: '', cle: null, forme: null, kg: '', qui: 'enfant', conc: null, mono: {}, monoEtat: {} };
+let MX = { q: '', cle: null, forme: null, kg: '', qui: 'enfant', conc: null, mono: {}, monoEtat: {}, vidal: {} };
 
 /* ---------- Index des molécules ---------- */
 function indexMX() {
@@ -365,12 +365,34 @@ function rubHTML(e) {
       ${cis ? `<a class="vidal" style="display:inline-block;margin-top:10px" href="https://base-donnees-publique.medicaments.gouv.fr/medicament/${cis}/extrait" target="_blank" rel="noopener">RCP complet (base publique ANSM) ↗</a>` : ''}
     </div>`;
 }
+/* ---------- Page Vidal dédiée : trouvée par le relais, recherche Vidal en attendant ---------- */
+function demandeVidalMX(m, e) {
+  const subs = m.cle.split(' + ');   // « chlorhexidine » plutôt que « digluconate de chlorhexidine »
+  const marque = subs.length > 1 ? (m.specs.filter(s => !estGeneriqueMX(m, s)).map(s => MEDS.titre(s.nom))[0] || '') : '';
+  const dose = subs.length > 1 ? String(e.forme || '').split(', ')[0] : '';
+  return { subs, marque, dose, cle: [subs.join('+'), marque, dose].join('|') };
+}
+function vidalHTML(m, e) {
+  const d = demandeVidalMX(m, e), v = MX.vidal[d.cle];
+  const url = v?.url || 'https://www.vidal.fr/recherche.html?query=' + encodeURIComponent(d.subs.join(' '));
+  return `<a class="mx-vidal" id="mxVidal" href="${esc(url)}" target="_blank" rel="noopener"><span>Voir la page Vidal</span>${v?.type === 'medicament' ? `<small>${esc(v.nom.replace(/^[A-ZÀ-Ý][A-ZÀ-Ý\/ '-]*?(?=\s\d|$)/, x => MEDS.titre(x)))}</small>` : ''}<b aria-hidden="true">↗</b></a>`;
+}
+function majVidalMX(m) {
+  const e = etatFicheMX(m), d = demandeVidalMX(m, e);
+  const poser = () => { const a = $('#mxVidal'); if (a && vue === 'medoc' && MX.cle === m.cle) a.outerHTML = vidalHTML(m, etatFicheMX(m)); };
+  if (MX.vidal[d.cle]) return poser();
+  MX.vidal[d.cle] = null;
+  fetch(IA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'vidal', subs: d.subs, marque: d.marque, dose: d.dose }) })
+    .then(r => r.json()).then(j => { if (j && j.url) { MX.vidal[d.cle] = j; poser(); } else delete MX.vidal[d.cle]; })
+    .catch(() => { delete MX.vidal[d.cle]; });
+}
 function ficheMX(m) {
   const e = etatFicheMX(m);
   const marques = m.specs.filter(s => !estGeneriqueMX(m, s)), generiques = m.specs.filter(s => estGeneriqueMX(m, s));
   return `<section class="mx-tete">
       <h2>${esc(m.nom)}</h2>
       <p class="sous" id="mxClasse">${classeHTML(e)}</p>
+      ${vidalHTML(m, e)}
       <p class="sous mx-compte">${marques.length ? `${marques.length} marque${marques.length > 1 ? 's' : ''}` : ''}${marques.length && generiques.length ? ' · ' : ''}${generiques.length ? `${generiques.length} générique${generiques.length > 1 ? 's' : ''}` : ''} · ${e.formes.length} forme${e.formes.length > 1 ? 's' : ''} et dosage${e.formes.length > 1 ? 's' : ''}</p>
     </section>
     ${calcHTML(e)}
@@ -397,7 +419,7 @@ function majMorceauMX(sel, html, ancre) {
 }
 function brancherFicheMX(m) {
   $('#mxRet').onclick = () => { MX.cle = null; vMedoc(); };
-  brancherCalcMX(m); brancherFormesMX(m); chargerMonoMX(m);
+  brancherCalcMX(m); brancherFormesMX(m); chargerMonoMX(m); majVidalMX(m);
   $('#mxPrescri').onclick = () => {
     const e = etatFicheMX(m);
     versPrescriMX({ x: { nom: m.nom, subs: m.cle.split(' + '), cis: e.cis, pres: e.formes, classe: MX.mono[e.cis]?.classe ? majMX(MX.mono[e.cis].classe) : '', type: 'dci' } });
@@ -409,7 +431,7 @@ function majFormesMX(m, ancre) {
   majMorceauMX('#mxFormes', formesHTML(e), ancre); brancherFormesMX(m);
   const z = app.querySelector('#mxRub'); if (z) z.style.minHeight = z.offsetHeight + 'px';   // pas de trou pendant la lecture du RCP
   majMorceauMX('#mxRub', rubHTML(e)); $('#mxClasse').innerHTML = classeHTML(e);
-  chargerMonoMX(m);
+  chargerMonoMX(m); majVidalMX(m);
 }
 function brancherFormesMX(m) {
   app.querySelectorAll('[data-forme]').forEach(b => b.onclick = () => {
