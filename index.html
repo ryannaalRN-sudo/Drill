@@ -197,6 +197,33 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 }
 .groupe{margin:16px 2px 2px;font-family:var(--display);font-weight:700;font-size:.95rem;color:var(--encre-2)}
 .choix .groupe:first-child{margin-top:4px}
+/* Rubriques encadrées */
+.rubrique{margin-top:16px;padding:16px;border-radius:var(--r-l);background:var(--carte);border:1.5px solid var(--trait);box-shadow:0 1px 3px rgba(15,42,51,.05)}
+.rubrique:first-child{margin-top:4px}
+.rubrique-t{padding-bottom:12px;margin-bottom:2px;border-bottom:1.5px solid var(--trait)}
+.rubrique-t h2{font-size:1.35rem;margin:0}
+.rubrique-t .sous{font-size:.86rem;margin-bottom:2px}
+.rubrique > .sous{margin-top:10px}
+.rubrique .verdict{background:var(--email);border:0;border-left:4px solid #8E1F31;border-radius:var(--r-s)}
+.rubrique .verdict.non{border-left-color:var(--lagon)}
+.rubrique .ajout-med-zone{background:var(--email)}
+.rubrique .bloc-titre:first-child{margin-top:0}
+/* Alertes regroupées : un bloc rouge, un bloc orange, un bloc vert */
+.ga{margin-top:12px;border-radius:var(--r-m);border:1.5px solid;overflow:hidden}
+.ga.forte{background:var(--gencive-pale);border-color:#F4C3CC;color:#8E1F31}
+.ga.moy{background:var(--ambre-pale);border-color:#F0D3A2;color:#7A4A05}
+.ga.info{background:var(--lagon-pale);border-color:#B3E0D8;color:#065E54}
+.ga-t{display:flex;align-items:center;gap:8px;padding:11px 14px;font-family:var(--display);font-weight:800;font-size:1rem;background:rgba(255,255,255,.45);border-bottom:1.5px solid;border-color:inherit}
+.ga-t svg{flex:none;width:20px;height:20px}
+.ga-nb{margin-left:auto;min-width:24px;height:24px;padding:0 7px;border-radius:999px;display:grid;place-items:center;font-size:.8rem;background:rgba(255,255,255,.8)}
+.ga-i{padding:12px 14px;font-size:.93rem;line-height:1.45}
+.ga-i + .ga-i{border-top:1px solid rgba(15,42,51,.09)}
+.ga-i b{display:block}
+.ga-i.geste{display:flex;gap:10px;align-items:flex-start}
+.ga-i.geste svg{flex:none;width:17px;height:17px;margin-top:3px}
+.ga-corps{padding:10px;margin:0}
+.ga-corps .pr{border-color:rgba(15,42,51,.1)}
+.pr-cl{display:block;font-family:var(--texte);font-weight:400;font-size:.76rem;color:var(--encre-2);margin-top:1px}
 .verdict{margin-top:14px;padding:16px;border-radius:var(--r-m);border:1.5px solid var(--trait);background:var(--carte)}
 .verdict b{display:block;font-family:var(--display);font-size:1.15rem;margin-bottom:4px}
 .verdict.oui b{color:#8E1F31}.verdict.non b{color:#065E54}
@@ -625,6 +652,14 @@ const ICO = {
 const logo = `<svg viewBox="0 0 24 26" aria-hidden="true"><g transform="translate(2.5 1.5)" fill="#0E9384">${ICO.dent}</g></svg>`;
 
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('vu');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('vu'),1800)}
+/* Rubriques encadrées, alertes regroupées par couleur (rouge, puis orange, puis vert) */
+const cadreHTML = (titre, corps, sur='') => `<section class="rubrique"><header class="rubrique-t">${sur?`<p class="sous">${sur}</p>`:''}<h2>${titre}</h2></header>${corps}</section>`;
+function alertesGroupees(items, titres={}){
+  return [['forte','À ne pas manquer'],['moy','Précautions'],['info','Bon à savoir']].map(([n,t])=>{
+    const l=items.filter(x=>x.n===n); if(!l.length) return '';
+    return `<div class="ga ${n}"><p class="ga-t">${n==='info'?ICO.info:ICO.alerte}<span>${titres[n]||t}</span><span class="ga-nb">${l.length}</span></p>${l.map(x=>x.geste?`<div class="ga-i geste">${ICO_COCHE}<span>${x.html}</span></div>`:`<div class="ga-i">${x.html}</div>`).join('')}</div>`;
+  }).join('');
+}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 const MOTION = window.Motion;
 const sansMouvement = matchMedia('(prefers-reduced-motion: reduce)');
@@ -987,29 +1022,31 @@ function vOrdo(){
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="prec">${ICO.retour}Retour</button><button class="retour" id="raz" style="padding-left:12px">Nouveau patient</button></header>
     ${progressionHTML(etapes().length, etapes().length)}
-    <section class="question" style="padding-bottom:120px">
-      <p class="sous">${M.t||''}</p>
-      <h2>Conduite à tenir</h2>
-      ${O.hospit?`<div class="alerte forte">${ICO.alerte}<span><b>Prise en charge hospitalière</b>Adresser le patient aux urgences ou en chirurgie maxillo-faciale.</span></div>`:''}
-      ${O.gestes.length?`<ul class="gestes">${O.gestes.map(g=>`<li>${g}</li>`).join('')}</ul>`:''}
-      <div class="verdict ${O.atb?'oui':'non'}"><b>${O.atb?'Antibiotique : oui':'Antibiotique : non'}</b>${O.pourquoi.map(x=>`<p>${x}</p>`).join('')}</div>
-      ${[...O.alertes].sort((x,y)=>({forte:0,moy:1,info:2}[x.n])-({forte:0,moy:1,info:2}[y.n])).map(x=>`<div class="alerte ${x.n}">${icone(x.n)}<span><b>${x.t}</b>${x.d}</span></div>`).join('')}
-      <h2 style="margin-top:22px">Ordonnance proposée</h2>
-      <p class="sous">${toutes.length?'Touche une ligne pour la retirer ou la remettre.':'Aucun médicament recommandé pour cette situation.'}</p>
-      <div class="lignes">${toutes.map(carteLigne).join('')}</div>
-      <div class="ajout-med-zone">
-        <p class="groupe" style="margin:0 0 6px">Ajouter un médicament</p>
-        <div class="recherche" style="margin:0">${ICO.loupe}<input id="ajoutRech" type="search" placeholder="Ex. néfopam, Acupan…" autocomplete="off" autocorrect="off" spellcheck="false"></div>
-        <div id="sugg" class="sugg-liste" role="listbox"></div>
-        <div id="ajoutForm"></div>
-      </div>
-      ${toutes.length?`<h2 style="margin-top:22px">À recopier sur l’ordonnance</h2>
-      <p class="sous">Dans l’ordre : traitement de la cause, puis douleur, puis soins locaux.</p>
-      <div class="ordo-texte" id="ordoTexte"></div>`:''}
-      <div class="fav-actions">
-        ${toutes.length?`<button class="btn sec" id="favSave">${ICO_ETOILE} Enregistrer comme ordonnance type</button>`:''}
-        ${lireFavoris().length?`<button class="btn sec" id="favIns">Insérer une ordonnance type</button><div id="favInsListe" class="sugg-liste"></div>`:''}
-      </div>
+    <section class="question fin" style="padding-bottom:120px">
+      ${cadreHTML('Conduite à tenir', `
+        <div class="verdict ${O.atb?'oui':'non'}"><b>${O.atb?'Antibiotique : oui':'Antibiotique : non'}</b>${O.pourquoi.map(x=>`<p>${x}</p>`).join('')}</div>
+        ${alertesGroupees([
+          ...(O.hospit?[{n:'forte', html:'<b>Prise en charge hospitalière</b>Adresser le patient aux urgences ou en chirurgie maxillo-faciale.'}]:[]),
+          ...O.alertes.filter(x=>x.n!=='info').map(x=>({n:x.n, html:`<b>${x.t}</b>${x.d}`})),
+          ...O.gestes.map(g=>({n:'info', geste:true, html:g})),
+          ...O.alertes.filter(x=>x.n==='info').map(x=>({n:'info', html:`<b>${x.t}</b>${x.d}`})),
+        ], {info: O.gestes.length?'Au fauteuil et bon à savoir':'Bon à savoir'})}`, esc(M.t||''))}
+      ${cadreHTML('Ordonnance proposée', `
+        <p class="sous">${toutes.length?'Touche une ligne pour la retirer ou la remettre.':'Aucun médicament recommandé pour cette situation.'}</p>
+        <div class="lignes">${toutes.map(carteLigne).join('')}</div>
+        <div class="ajout-med-zone">
+          <p class="groupe" style="margin:0 0 6px">Ajouter un médicament</p>
+          <div class="recherche" style="margin:0">${ICO.loupe}<input id="ajoutRech" type="search" placeholder="Ex. néfopam, Acupan…" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+          <div id="sugg" class="sugg-liste" role="listbox"></div>
+          <div id="ajoutForm"></div>
+        </div>`)}
+      ${cadreHTML(toutes.length?'À recopier sur l’ordonnance':'Ordonnances types', `
+        ${toutes.length?`<p class="sous">Dans l’ordre : traitement de la cause, puis douleur, puis soins locaux.</p>
+        <div class="ordo-texte" id="ordoTexte"></div>`:''}
+        <div class="fav-actions">
+          ${toutes.length?`<button class="btn sec" id="favSave">${ICO_ETOILE} Enregistrer comme ordonnance type</button>`:''}
+          ${lireFavoris().length?`<button class="btn sec" id="favIns">Insérer une ordonnance type</button><div id="favInsListe" class="sugg-liste"></div>`:`${toutes.length?'':'<p class="sous">Aucune ordonnance type enregistrée.</p>'}`}
+        </div>`)}
       <p class="demo">Sources : HAS 2026 (antibiotiques en pratique bucco-dentaire), HAS 2024 (endocardite), SFCO 2015 (antithrombotiques), ANSM, RCP. Interactions avec le traitement du patient et médicaments ajoutés : thésaurus ANSM des interactions, base publique des médicaments (ANSM) et RCP. Outil d'aide à la décision : il ne remplace pas ton jugement clinique ni l'avis de ton senior.</p>
     </section>
   </div>
@@ -2191,30 +2228,35 @@ const PASTILLE = {OK:['ok','Compatible'], APEC:['apec','À prendre en compte'], 
 function vScanResultat(){
   const R=SC.R, src=s=>s?` <span class="src">${esc(s)}</span>`:'';
   const ico = n => n==='info'?ICO.info:ICO.alerte;
-  const terrain = R.terrain.map(a=>`<div class="alerte ${a.n}">${ico(a.n)}<div><b>${esc(a.t)}</b>${esc(a.d)}${src(a.src)}</div></div>`).join('');
-  const presc = R.presc.map(G=>`<p class="groupe">${G.groupe}</p><div class="presc">${G.items.map(it=>{
+  const terrain = alertesGroupees(R.terrain.map(a=>({n:a.n, html:`<b>${esc(a.t)}</b>${esc(a.d)}${src(a.src)}`})));
+  // regroupés par couleur : à éviter (rouge), avec précaution (orange), compatibles (vert) ; la classe reste indiquée sous le nom
+  const COUL = {CI:'forte', ASDEC:'forte', PE:'moy', APEC:'moy', OK:'info'}, RANG = {CI:0, ASDEC:1, PE:2, APEC:3, OK:4};
+  const tous = R.presc.flatMap(G=>G.items.map((it,k)=>({it, g:G.groupe, k}))).map((x,i)=>({...x, i})).sort((a,b)=>RANG[a.it.niveau]-RANG[b.it.niveau] || a.i-b.i);
+  const ligneP = ({it, g}) => {
     const [cl,lib]=PASTILLE[it.niveau];
+    const nom = `<span>${esc(it.nom)}<small class="pr-cl">${esc(g)}</small></span>`;
     const det = it.raisons.map(r=>`<li><span class="niv ${PASTILLE[r.niv][0]}">${PASTILLE[r.niv][1]}</span> <b>${esc(r.meds.join(', '))}</b> — ${esc(r.txt)}${src(r.src)}</li>`).join('') + (it.note?`<li>${esc(it.note)}</li>`:'');
-    return det ? `<details class="pr ${cl}"><summary><span>${esc(it.nom)}</span><span class="niv ${cl}">${lib}</span></summary><ul>${det}</ul></details>`
-               : `<div class="pr ok"><span>${esc(it.nom)}</span><span class="niv ok">${lib}</span></div>`;
-  }).join('')}</div>`).join('');
+    return det ? `<details class="pr ${cl}"><summary>${nom}<span class="niv ${cl}">${lib}</span></summary><ul>${det}</ul></details>`
+               : `<div class="pr ok">${nom}<span class="niv ok">${lib}</span></div>`;
+  };
+  const presc = [['forte','À éviter'],['moy','Avec précaution'],['info','Compatibles']].map(([n,t])=>{
+    const l=tous.filter(x=>COUL[x.it.niveau]===n); if(!l.length) return '';
+    return `<div class="ga ${n}"><p class="ga-t">${n==='info'?ICO_COCHE:ICO.alerte}<span>${t}</span><span class="ga-nb">${l.length}</span></p><div class="ga-corps presc">${l.map(ligneP).join('')}</div></div>`;
+  }).join('');
   const bouche = R.bouche.map(b=>`<li><b>${esc(b.t)}</b>${esc(b.d)}</li>`).join('');
   const pfP = RECO.depuisScanner(SC.meds), prefN = pfP.ttt.length + pfP.atcd.length;
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="ret">${ICO.retour}Modifier la liste</button><button class="retour" id="raz" style="padding-left:12px">Nouveau scan</button></header>
     <h2 style="margin-top:6px">Ce que ce traitement change pour toi</h2>
-    <p class="bloc-titre">Ses médicaments</p>
-    <p class="sous" style="font-size:.88rem">Classe, indications et contre-indications tirées du RCP officiel. Touche un médicament.</p>
-    <div id="mesMeds" class="presc" style="margin-top:8px">${htmlMesMeds()}</div>
-    ${R.aDemander.length?`<div class="alerte info">${ICO.info}<div><b>À demander au patient</b>${esc(R.aDemander.join(' · '))}</div></div>`:''}
-    <p class="bloc-titre">Avant un geste</p>
-    ${terrain || `<p class="sous">Rien de particulier repéré dans ce traitement.</p>`}
-    <p class="bloc-titre">Si tu prescris</p>
-    <p class="sous" style="font-size:.88rem">Touche une ligne pour voir pourquoi.</p>
-    ${presc}
-    ${bouche?`<p class="bloc-titre">En bouche</p><ul class="gestes bouche">${bouche}</ul>`:''}
-    <p class="bloc-titre">Assistant</p>
-    <div id="iaZone">${SC.ia?`<div class="bulle ia-bulle">${SC.ia}</div>`:`<button class="btn ia" id="demIA" style="width:100%">${SC.iaAttente?'<span class="roue"></span>L’assistant réfléchit…':'Demander une synthèse à l’assistant'}</button>`}</div>
+    ${cadreHTML('Ses médicaments', `
+      <p class="sous" style="font-size:.88rem">Classe, indications et contre-indications tirées du RCP officiel. Touche un médicament.</p>
+      <div id="mesMeds" class="presc" style="margin-top:8px">${htmlMesMeds()}</div>
+      ${R.aDemander.length?`<div class="alerte info">${ICO.info}<div><b>À demander au patient</b>${esc(R.aDemander.join(' · '))}</div></div>`:''}`)}
+    ${cadreHTML('Avant un geste', terrain || `<p class="sous" style="margin-top:10px">Rien de particulier repéré dans ce traitement.</p>`)}
+    ${cadreHTML('Si tu prescris', `<p class="sous" style="font-size:.88rem">Touche une ligne pour voir pourquoi.</p>${presc}`)}
+    ${bouche?cadreHTML('En bouche', `<ul class="gestes bouche">${bouche}</ul>`):''}
+    <section class="rubrique"><header class="rubrique-t"><h2>Assistant</h2></header>
+    <div id="iaZone" style="margin-top:12px">${SC.ia?`<div class="bulle ia-bulle">${SC.ia}</div>`:`<button class="btn ia" id="demIA" style="width:100%">${SC.iaAttente?'<span class="roue"></span>L’assistant réfléchit…':'Demander une synthèse à l’assistant'}</button>`}</div></section>
     <p class="demo">Médicaments : base de données publique des médicaments (ANSM, ${MEDS.dateBDPM()||'2026'}) et RCP officiels. Interactions : thésaurus ANSM (15/09/2023, dernière version publiée) et RCP. Terrain : HAS 2026, SFCO 2015. Ne remplace ni le Vidal ni l’avis du prescripteur.</p>
     <div style="height:90px"></div>
   </div>
