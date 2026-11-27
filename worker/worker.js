@@ -245,6 +245,41 @@ function rubriquesRCP(html) {
   });
   return r;
 }
+/* ---------- Page Vidal dédiée (Médicodex) ----------
+   Une molécule seule : sa page « substance ». Une association : la page du médicament
+   (princeps de préférence) au dosage de la forme choisie. Sinon : la page de recherche. */
+const sansAccents = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+async function pageVidal(subs, marque, dose) {
+  const q = subs.join(' ');
+  const recherche = 'https://www.vidal.fr/recherche.html?query=' + encodeURIComponent(q);
+  const cle = new Request('https://drill-cache.local/vidal1/' + encodeURIComponent(sansAccents([q, marque, dose].join('|'))));
+  let cache = null; try { cache = caches.default; const deja = await cache.match(cle); if (deja) return await deja.json(); } catch { cache = null; }
+  let res = { url: recherche, type: 'recherche' };
+  try {
+    const r = await fetch(recherche, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Drill)', 'Accept-Language': 'fr' } });
+    if (r.ok) {
+      const html = await r.text();
+      const liens = [...html.matchAll(/href="(medicaments\/[^"]+\.html)"[^>]*ise_click_product':'([^']*)','ise_click_product_type':'([^']*)'/g)]
+        .map(m => ({ url: 'https://www.vidal.fr/' + m[1], nom: decoder(m[2]), type: m[3] }));
+      if (subs.length === 1) {
+        const s = liens.find(l => l.type === 'Substance' && sansAccents(l.nom) === sansAccents(subs[0]));
+        if (s) res = { url: s.url, type: 'substance', nom: s.nom };
+      }
+      if (res.type === 'recherche') {
+        const nombres = String(dose || '').match(/\d+(?:[.,]\d+)?/g) || [];
+        const m = sansAccents(marque);
+        const score = l => { const n = sansAccents(l.nom).replace(/,/g, '.'); let sc = 0;
+          if (m && n.startsWith(m)) sc += 4;
+          let i = 0; for (const x of nombres) { const j = n.indexOf(x.replace(',', '.'), i); if (j < 0) { sc -= 1; break; } i = j + 1; sc += 1; }
+          return sc; };
+        const meds = liens.filter(l => l.type === 'Médicament').map(l => ({ l, sc: score(l) })).sort((a, b) => b.sc - a.sc);
+        if (meds.length && meds[0].sc > 0) res = { url: meds[0].l.url, type: 'medicament', nom: meds[0].l.nom };
+      }
+      if (cache) { try { await cache.put(cle, new Response(JSON.stringify(res), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=2592000' } })); } catch {} }
+    }
+  } catch {}
+  return res;
+}
 /* Monographie complète (Médicodex) : les rubriques du RCP officiel, un peu plus longues que la fiche courte */
 async function monographie(cis) {
   const cle = new Request('https://drill-cache.local/mono3/' + cis);
@@ -321,6 +356,11 @@ async function traiter(request, env) {
     let corps;
     try { corps = await request.json(); } catch { return json({ erreur: 'JSON invalide' }, 400, cors); }
     // --- Fiches officielles : aucune IA, lecture du RCP sur la base publique (ANSM) ---
+    if (corps.mode === 'vidal') {
+      const subs = (Array.isArray(corps.subs) ? corps.subs : []).map(x => String(x).slice(0, 60)).filter(Boolean).slice(0, 4);
+      if (!subs.length) return json({ erreur: 'molécule manquante' }, 400, cors);
+      return json(await pageVidal(subs, String(corps.marque || '').slice(0, 60), String(corps.dose || '').slice(0, 60)), 200, cors);
+    }
     if (corps.mode === 'monographie') {
       const cis = String(corps.cis || '');
       if (!/^\d{8}$/.test(cis)) return json({ erreur: 'CIS invalide' }, 400, cors);
