@@ -261,11 +261,11 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 
 /* ---------- barre d'onglets ---------- */
 .onglets{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--trait);padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:5}
-.onglets .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);position:relative}
-.indic{position:absolute;left:0;top:2px;width:20%;height:32px;display:flex;justify-content:center;pointer-events:none}
+.onglets .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);position:relative}
+.indic{position:absolute;left:0;top:2px;width:calc(100% / 6);height:32px;display:flex;justify-content:center;pointer-events:none}
 .indic i{width:56px;height:32px;border-radius:999px;background:var(--lagon-pale);transition:background .2s}
 .indic.ia i{background:var(--ia-pale)}
-.onglet{position:relative;z-index:1;display:grid;justify-items:center;gap:3px;padding:6px 0;font-size:.72rem;font-weight:700;color:var(--encre-2)}
+.onglet{position:relative;z-index:1;display:grid;justify-items:center;gap:3px;padding:6px 0;font-size:.68rem;font-weight:700;color:var(--encre-2);letter-spacing:-.01em;min-width:0}
 .onglet svg{width:24px;height:24px}
 .onglet[aria-current="page"]{color:var(--lagon)}
 .onglet.ia[aria-current="page"]{color:var(--ia)}
@@ -374,6 +374,34 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .pres{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
 .chip-pres{padding:6px 10px;border-radius:999px;border:1.5px solid var(--trait);background:var(--email);font-size:.84rem;font-weight:700;color:var(--encre-2)}
 .chip-pres[aria-pressed="true"]{background:var(--lagon-pale);border-color:var(--lagon);color:#065E54}
+/* Médicodex */
+.mx-res{display:grid;gap:10px;margin-top:12px}
+.mx-carte{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;width:100%;padding:14px 16px;border-radius:var(--r-m);background:var(--carte);border:1.5px solid var(--trait)}
+.mx-carte b{display:block;font-family:var(--display);font-size:1.05rem}
+.mx-carte small{display:block;color:var(--encre-2);font-size:.84rem;margin-top:2px}
+.mx-carte svg{flex:none;width:18px;height:18px;color:var(--encre-2)}
+.mx-sugg{display:flex;flex-wrap:wrap;gap:8px}
+.mx-tete{padding:8px 0 4px}
+.mx-tete h2{font-size:1.7rem}
+.mx-compte{font-size:.86rem;margin-top:2px}
+.mx-calc h3{margin-bottom:2px}
+.mx-kg{display:flex;align-items:center;gap:8px}
+.mx-kg input{width:84px;height:48px;text-align:center;font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--encre);background:var(--email);border:1.5px solid var(--trait);border-radius:14px}
+.mx-kg input:focus{outline:none;border-color:var(--lagon);background:var(--carte)}
+.mx-kg span{font-weight:700;color:var(--encre-2)}
+.mx-schemas{display:grid;gap:10px;margin-top:14px}
+.mx-schema{display:grid;gap:4px;padding:12px 14px;border-radius:var(--r-s);background:var(--lagon-pale)}
+.mx-schema b{font-size:.9rem;color:#065E54}
+.mx-dose{font-family:var(--display);font-weight:700;font-size:1.02rem;line-height:1.3;color:var(--encre)}
+.mx-schema small{font-size:.8rem;color:var(--encre-2)}
+.mx-bas{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px}
+.mx-bas .mini{padding:8px 12px;font-size:.8rem}
+.mx-formes .chip-pres{text-align:left}
+.mx-rub{margin-top:8px}
+.mx-rub .rcp{font-size:.86rem;line-height:1.45}
+.roue.sombre{border-color:var(--trait);border-top-color:var(--lagon)}
+/* iOS : les barres fixes ne restent pas décalées après la fermeture du clavier */
+.onglets,.barre-action,.panier{-webkit-transform:translateZ(0);transform:translateZ(0)}
 .poso-sugg{display:grid;gap:6px}
 .sug.choisie{border-color:var(--lagon);background:var(--lagon-pale)}
 .favs{margin:6px 0 16px;padding:12px;border-radius:var(--r-m);background:var(--ambre-pale)}
@@ -525,6 +553,7 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
   <span class="indic" aria-hidden="true"><i></i></span>
   <button class="onglet" data-vue="accueil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
   <button class="onglet" data-vue="prescri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg>Prescrire</button>
+  <button class="onglet" data-vue="medoc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-45 12 12)"/><path d="m8.9 8.9 6.2 6.2"/></svg>Médicodex</button>
   <button class="onglet" data-vue="scan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M9 9h6M9 12h6M9 15h3"/></svg>Scanner</button>
   <button class="onglet" data-vue="code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>Coder</button>
   <button class="onglet ia" data-vue="ia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2"/><circle cx="12" cy="12" r="3"/></svg>Assistant</button>
@@ -579,7 +608,9 @@ function aller(v){
   onglets.forEach(b=>b.setAttribute('aria-current', b.dataset.vue===v ? 'page':'false'));
   placerIndic(onglets.findIndex(b=>b.dataset.vue===v), v==='ia');
   vPrescri.vu = null; animerProgression.prec = null;
-  ({accueil:vAccueil, prescri:vPrescri, scan:vScan, code:vCode, ia:vIA})[v]();
+  // iOS : fermer le clavier avant de changer d'écran, sinon les barres fixes peuvent rester décalées
+  if(document.activeElement && document.activeElement!==document.body) document.activeElement.blur();
+  ({accueil:vAccueil, prescri:vPrescri, medoc:()=>vMedoc(), scan:vScan, code:vCode, ia:vIA})[v]();
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.onglet').forEach(b=>b.onclick=()=>aller(b.dataset.vue));
@@ -609,6 +640,10 @@ function vAccueil(){
       <button class="outil" data-go="prescri">
         <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V7m3.5 5 3 4m0-4-3 4"/></svg></span>
         <span><h3>Prescri'Dent</h3><p>Profil du patient, conduite à tenir et ordonnance à recopier</p></span><span class="fl">${ICO.fleche}</span>
+      </button>
+      <button class="outil" data-go="medoc">
+        <span class="ico l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-45 12 12)"/><path d="m8.9 8.9 6.2 6.2"/></svg></span>
+        <span><h3>Médicodex</h3><p>Une fiche par molécule : posologies au poids, formes, contre-indications</p></span><span class="fl">${ICO.fleche}</span>
       </button>
       <button class="outil" id="goFav">
         <span class="ico a">${ICO_ETOILE.replace('width="18" height="18"','')}</span>
@@ -884,6 +919,11 @@ function vOrdo(){
   const r=P.rep, O=RECO.decider(r), M=RECO.MOTIF[r.motif]||{};
   if(!P.decochesFaits){ O.lignes.filter(l=>l.decoche).forEach(l=>P.lignesOff.add(l.id)); P.decochesFaits=true; }
   if(!P.ajouts) P.ajouts=[];
+  // posologies envoyées depuis le Médicodex
+  if(P.attente && P.attente.some(a=>a.pos)){
+    P.attente.filter(a=>a.pos).forEach((a,k)=>{ const v=MEDS.verifierAjout(a.titre, P.rep, O.lignes); P.ajouts.push({id:'aj'+Date.now()+'_mx'+k, titre:a.titre, pos:a.pos, classe:a.classe, ordre:v.ordre, alertes:v.alertes}); });
+    P.attente = P.attente.filter(a=>!a.pos);
+  }
   const ajoutsL = P.ajouts.map(a=>({id:a.id, cat:'Ajout', med:a.titre, pos:a.pos, qsp:'', ajout:true, ordre:a.ordre, classe:a.classe, alertes:a.alertes, source:a.source}));
   const toutes = trierLignes([...O.lignes, ...ajoutsL]);
   const actives = () => toutes.filter(l=>!P.lignesOff.has(l.id));
@@ -903,7 +943,7 @@ function vOrdo(){
           <span style="text-align:left"><small class="sous" style="font-size:.78rem">${l.cat}</small>
             <span class="med" style="display:block">${l.med}</span>
             <span class="pos" style="display:block">${l.pos} · ${l.qsp}</span>
-            <a class="vidal" href="https://www.vidal.fr/recherche.html?query=${encodeURIComponent(l.med.split(/[ (]/)[0])}" target="_blank" rel="noopener">Voir sur Vidal</a></span>
+            <a class="vidal" href="#" data-mx="${esc(l.med)}">Fiche Médicodex</a></span>
         </button>`;
   app.innerHTML = `<div class="vue">
     <header class="top"><button class="retour" id="prec">${ICO.retour}Retour</button><button class="retour" id="raz" style="padding-left:12px">Nouveau patient</button></header>
@@ -1192,6 +1232,9 @@ function brancherAjout(actives){
     };
     form.scrollIntoView({behavior:'smooth', block:'start'});
   };
+  // médicament envoyé depuis le Médicodex sans posologie : le formulaire s'ouvre directement
+  const enAttente = (P.attente||[]).find(a=>a.x);
+  if(enAttente){ P.attente = P.attente.filter(a=>a!==enAttente); choisir(enAttente.x); }
 }
 
 /* Ordonnance : texte à recopier sur l'ordonnance du service (aucun document généré).
@@ -1874,6 +1917,8 @@ function repondrePrescription(texte){
 
 /* Réponse immédiate du moteur local ; le texte de l'IA vient ensuite l'enrichir s'il arrive à temps. */
 function repondreLocal(texte){
+  const poso = reponsePosologieMX(texte);
+  if(poso) return poso;
   if(intentionPrescription(texte)){
     const R0 = repondrePrescription(texte);
     const suite = R0.html.includes('<ul class="rx">') ? R0.html.slice(R0.html.indexOf('<p><b>À prescrire')) : R0.html.slice(R0.html.indexOf('<button'));
@@ -2086,6 +2131,7 @@ function htmlMesMeds(){
     if(f?.indications) corps.push(`<li><b>Indications</b><span class="rcp">${esc(f.indications)}</span></li>`);
     if(f?.contreIndications) corps.push(`<li><b>Contre-indications</b><span class="rcp">${esc(f.contreIndications)}</span></li>`);
     if(x.cis && SC.fichesEtat==='erreur' && !f) corps.push(`<li>Fiche officielle indisponible pour le moment.</li>`);
+    if(x.connu) corps.push(`<li><a class="vidal" href="#" data-mx="${esc(x.subs.join(' + ')||x.nom)}">Fiche Médicodex : posologies, formes, précautions</a></li>`);
     if(x.cis) corps.push(`<li><a class="vidal" href="https://base-donnees-publique.medicaments.gouv.fr/medicament/${x.cis}/extrait" target="_blank" rel="noopener">RCP complet (base publique ANSM) ↗</a></li>`);
     const tete = `<span class="mm"><span>${esc(x.nom)}</span>${sous}</span>${etat}`;
     return corps.length ? `<details class="pr mm-c"><summary>${tete}</summary><ul>${corps.join('')}</ul></details>` : `<div class="pr mm-c">${tete}</div>`;
@@ -2225,6 +2271,14 @@ const DIAPOS = [
     etapes:['Décris l’acte avec tes mots, ou pose une question de prescription.','Il répond avec le code CCAM et son tarif, ou la conduite à tenir.','Ajoute le code au codage, ou ouvre le cas dans Prescri’Dent.'],
     note:'N’écris jamais le nom du patient.',
     cta:'Parler à l’assistant', go:()=>aller('ia') },
+  { court:'Médicodex', decor:'d-lagon', titre:'Médicodex',
+    chapo:'Une seule fiche par molécule, toutes les posologies.',
+    scene:()=>`<div style="display:grid;justify-items:center;width:100%">
+      <div class="m-acte"><span><b>Amoxicilline · enfant de 11 kg</b>180 mg (3,6 mL) 3 fois par jour</span><span class="m-plus">+<i>✓</i></span></div>
+      <div class="m-acte"><span><b>Antibioprophylaxie · 11 kg</b>550 mg (11 mL) en une prise</span><span class="m-plus">+<i>✓</i></span></div></div>`,
+    etapes:['Cherche une molécule, une marque ou un générique : une seule fiche les regroupe tous.','Saisis le poids : chaque posologie se calcule, en mg et en mL.','Ajoute la posologie à l’ordonnance de Prescri’Dent en un geste.'],
+    note:'RCP officiels de l’ANSM et HAS 2026.',
+    cta:'Ouvrir le Médicodex', go:()=>aller('medoc') },
   { court:'C’est parti', decor:'d-lagon', titre:'Tu es prêt !',
     chapo:'Le guide reste sur l’accueil si tu veux le revoir.',
     scene:()=>`<div class="m-bravo"><svg viewBox="0 0 48 48"><path pathLength="1" stroke-dasharray="1 1" stroke-dashoffset="1" d="M13 25l7 7 15-16"/></svg></div>
@@ -2334,6 +2388,9 @@ function activer(i){
       boucle(q('.m-bulle.lui'), {opacity:fin([0,0,1,1,0]), y:fin([12,12,0,0,0])}, {duration:4, times:[0,.42,.5,.9,1]});
       break;
     case 6:
+      q('.m-plus i').forEach((p,k)=>boucle(p, {opacity:fin([0,0,1,1,0]), scale:fin([.4,.4,1,1,.4])}, {duration:3.4, times:[0,.25+k*.25,.31+k*.25,.9,1]}));
+      break;
+    case 7:
       go(q('.m-bravo'), {scale:[.4,1]}, {type:'spring', bounce:.5, visualDuration:.5});
       go(q('.m-bravo path'), {strokeDashoffset:[1,0]}, {duration:.5, delay:.25, ease:[.16,1,.3,1]});
       if(!fixe) q('.m-confetti i').forEach((c,k)=>{ const a=k/22*Math.PI*2, r=90+(k%4)*28;
@@ -2383,6 +2440,15 @@ aller('accueil');
     A(elements, {opacity:[0,1], y:[22,0]}, {duration:.8, delay:MOTION.stagger(.08,{startDelay:.4}), ease:[.22,1,.36,1]});
     A(document.querySelector('.onglets'), {y:[90,0]}, {duration:.8, delay:.55, ease:[.22,1,.36,1]});
   }, 1500);
+})();
+</script>
+<script src="medicodex.js"></script>
+<script>
+/* iOS : après la fermeture du clavier, on recale la page pour que les barres fixes reviennent en bas */
+(function(){
+  const recaler=()=>setTimeout(()=>{ if(!document.activeElement || !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) window.scrollTo(window.scrollX, window.scrollY); }, 120);
+  document.addEventListener('focusout', recaler);
+  if(window.visualViewport){ let h=visualViewport.height; visualViewport.addEventListener('resize', ()=>{ if(visualViewport.height>h+80) recaler(); h=visualViewport.height; }); }
 })();
 </script>
 </body>

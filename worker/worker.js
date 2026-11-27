@@ -138,6 +138,31 @@ function section(t, debut, fin) {
   return meilleur.trim();
 }
 const couper = (s, n) => s.length > n ? s.slice(0, n).replace(/\s+\S*$/, '') + '…' : s;
+/* Monographie complète (Médicodex) : les rubriques du RCP officiel, un peu plus longues que la fiche courte */
+async function monographie(cis) {
+  const cle = new Request('https://drill-cache.local/mono1/' + cis);
+  let cache = null; try { cache = caches.default; const deja = await cache.match(cle); if (deja) return await deja.json(); } catch { cache = null; }
+  const f = { cis, url: BDPM(cis) };
+  try {
+    const r = await fetch(BDPM(cis), { headers: { 'User-Agent': 'Drill (outil clinique etudiant)', 'Accept-Language': 'fr' } });
+    if (!r.ok) return { ...f, erreur: r.status };
+    const t = texteDe(await r.text());
+    const cl = t.match(/Classe pharmacoth[ée]rapeutique\s*:?\s*([^\n]*?)\s*[,;.\-–]?\s*code ATC\s*:?\s*([A-Z]\d{2}[A-Z0-9]{0,4})/i)
+            || t.match(/Classe pharmacoth[ée]rapeutique\s*:?\s*([^\n]{3,200})/i);
+    f.classe = cl ? cl[1].replace(/[\s,;:–-]+$/, '').trim() : '';
+    f.atc = cl && cl[2] ? cl[2] : (t.match(/code ATC\s*:?\s*([A-Z]\d{2}[A-Z0-9]{0,4})/i) || [])[1] || '';
+    const R = (a, b, n) => couper(section(t, a, b), n);
+    f.indications = R('4\\.1\\.?\\s*Indications th[ée]rapeutiques', '4\\.2\\.?\\s*Posologie', 3000);
+    f.posologie = R('4\\.2\\.?\\s*Posologie et mode d.administration', '4\\.3\\.?\\s*Contre-?\\s?indications', 7000);
+    f.contreIndications = R('4\\.3\\.?\\s*Contre-?\\s?indications', '4\\.4\\.?\\s*Mises en garde', 2500);
+    f.precautions = R('4\\.4\\.?\\s*Mises en garde', '4\\.5\\.?\\s*Interactions', 5000);
+    f.interactions = R('4\\.5\\.?\\s*Interactions', '4\\.6\\.?\\s*(Fertilit|Grossesse)', 4000);
+    f.grossesse = R('4\\.6\\.?\\s*(?:Fertilit[ée],?\\s*)?[Gg]rossesse', '4\\.7\\.?\\s*Effets sur', 3000);
+    f.effets = R('4\\.8\\.?\\s*Effets ind[ée]sirables', '4\\.9\\.?\\s*Surdosage', 3500);
+    if (cache) { try { await cache.put(cle, new Response(JSON.stringify(f), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=604800' } })); } catch {} }
+  } catch (e) { f.erreur = 'lecture'; }
+  return f;
+}
 async function fiche(cis) {
   const cle = new Request('https://drill-cache.local/fiche2/' + cis);
   let cache = null; try { cache = caches.default; const deja = await cache.match(cle); if (deja) return await deja.json(); } catch { cache = null; }
@@ -183,6 +208,11 @@ async function traiter(request, env) {
     let corps;
     try { corps = await request.json(); } catch { return json({ erreur: 'JSON invalide' }, 400, cors); }
     // --- Fiches officielles : aucune IA, lecture du RCP sur la base publique (ANSM) ---
+    if (corps.mode === 'monographie') {
+      const cis = String(corps.cis || '');
+      if (!/^\d{8}$/.test(cis)) return json({ erreur: 'CIS invalide' }, 400, cors);
+      return json(await monographie(cis), 200, cors);
+    }
     if (corps.mode === 'fiche') {
       const liste = (Array.isArray(corps.cis) ? corps.cis : []).map(String).filter(c => /^\d{8}$/.test(c)).slice(0, 15);
       const fiches = await Promise.all(liste.map(fiche));
