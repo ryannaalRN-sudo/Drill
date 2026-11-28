@@ -2554,7 +2554,11 @@ aller('accueil');
     document.body.appendChild(voile);
     bulle.classList.add('partie');
     const logo = voile.querySelector('.vi-logo');
-    const fin = () => { voile.remove(); bulle.classList.remove('partie'); enCours = false; };
+    // la barre d'état (tout en haut) passe au violet quand le voile l'atteint, et redevient claire quand il se retire
+    const barre = document.getElementById('couleurBarre');
+    const teinte = c => { if(barre) barre.content = c; };
+    setTimeout(() => teinte('#7A6FF0'), 220);
+    const fin = () => { teinte('#F5F8F8'); voile.remove(); bulle.classList.remove('partie'); enCours = false; };
     // 1. le violet envahit l'écran, la bulle file au centre en grandissant
     A(voile, {clipPath:[`circle(${r.width/2}px at ${cx}px ${cy}px)`, `circle(${couvre(cx,cy)}px at ${cx}px ${cy}px)`]}, {duration:.55, ease:EASE});
     A(logo, {x:[0, mx-cx], y:[0, my-cy]}, {duration:.6, ease:EASE});
@@ -2566,6 +2570,7 @@ aller('accueil');
       A(logo, {scale:[2, 2.15, 0]}, {duration:.7, ease:EASE, times:[0,.35,1]});
       A(voile, {clipPath:[`circle(${couvre(mx,my)}px at ${mx}px ${my}px)`, `circle(0px at ${mx}px ${my}px)`]}, {duration:.7, ease:EASE})
         .finished.then(fin, fin);
+      setTimeout(() => teinte('#F5F8F8'), 230);
       const elements = [...document.querySelectorAll('#app .vue > *')].slice(0, 8);
       if(elements.length) A(elements, {opacity:[0,1], y:[22,0]}, {duration:.7, delay:MOTION.stagger(.07,{startDelay:.3}), ease:[.22,1,.36,1]});
       const saisie = document.querySelector('#app .saisie');
