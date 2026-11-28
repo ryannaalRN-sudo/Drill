@@ -459,6 +459,14 @@ html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 .bulle-ia::after{content:"";position:absolute;right:9px;bottom:7px;width:12px;height:6px;border-radius:50%;background:rgba(255,255,255,.16);filter:blur(1.5px);transform:rotate(-35deg);pointer-events:none}
 .bulle-ia svg{position:relative;z-index:1;width:24px;height:24px}
 .bulle-ia:active{transform:scale(.9)}
+.bulle-ia.partie{opacity:0!important;transition:none!important}
+.voile-ia{position:fixed;inset:0;z-index:40;pointer-events:auto;will-change:clip-path;
+  background:radial-gradient(70% 40% at 25% 30%,rgba(201,195,255,.35),transparent 70%),linear-gradient(180deg,#7A6FF0 0%,#5B4FD9 50%,#3D3499 100%)}
+.vi-logo{position:absolute;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--ia);will-change:transform;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(255,255,255,.2),inset 0 -5px 9px rgba(40,28,150,.2),0 10px 24px rgba(20,14,80,.35)}
+.vi-logo::before{content:"";position:absolute;left:7px;right:7px;top:3px;height:48%;border-radius:999px 999px 60% 60%/999px 999px 40% 40%;background:linear-gradient(rgba(255,255,255,.3),rgba(255,255,255,.05) 80%,rgba(255,255,255,0))}
+.vi-logo svg{position:relative;width:24px;height:24px}
+.vi-halo{position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(255,255,255,.75);opacity:0}
 body[data-vue="prescri"] .bulle-ia,body[data-vue="ia"] .bulle-ia,body.en-saisie .bulle-ia,body.panier-ouvert .bulle-ia,body:not([data-vue]) .bulle-ia{opacity:0;transform:scale(.5);pointer-events:none;visibility:hidden;transition:transform .25s ease,opacity .2s,visibility 0s .25s}
 .onglets{bottom:calc(0px - var(--derive))}
 .barre-action,.panier,.saisie{bottom:calc(72px + env(safe-area-inset-bottom) - var(--derive))}
@@ -2527,7 +2535,43 @@ aller('accueil');
 (function(){
   const bulle = document.getElementById('bulleIA'), onglets = document.querySelector('.onglets');
   if(!bulle || !onglets) return;
-  bulle.onclick = () => aller('ia');
+  // Ouverture de l'assistant, comme le lancement de Drill : le violet part de la bulle et envahit l'écran,
+  // la bulle vient grandir au centre (comme le logo), puis l'écran se referme sur elle et dévoile l'assistant
+  let enCours = false;
+  bulle.onclick = () => {
+    if(enCours) return;
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches || !MOTION){ aller('ia'); return; }
+    enCours = true;
+    const A = MOTION.animate, EASE = [.65,0,.35,1];
+    const r = bulle.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+    const W = window.innerWidth, H = window.innerHeight, mx = W/2, my = H*.46;
+    const couvre = (x,y) => Math.ceil(Math.hypot(Math.max(x, W-x), Math.max(y, H-y))) + 4;
+    const voile = document.createElement('div');
+    voile.className = 'voile-ia';
+    voile.innerHTML = `<span class="vi-logo" style="left:${cx - r.width/2}px;top:${cy - r.height/2}px"><span class="vi-halo"></span><span class="vi-halo"></span>${bulle.querySelector('svg').outerHTML}</span>`;
+    voile.style.clipPath = `circle(${r.width/2}px at ${cx}px ${cy}px)`;
+    document.body.appendChild(voile);
+    bulle.classList.add('partie');
+    const logo = voile.querySelector('.vi-logo');
+    const fin = () => { voile.remove(); bulle.classList.remove('partie'); enCours = false; };
+    // 1. le violet envahit l'écran, la bulle file au centre en grandissant
+    A(voile, {clipPath:[`circle(${r.width/2}px at ${cx}px ${cy}px)`, `circle(${couvre(cx,cy)}px at ${cx}px ${cy}px)`]}, {duration:.55, ease:EASE});
+    A(logo, {x:[0, mx-cx], y:[0, my-cy]}, {duration:.6, ease:EASE});
+    A(logo, {scale:[1, 2]}, {type:'spring', bounce:.35, visualDuration:.6});
+    voile.querySelectorAll('.vi-halo').forEach((h,k)=>A(h, {scale:[.9,1,1.9], opacity:[0,0,.7,0]}, {duration:1.1+k*.2, ease:'easeOut', delay:.25, scale:{duration:1.1+k*.2, times:[0,.15+k*.1,1], ease:[.16,1,.3,1]}, opacity:{duration:1.1+k*.2, times:[0,.12+k*.1,.25+k*.1,1]}}));
+    // 2. l'assistant prend la place de l'écran, puis le violet se referme sur la bulle
+    setTimeout(() => {
+      aller('ia');
+      A(logo, {scale:[2, 2.15, 0]}, {duration:.7, ease:EASE, times:[0,.35,1]});
+      A(voile, {clipPath:[`circle(${couvre(mx,my)}px at ${mx}px ${my}px)`, `circle(0px at ${mx}px ${my}px)`]}, {duration:.7, ease:EASE})
+        .finished.then(fin, fin);
+      const elements = [...document.querySelectorAll('#app .vue > *')].slice(0, 8);
+      if(elements.length) A(elements, {opacity:[0,1], y:[22,0]}, {duration:.7, delay:MOTION.stagger(.07,{startDelay:.3}), ease:[.22,1,.36,1]});
+      const saisie = document.querySelector('#app .saisie');
+      if(saisie) A(saisie, {opacity:[0,1], y:[40,0]}, {duration:.7, delay:.45, ease:[.22,1,.36,1]});
+    }, 820);
+    setTimeout(() => { if(enCours){ if(vue !== 'ia') aller('ia'); fin(); } }, 3000);   // filet de sécurité
+  };
   const racine = document.documentElement;
   let prevu = 0;
   const placer = () => {
